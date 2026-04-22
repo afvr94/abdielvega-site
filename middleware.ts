@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const BUDGET_HOST_PATTERN = /^budget\./i;
+const LOCAL_HOST_PATTERN = /^(localhost|127\.0\.0\.1|\[::1\])(:|$)/i;
 
 // Paths that must be reachable without a session
 const PUBLIC_PATHS = new Set(['/login', '/auth/callback']);
@@ -47,8 +48,9 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2 — APEX / any other host: hide /budget/* so the budget tracker is
-  //     strictly on its subdomain.
-  if (pathname.startsWith('/budget')) {
+  //     strictly on its subdomain. Exempt localhost so you can test the
+  //     tracker in dev without editing /etc/hosts.
+  if (pathname.startsWith('/budget') && !LOCAL_HOST_PATTERN.test(host)) {
     return NextResponse.rewrite(new URL('/404', url));
   }
 
