@@ -152,25 +152,25 @@ In **Project → Settings → Domains**:
 
 ---
 
-## 6. Route 53 — repoint DNS
+## 6. DNS — repoint to Vercel
 
-Open the Route 53 hosted zone for `abdielvega.com`:
+DNS for `abdielvega.com` is managed at **Namecheap** (Domain List → Manage → Advanced DNS).
 
 **Apex `abdielvega.com`:**
 
-- Delete the old record(s) pointing at AWS (likely CloudFront / S3 / API Gateway).
-- Create a new **A record** with the "ALIAS / A" to Vercel's IP (Vercel will give you the exact value; currently `76.76.21.21`).
-- Or, if your zone supports ANAME/ALIAS, point apex to `cname.vercel-dns.com`.
+- Edit the existing `ALIAS` record with host `@`. Change its value from the old CloudFront target (`d…cloudfront.net.`) to `cname.vercel-dns.com.`.
 
 **`www.abdielvega.com`:**
 
-- CNAME → `cname.vercel-dns.com`.
+- Add: `CNAME Record`, host `www`, value `cname.vercel-dns.com.`.
 
 **`budget.abdielvega.com`:**
 
-- CNAME → `cname.vercel-dns.com`.
+- Add: `CNAME Record`, host `budget`, value `cname.vercel-dns.com.`.
 
-Propagation is usually quick (minutes). Vercel's domain dashboard auto-detects when it's done and issues HTTPS certs.
+**ACM validation CNAMEs (`_xxxx…mjclfywhbs.acm…`):** these validated the old AWS certificates. Leave them in place for now — delete only in step 9 with the rest of the AWS decommission, so you can revert if Vercel breaks.
+
+Propagation is usually a few minutes. Vercel's domain dashboard auto-detects when it's ready and issues HTTPS certs. **Always sanity-check against what Vercel's UI is telling you** — if Vercel shows a different target (e.g., `A 76.76.21.21`), trust Vercel over these notes.
 
 ---
 
