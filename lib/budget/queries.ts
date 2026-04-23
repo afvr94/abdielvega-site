@@ -45,7 +45,7 @@ export async function upsertCategory(db: SupabaseClient, c: Category) {
       sort_order: c.sortOrder,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: 'id' }
+    { onConflict: 'user_id,id' }
   );
   if (error) throw error;
 }
@@ -85,7 +85,7 @@ export async function writePlan(db: SupabaseClient, month: string, plan: Plan) {
   }));
   if (rows.length === 0) return;
   const { error } = await db.from('budget_plans').upsert(rows, {
-    onConflict: 'month,category_id',
+    onConflict: 'user_id,month,category_id',
   });
   if (error) throw error;
 }

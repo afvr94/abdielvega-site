@@ -60,7 +60,7 @@ Tailwind exposes these as named values: `bg-cream`, `text-ink`, `text-muted`, `b
 
 ## Data model (Supabase)
 
-Three tables: `categories`, `budget_plans`, `transactions`. Row-level security is `auth.uid() IS NOT NULL` — single-user app, any authenticated session has full access. See `DEPLOY.md` for the SQL.
+Three tables: `categories`, `budget_plans`, `transactions`. Each row carries a `user_id` (defaulted to `auth.uid()`); RLS policies (`auth.uid() = user_id`) isolate per-user data. New users get the default categories seeded by an `on_auth_user_created` trigger. Signups are gated at the Supabase auth layer (invite-only in production). See `DEPLOY.md` for the SQL.
 
 ## Local development
 
