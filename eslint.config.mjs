@@ -9,6 +9,8 @@ const config = [
     rules: {
       '@next/next/no-html-link-for-pages': 'off',
       'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/immutability': 'warn',
     },
   },
 ];
