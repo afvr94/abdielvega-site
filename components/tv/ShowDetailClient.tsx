@@ -11,7 +11,7 @@ import {
   markWatched,
   markUnwatched,
   markSeasonWatched,
-  markPreviousWatched,
+  markWatchedMany,
   setArchived,
 } from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
@@ -114,20 +114,18 @@ export function ShowDetailClient({
   function confirmMarkPrevious() {
     if (!prompt) return;
     const { season, episode } = prompt;
+    const toMark = airedRegular.filter(
+      (x) =>
+        isBefore(x, season, episode) || (x.seasonNumber === season && x.episodeNumber === episode)
+    );
     setWatched((prev) => {
       const copy = new Set(prev);
-      for (const x of airedRegular) {
-        if (
-          isBefore(x, season, episode) ||
-          (x.seasonNumber === season && x.episodeNumber === episode)
-        ) {
-          copy.add(watchKey(x.seasonNumber, x.episodeNumber));
-        }
-      }
+      for (const x of toMark) copy.add(watchKey(x.seasonNumber, x.episodeNumber));
       return copy;
     });
+    const payload = toMark.map((x) => ({ season: x.seasonNumber, episode: x.episodeNumber }));
     startTransition(async () => {
-      await markPreviousWatched(show.tmdbId, season, episode);
+      await markWatchedMany(show.tmdbId, payload);
     });
     setPrompt(null);
   }

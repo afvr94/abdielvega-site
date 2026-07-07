@@ -87,35 +87,25 @@ export async function markUnwatched(
   revalidatePath(`/tv/show/${tmdbId}`);
 }
 
-// Mark every aired, non-special episode at or before (season, episode) watched.
-// Powers the "mark previous episodes" prompt.
-export async function markPreviousWatched(
+// Mark an explicit list of episodes watched in one batch. The caller already
+// knows exactly which (season, episode) pairs to mark, so no server-side lookup.
+export async function markWatchedMany(
   tmdbId: number,
-  season: number,
-  episode: number
+  episodes: { season: number; episode: number }[]
 ): Promise<void> {
+  if (episodes.length === 0) return;
   const db = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await db
-    .from('tv_episodes')
-    .select('season_number,episode_number')
-    .eq('show_tmdb_id', tmdbId)
-    .gt('season_number', 0)
-    .not('air_date', 'is', null)
-    .lte('air_date', today)
-    .or(`season_number.lt.${season},and(season_number.eq.${season},episode_number.lte.${episode})`);
-  if (error) throw error;
-  const rows = (data ?? []).map((e: { season_number: number; episode_number: number }) => ({
+  const rows = episodes.map((e) => ({
     show_tmdb_id: tmdbId,
-    season_number: e.season_number,
-    episode_number: e.episode_number,
+    season_number: e.season,
+    episode_number: e.episode,
   }));
   for (let i = 0; i < rows.length; i += 500) {
-    const { error: insErr } = await db.from('tv_watches').upsert(rows.slice(i, i + 500), {
+    const { error } = await db.from('tv_watches').upsert(rows.slice(i, i + 500), {
       onConflict: 'show_tmdb_id,season_number,episode_number',
       ignoreDuplicates: true,
     });
-    if (insErr) throw insErr;
+    if (error) throw error;
   }
   revalidatePath('/tv');
   revalidatePath(`/tv/show/${tmdbId}`);
