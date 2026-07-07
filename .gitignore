@@ -28,9 +28,14 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# typescript incremental build cache — machine-local, must not be committed
+# (a stale committed cache once masked a type error and broke a prod build)
+*.tsbuildinfo
+
 # vercel
 .vercel
 
 .vscode
 
 .env
+.env*

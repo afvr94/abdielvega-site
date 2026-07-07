@@ -64,8 +64,11 @@ function parseCsv(text: string): Record<string, string>[] {
   return rows.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ''])));
 }
 
-const isTrue = (v: string) => v.trim().toLowerCase() === 'true';
-const toIso = (v: string) => (v.trim() ? v.trim().replace(' ', 'T') + 'Z' : null);
+const isTrue = (v: string | undefined) => (v ?? '').trim().toLowerCase() === 'true';
+const toIso = (v: string | undefined) => {
+  const s = (v ?? '').trim();
+  return s ? s.replace(' ', 'T') + 'Z' : null;
+};
 
 type WatchRow = { season: number; episode: number; watchedAt: string | null };
 
@@ -76,7 +79,7 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number
     Array.from({ length: Math.min(limit, items.length) }, async () => {
       while (cursor < items.length) {
         const i = cursor++;
-        results[i] = await fn(items[i], i);
+        results[i] = await fn(items[i]!, i);
       }
     })
   );
