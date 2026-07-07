@@ -59,3 +59,15 @@ export type ShowDetail = {
 export function watchKey(season: number, episode: number): string {
   return `${season}-${episode}`;
 }
+
+// Aggregated viewing stats (computed by the tv_stats() SQL function).
+export type Stats = {
+  totalWatches: number;
+  totalRuntimeMin: number;
+  showsFollowed: number;
+  showsArchived: number;
+  firstWatch: string | null;
+  lastWatch: string | null;
+  byYear: { year: number; count: number }[];
+  topShows: { showTmdbId: number; name: string; count: number; runtimeMin: number }[];
+};

@@ -552,6 +552,48 @@ returns table (
 $$;
 ```
 
+### Stats function
+
+Backs the `/stats` page — totals, time watched, activity by year, and most-watched
+shows, all in one call. Run once:
+
+```sql
+create or replace function tv_stats()
+returns json language sql stable as $$
+  select json_build_object(
+    'total_watches', (select count(*) from tv_watches),
+    'total_runtime_min', (
+      select coalesce(sum(e.runtime), 0)
+      from tv_watches w
+      join tv_episodes e
+        on  e.show_tmdb_id  = w.show_tmdb_id
+        and e.season_number = w.season_number
+        and e.episode_number = w.episode_number),
+    'shows_followed', (select count(*) from tv_follows where not archived),
+    'shows_archived', (select count(*) from tv_follows where archived),
+    'first_watch', (select min(watched_at) from tv_watches),
+    'last_watch',  (select max(watched_at) from tv_watches),
+    'by_year', (
+      select coalesce(json_agg(row_to_json(t) order by t.year), '[]'::json) from (
+        select extract(year from watched_at)::int as year, count(*)::int as count
+        from tv_watches group by 1) t),
+    'top_shows', (
+      select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
+        select w.show_tmdb_id, s.name, count(*)::int as count,
+               coalesce(sum(e.runtime), 0)::int as runtime_min
+        from tv_watches w
+        join tv_shows s on s.tmdb_id = w.show_tmdb_id
+        left join tv_episodes e
+          on  e.show_tmdb_id  = w.show_tmdb_id
+          and e.season_number = w.season_number
+          and e.episode_number = w.episode_number
+        group by w.show_tmdb_id, s.name
+        order by count(*) desc
+        limit 12) t)
+  );
+$$;
+```
+
 ### Scheduled sync (Vercel Cron)
 
 `vercel.json` registers a daily `GET /api/tv/sync`. Vercel automatically sends

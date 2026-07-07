@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getUpNext, getShowDetail, getLibrary } from '@/lib/tv/queries';
+import { getUpNext, getShowDetail, getLibrary, getStats } from '@/lib/tv/queries';
 
 // Minimal chainable stand-in for the Supabase query builder. Each method that
 // filters is honored so getShowDetail's per-show reads behave; everything
@@ -32,7 +32,7 @@ function makeBuilder(rows: Record<string, unknown>[]) {
 }
 
 function makeDb(config: {
-  rpc?: Record<string, unknown[]>;
+  rpc?: Record<string, unknown>;
   tables?: Record<string, Record<string, unknown>[]>;
 }): SupabaseClient {
   return {
@@ -173,6 +173,44 @@ describe('getLibrary', () => {
     const items = await getLibrary(db);
     expect(items.map((i) => i.show.name)).toEqual(['Beta', 'Zeta', 'Alpha', 'Xray']);
     expect(items[0].lastWatchedAt).toBe('2026-07-05T00:00:00Z');
+  });
+});
+
+describe('getStats', () => {
+  it('maps the tv_stats json blob to camelCase', async () => {
+    const db = makeDb({
+      rpc: {
+        tv_stats: {
+          total_watches: 9419,
+          total_runtime_min: 240000,
+          shows_followed: 34,
+          shows_archived: 5,
+          first_watch: '2018-05-20T23:10:58Z',
+          last_watch: '2026-07-07T00:00:00Z',
+          by_year: [
+            { year: 2018, count: 100 },
+            { year: 2019, count: 200 },
+          ],
+          top_shows: [{ show_tmdb_id: 1, name: 'Arrow', count: 170, runtime_min: 6800 }],
+        },
+      },
+    });
+    const s = await getStats(db);
+    expect(s.totalWatches).toBe(9419);
+    expect(s.totalRuntimeMin).toBe(240000);
+    expect(s.showsFollowed).toBe(34);
+    expect(s.showsArchived).toBe(5);
+    expect(s.firstWatch).toBe('2018-05-20T23:10:58Z');
+    expect(s.byYear).toEqual([
+      { year: 2018, count: 100 },
+      { year: 2019, count: 200 },
+    ]);
+    expect(s.topShows[0]).toEqual({
+      showTmdbId: 1,
+      name: 'Arrow',
+      count: 170,
+      runtimeMin: 6800,
+    });
   });
 });
 

@@ -21,3 +21,15 @@ export function dayHeading(iso: string): string {
   const weekday = WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
   return `${weekday} · ${MONTHS[m - 1]} ${d}`;
 }
+
+// Minutes → "1,234 hrs" (rounded).
+export function humanizeMinutes(min: number): string {
+  const hrs = Math.round(min / 60);
+  return `${hrs.toLocaleString('en-US')} hr${hrs === 1 ? '' : 's'}`;
+}
+
+// Minutes → "51 days" (rounded whole days).
+export function daysFromMinutes(min: number): string {
+  const days = Math.round(min / 1440);
+  return `${days.toLocaleString('en-US')} day${days === 1 ? '' : 's'}`;
+}

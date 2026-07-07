@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { episodeCode, formatAirDate, dayHeading } from '@/lib/tv/format';
+import {
+  episodeCode,
+  formatAirDate,
+  dayHeading,
+  humanizeMinutes,
+  daysFromMinutes,
+} from '@/lib/tv/format';
 
 describe('episodeCode', () => {
   it('zero-pads single digits', () => {
@@ -40,5 +46,25 @@ describe('dayHeading', () => {
   it('returns empty string for malformed input', () => {
     expect(dayHeading('')).toBe('');
     expect(dayHeading('nope')).toBe('');
+  });
+});
+
+describe('humanizeMinutes', () => {
+  it('rounds to whole hours and pluralizes', () => {
+    expect(humanizeMinutes(0)).toBe('0 hrs');
+    expect(humanizeMinutes(60)).toBe('1 hr');
+    expect(humanizeMinutes(90)).toBe('2 hrs'); // 1.5 → 2
+    expect(humanizeMinutes(6000)).toBe('100 hrs');
+  });
+  it('adds thousands separators', () => {
+    expect(humanizeMinutes(600000)).toBe('10,000 hrs');
+  });
+});
+
+describe('daysFromMinutes', () => {
+  it('rounds to whole days and pluralizes', () => {
+    expect(daysFromMinutes(0)).toBe('0 days');
+    expect(daysFromMinutes(1440)).toBe('1 day');
+    expect(daysFromMinutes(2880)).toBe('2 days');
   });
 });

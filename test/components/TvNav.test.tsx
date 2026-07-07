@@ -15,7 +15,7 @@ describe('TvNav', () => {
   it('renders the wordmark, nav links, theme toggle and sign-out', () => {
     render(<TvNav />);
     expect(screen.getByText('The Marquee')).toBeInTheDocument();
-    for (const label of ['Up Next', 'Shows', 'Calendar', 'Search']) {
+    for (const label of ['Up Next', 'Shows', 'Calendar', 'Stats', 'Search']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
     }
     expect(

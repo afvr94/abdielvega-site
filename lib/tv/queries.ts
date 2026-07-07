@@ -1,5 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Episode, LibraryItem, Show, ShowDetail, UpcomingEpisode, UpNextItem } from './types';
+import type {
+  Episode,
+  LibraryItem,
+  Show,
+  ShowDetail,
+  Stats,
+  UpcomingEpisode,
+  UpNextItem,
+} from './types';
 import { watchKey } from './types';
 
 type ShowRow = {
@@ -181,6 +189,39 @@ export async function getFollowedTmdbIds(db: SupabaseClient): Promise<Set<number
   const { data, error } = await db.from('tv_follows').select('show_tmdb_id');
   if (error) throw error;
   return new Set((data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id));
+}
+
+type StatsJson = {
+  total_watches: number;
+  total_runtime_min: number;
+  shows_followed: number;
+  shows_archived: number;
+  first_watch: string | null;
+  last_watch: string | null;
+  by_year: { year: number; count: number }[];
+  top_shows: { show_tmdb_id: number; name: string; count: number; runtime_min: number }[];
+};
+
+// Aggregated viewing stats — all computed in one tv_stats() SQL call.
+export async function getStats(db: SupabaseClient): Promise<Stats> {
+  const { data, error } = await db.rpc('tv_stats');
+  if (error) throw error;
+  const d = (data ?? {}) as StatsJson;
+  return {
+    totalWatches: Number(d.total_watches ?? 0),
+    totalRuntimeMin: Number(d.total_runtime_min ?? 0),
+    showsFollowed: Number(d.shows_followed ?? 0),
+    showsArchived: Number(d.shows_archived ?? 0),
+    firstWatch: d.first_watch ?? null,
+    lastWatch: d.last_watch ?? null,
+    byYear: (d.by_year ?? []).map((r) => ({ year: Number(r.year), count: Number(r.count) })),
+    topShows: (d.top_shows ?? []).map((r) => ({
+      showTmdbId: Number(r.show_tmdb_id),
+      name: r.name,
+      count: Number(r.count),
+      runtimeMin: Number(r.runtime_min),
+    })),
+  };
 }
 
 export async function getActiveFollowIds(db: SupabaseClient): Promise<number[]> {
