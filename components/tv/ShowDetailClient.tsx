@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Check, CheckCheck, Archive, Bookmark } from 'lucide-react';
 import type { Episode, Show } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
-import { imageUrl } from '@/lib/tv/tmdb';
+import { imageUrl, type WatchProvider } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import {
   markWatched,
@@ -27,6 +27,8 @@ export function ShowDetailClient({
   isFollowed,
   archived,
   watchlist,
+  providers = [],
+  providerLink = null,
 }: {
   show: Show;
   episodes: Episode[];
@@ -34,6 +36,8 @@ export function ShowDetailClient({
   isFollowed: boolean;
   archived: boolean;
   watchlist: boolean;
+  providers?: WatchProvider[];
+  providerLink?: string | null;
 }) {
   const [watched, setWatched] = useState<Set<string>>(() => new Set(watchedKeys));
   const [isArchived, setIsArchived] = useState(archived);
@@ -251,6 +255,36 @@ export function ShowDetailClient({
           <FollowButton tmdbId={show.tmdbId} initialFollowed={isFollowed} />
         </div>
       </div>
+
+      {/* Where to watch */}
+      {providers.length > 0 ? (
+        <div className="mb-6">
+          <div className="label-tag mb-2">Where to watch</div>
+          <div className="flex flex-wrap items-center gap-2">
+            {providers.map((p) => (
+              <span
+                key={p.name}
+                className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-card py-1 pl-1 pr-2.5 text-xs"
+              >
+                {p.logoUrl ? (
+                  <Image src={p.logoUrl} alt="" width={18} height={18} className="rounded-[4px]" />
+                ) : null}
+                {p.name}
+              </span>
+            ))}
+            {providerLink ? (
+              <a
+                href={providerLink}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-muted underline decoration-hairline underline-offset-2 hover:text-ink"
+              >
+                via JustWatch
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {/* Season selector */}
       <div className="mb-4 flex items-center justify-between gap-3">
