@@ -23,10 +23,18 @@ export const metadata: Metadata = {
   },
 };
 
+// Applies the saved theme before first paint to avoid a flash. Dark mode is
+// scoped to the TV subdomain: elsewhere (portfolio, budget) it stays light
+// unless a preference was explicitly stored for that origin.
+const themeScript = `try{var t=localStorage.getItem('theme');var isTv=location.hostname.split('.')[0]==='tv';if(t==='dark'||(!t&&isTv&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${instrument.variable} ${jetbrains.variable}`}>
-      <body>{children}</body>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {children}
+      </body>
     </html>
   );
 }

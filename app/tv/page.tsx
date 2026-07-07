@@ -60,7 +60,7 @@ export default async function TvHomePage() {
               <Link
                 key={item.show.tmdbId}
                 href={`/show/${item.show.tmdbId}`}
-                className="rounded-full border border-hairline bg-white px-3 py-1.5 text-xs text-muted transition-colors hover:text-ink"
+                className="rounded-full border border-hairline bg-card px-3 py-1.5 text-xs text-muted transition-colors hover:text-ink"
               >
                 {item.show.name}
               </Link>

@@ -68,7 +68,7 @@ export function UpNextCard({ item }: { item: UpNextItem }) {
         onClick={mark}
         disabled={pending || done}
         aria-label={`Mark ${episodeCode(next.seasonNumber, next.episodeNumber)} watched`}
-        className="group flex w-14 shrink-0 items-center justify-center rounded-lg border border-hairline bg-white transition-colors hover:border-income hover:bg-income/5 disabled:opacity-60"
+        className="group flex w-14 shrink-0 items-center justify-center rounded-lg border border-hairline bg-card transition-colors hover:border-income hover:bg-income/5 disabled:opacity-60"
       >
         <Check
           size={22}

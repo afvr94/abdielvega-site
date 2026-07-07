@@ -7,10 +7,13 @@ import type { LibraryItem } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { formatAirDate } from '@/lib/tv/format';
 
-type Filter = 'all' | 'behind' | 'caught-up' | 'archived';
+type Filter = 'all' | 'not-started' | 'behind' | 'caught-up' | 'archived';
 
+function isNotStarted(i: LibraryItem) {
+  return !i.archived && i.airedTotal > 0 && i.airedWatched === 0;
+}
 function isBehind(i: LibraryItem) {
-  return !i.archived && i.airedWatched < i.airedTotal;
+  return !i.archived && i.airedWatched > 0 && i.airedWatched < i.airedTotal;
 }
 function isCaughtUp(i: LibraryItem) {
   return !i.archived && i.airedTotal > 0 && i.airedWatched >= i.airedTotal;
@@ -22,6 +25,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
   const counts = useMemo(
     () => ({
       all: items.filter((i) => !i.archived).length,
+      'not-started': items.filter(isNotStarted).length,
       behind: items.filter(isBehind).length,
       'caught-up': items.filter(isCaughtUp).length,
       archived: items.filter((i) => i.archived).length,
@@ -31,6 +35,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
 
   const shown = items.filter((i) => {
     if (filter === 'all') return !i.archived;
+    if (filter === 'not-started') return isNotStarted(i);
     if (filter === 'behind') return isBehind(i);
     if (filter === 'caught-up') return isCaughtUp(i);
     return i.archived;
@@ -38,6 +43,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
 
   const tabs: { key: Filter; label: string }[] = [
     { key: 'all', label: 'All' },
+    { key: 'not-started', label: 'Not started' },
     { key: 'behind', label: 'Behind' },
     { key: 'caught-up', label: 'Caught up' },
     { key: 'archived', label: 'Archived' },

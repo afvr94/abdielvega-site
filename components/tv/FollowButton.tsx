@@ -36,7 +36,7 @@ export function FollowButton({
       disabled={pending}
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider transition-colors disabled:opacity-70 ${base} ${
         followed
-          ? 'border border-hairline bg-white text-muted hover:text-ink'
+          ? 'border border-hairline bg-card text-muted hover:text-ink'
           : 'bg-ink text-cream hover:opacity-90'
       }`}
     >

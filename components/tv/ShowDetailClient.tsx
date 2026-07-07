@@ -147,7 +147,7 @@ export function ShowDetailClient({
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
                 isArchived
                   ? 'bg-ink text-cream'
-                  : 'border border-hairline bg-white text-muted hover:text-ink'
+                  : 'border border-hairline bg-card text-muted hover:text-ink'
               }`}
             >
               <Archive size={13} strokeWidth={2.2} />
@@ -176,7 +176,7 @@ export function ShowDetailClient({
         {!seasonAllWatched && seasonEpisodes.some(hasAired) ? (
           <button
             onClick={markSeason}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted transition-colors hover:border-income hover:text-income"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-card px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted transition-colors hover:border-income hover:text-income"
           >
             <CheckCheck size={13} strokeWidth={2.2} /> Mark season
           </button>
@@ -226,7 +226,7 @@ export function ShowDetailClient({
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-30 ${
                   isWatched
                     ? 'border-income bg-income text-white'
-                    : 'border-hairline bg-white text-muted hover:border-income hover:text-income'
+                    : 'border-hairline bg-card text-muted hover:border-income hover:text-income'
                 }`}
               >
                 <Check size={16} strokeWidth={2.6} />

@@ -2,18 +2,19 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        cream: '#F5EFE4',
-        ink: '#1A1815',
-        muted: '#8A8178',
-        hairline: '#1A181522',
-        income: '#4A6741',
-        expense: '#B54228',
-        savings: '#2E5266',
-        warn: '#C17A1F',
-        card: '#FFFFFF',
+        cream: 'rgb(var(--cream) / <alpha-value>)',
+        ink: 'rgb(var(--ink) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        hairline: 'rgb(var(--hairline) / 0.13)',
+        income: 'rgb(var(--income) / <alpha-value>)',
+        expense: 'rgb(var(--expense) / <alpha-value>)',
+        savings: 'rgb(var(--savings) / <alpha-value>)',
+        warn: 'rgb(var(--warn) / <alpha-value>)',
+        card: 'rgb(var(--card) / <alpha-value>)',
       },
       fontFamily: {
         display: ['var(--font-fraunces)', 'Georgia', 'serif'],

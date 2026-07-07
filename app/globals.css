@@ -3,21 +3,48 @@
 @tailwind utilities;
 
 @layer base {
-  html {
+  /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working.
+     Dark mode flips these variables; components never hardcode the hex. */
+  :root {
+    --cream: 245 239 228; /* page background */
+    --ink: 26 24 21; /* primary text */
+    --muted: 138 129 120;
+    --card: 255 255 255; /* card surface */
+    --hairline: 26 24 21; /* used at 13% alpha */
+    --income: 74 103 65;
+    --expense: 181 66 40;
+    --savings: 46 82 102;
+    --warn: 193 122 31;
     color-scheme: light;
   }
 
+  :root.dark {
+    --cream: 22 20 16; /* warm near-black background */
+    --ink: 237 231 220; /* warm off-white text */
+    --muted: 150 141 130;
+    --card: 34 31 26; /* raised warm dark surface */
+    --hairline: 237 231 220; /* light hairline at 13% alpha */
+    color-scheme: dark;
+  }
+
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
-    background-color: #f5efe4;
-    color: #1a1815;
+    background-color: rgb(var(--cream));
+    color: rgb(var(--ink));
     font-family: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background: #1a1815;
-    color: #f5efe4;
+    background: rgb(var(--ink));
+    color: rgb(var(--cream));
   }
 }
 
@@ -34,11 +61,11 @@
   }
 
   .hairline {
-    border-color: #1a181522;
+    border-color: rgb(var(--hairline) / 0.13);
   }
 
   .card {
-    background: #ffffff;
+    background: rgb(var(--card));
     border-radius: 14px;
   }
 
@@ -47,11 +74,20 @@
     letter-spacing: 0.25em;
     text-transform: uppercase;
     font-weight: 600;
-    color: #8a8178;
+    color: rgb(var(--muted));
   }
 
   .focus-ring:focus {
     outline: none;
-    box-shadow: 0 0 0 2px #1a1815;
+    box-shadow: 0 0 0 2px rgb(var(--ink));
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
