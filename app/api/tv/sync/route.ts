@@ -1,6 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { cacheShow } from '@/lib/tv/cache';
+import { buildNotificationEmail, type NotifyItem } from '@/lib/tv/notify';
+import { sendMail } from '@/lib/mail';
+
+type PendingRow = {
+  episode_tmdb_id: number;
+  show_name: string;
+  season_number: number;
+  episode_number: number;
+  name: string | null;
+  air_date: string | null;
+};
+
+// After syncing, email a digest of newly-aired episodes not yet notified.
+async function notifyNewEpisodes(
+  db: ReturnType<typeof createAdminClient>
+): Promise<{ notified: number; error?: string }> {
+  const to = process.env.TV_NOTIFY_EMAIL || process.env.CONTACT_INBOX || process.env.EMAIL;
+  if (!to) return { notified: 0 };
+
+  const { data, error } = await db.rpc('tv_pending_notifications');
+  if (error) return { notified: 0, error: `pending: ${error.message}` };
+  const rows = (data ?? []) as PendingRow[];
+  if (rows.length === 0) return { notified: 0 };
+
+  const items: NotifyItem[] = rows.map((r) => ({
+    showName: r.show_name,
+    seasonNumber: r.season_number,
+    episodeNumber: r.episode_number,
+    name: r.name,
+    airDate: r.air_date,
+  }));
+
+  try {
+    await sendMail({ to, ...buildNotificationEmail(items) });
+  } catch (e) {
+    return { notified: 0, error: `send: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  // Only mark notified once the email actually went out.
+  const { error: insErr } = await db.from('tv_notified').upsert(
+    rows.map((r) => ({ episode_tmdb_id: r.episode_tmdb_id })),
+    { onConflict: 'episode_tmdb_id', ignoreDuplicates: true }
+  );
+  if (insErr) return { notified: rows.length, error: `mark: ${insErr.message}` };
+  return { notified: rows.length };
+}
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -59,10 +105,14 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const notify = await notifyNewEpisodes(db);
+  if (notify.error) failures.push({ tmdbId: -1, error: notify.error });
+
   return NextResponse.json({
     ok: true,
     candidates: targets.length,
     synced,
+    notified: notify.notified,
     failures,
   });
 }

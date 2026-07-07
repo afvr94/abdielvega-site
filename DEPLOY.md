@@ -602,6 +602,54 @@ $$;
 The route re-fetches followed, still-airing shows from TMDB and upserts new
 episodes / corrected air dates; ended & archived shows are skipped.
 
+### New-episode notifications
+
+The same cron emails a digest when followed shows drop a newly-aired episode.
+Run this once — the seed marks all currently-aired episodes as already-notified
+so you don't get a retroactive backlog; only episodes that air afterward notify:
+
+```sql
+create table tv_notified (
+  episode_tmdb_id integer primary key references tv_episodes(tmdb_id) on delete cascade,
+  notified_at     timestamptz not null default now()
+);
+-- RLS on with no policy: anon is denied; the cron's service-role key bypasses it.
+alter table tv_notified enable row level security;
+
+-- Seed: everything already aired is considered "already notified".
+insert into tv_notified (episode_tmdb_id)
+select tmdb_id from tv_episodes
+where season_number > 0 and air_date is not null and air_date <= current_date
+on conflict do nothing;
+
+-- Episodes to notify: aired in the last 30 days, followed, not yet notified.
+create or replace function tv_pending_notifications()
+returns table (
+  episode_tmdb_id integer,
+  show_name       text,
+  season_number   int,
+  episode_number  int,
+  name            text,
+  air_date        date
+) language sql stable as $$
+  select e.tmdb_id, s.name, e.season_number, e.episode_number, e.name, e.air_date
+  from tv_episodes e
+  join tv_follows f on f.show_tmdb_id = e.show_tmdb_id and not f.archived
+  join tv_shows  s on s.tmdb_id = e.show_tmdb_id
+  where e.season_number > 0
+    and e.air_date is not null
+    and e.air_date <= current_date
+    and e.air_date >= current_date - interval '30 days'
+    and not exists (select 1 from tv_notified n where n.episode_tmdb_id = e.tmdb_id)
+  order by e.air_date, s.name;
+$$;
+```
+
+The email uses the existing SMTP config, so `EMAIL`, `EMAIL_PASSWORD`, and the
+`SMTP_*` vars must be set in Vercel (they already are, for the contact form).
+Optionally set **`TV_NOTIFY_EMAIL`** to override where the digest is sent
+(defaults to `CONTACT_INBOX` → `EMAIL`).
+
 ### Auth redirect URL
 
 Add to **Authentication → URL Configuration → Redirect URLs**:
