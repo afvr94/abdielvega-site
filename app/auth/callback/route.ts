@@ -4,7 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
-  const next = url.searchParams.get('next') ?? '/budget';
+  // Default to '/' — middleware resolves it to the right app per host
+  // (budget.* → /budget, tv.* → /tv).
+  const next = url.searchParams.get('next') ?? '/';
 
   if (code) {
     const supabase = await createClient();

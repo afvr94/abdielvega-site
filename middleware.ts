@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const BUDGET_HOST_PATTERN = /^budget\./i;
+const TV_HOST_PATTERN = /^tv\./i;
 const LOCAL_HOST_PATTERN = /^(localhost|127\.0\.0\.1|\[::1\])(:|$)/i;
 
 // Paths that must be reachable without a session
@@ -15,17 +16,26 @@ function isPublic(pathname: string) {
   return false;
 }
 
+// A gated subdomain: requests to the host are internally rewritten to `<prefix>/*`
+// and require an authenticated Supabase session.
+type GatedApp = { host: RegExp; prefix: string };
+
+const GATED_APPS: GatedApp[] = [
+  { host: BUDGET_HOST_PATTERN, prefix: '/budget' },
+  { host: TV_HOST_PATTERN, prefix: '/tv' },
+];
+
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const host = req.headers.get('host') ?? '';
-  const isBudgetHost = BUDGET_HOST_PATTERN.test(host);
   const pathname = url.pathname;
 
-  // 1 — SUBDOMAIN REWRITE: budget.abdielvega.com behaves as if it were /budget/*
-  if (isBudgetHost) {
-    // Block /budget/* path form on the subdomain to avoid double nesting
-    if (pathname.startsWith('/budget')) {
-      return NextResponse.redirect(new URL(pathname.replace(/^\/budget/, '') || '/', url));
+  // 1 — SUBDOMAIN REWRITE: e.g. budget.abdielvega.com behaves as if it were /budget/*
+  const app = GATED_APPS.find((a) => a.host.test(host));
+  if (app) {
+    // Block the /<prefix>/* path form on the subdomain to avoid double nesting
+    if (pathname === app.prefix || pathname.startsWith(`${app.prefix}/`)) {
+      return NextResponse.redirect(new URL(pathname.slice(app.prefix.length) || '/', url));
     }
 
     // Public paths served as-is — just refresh the Supabase session
@@ -34,7 +44,7 @@ export async function middleware(req: NextRequest) {
       return response;
     }
 
-    // Everything else: authenticate, then internally rewrite to /budget/<path>
+    // Everything else: authenticate, then internally rewrite to /<prefix>/<path>
     const { response, user } = await updateSession(req);
     if (!user) {
       const loginUrl = url.clone();
@@ -43,15 +53,19 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     const rewritten = url.clone();
-    rewritten.pathname = pathname === '/' ? '/budget' : `/budget${pathname}`;
+    rewritten.pathname = pathname === '/' ? app.prefix : `${app.prefix}${pathname}`;
     return NextResponse.rewrite(rewritten, { headers: response.headers });
   }
 
-  // 2 — APEX / any other host: hide /budget/* so the budget tracker is
-  //     strictly on its subdomain. Exempt localhost so you can test the
-  //     tracker in dev without editing /etc/hosts.
-  if (pathname.startsWith('/budget') && !LOCAL_HOST_PATTERN.test(host)) {
-    return NextResponse.rewrite(new URL('/404', url));
+  // 2 — APEX / any other host: hide the gated apps' path forms so each tracker is
+  //     strictly on its subdomain. Exempt localhost so you can test in dev without
+  //     editing /etc/hosts.
+  if (!LOCAL_HOST_PATTERN.test(host)) {
+    for (const { prefix } of GATED_APPS) {
+      if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+        return NextResponse.rewrite(new URL('/404', url));
+      }
+    }
   }
 
   return NextResponse.next();

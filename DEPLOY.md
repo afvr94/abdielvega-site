@@ -327,23 +327,184 @@ Only after production is confirmed working on Vercel:
 
 ## Environment variable reference
 
-| Name                            | Where                      | Notes                                                          |
-| ------------------------------- | -------------------------- | -------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Settings → API  | Public, safe to ship                                           |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API  | New-format `sb_publishable_…` or legacy `anon` JWT — both work |
-| `GITHUB_TOKEN`                  | github.com/settings/tokens | Fine-grained, no scopes needed for public repos                |
-| `SMTP_HOST`                     | Your mail provider         | iCloud: `smtp.mail.me.com`. Namecheap: `mail.privateemail.com` |
-| `SMTP_PORT`                     | Your mail provider         | iCloud: `587`. Namecheap: `465`                                |
-| `SMTP_USER`                     | Your mail provider         | iCloud: `<you>@icloud.com`. Namecheap: `me@abdielvega.com`     |
-| `EMAIL_PASSWORD`                | Your mail provider         | iCloud: **app-specific password** from appleid.apple.com       |
-| `EMAIL`                         | You                        | From address recipients see (e.g. `me@abdielvega.com`)         |
-| `CONTACT_INBOX`                 | You                        | Optional, defaults to `EMAIL`                                  |
+| Name                            | Where                      | Notes                                                            |
+| ------------------------------- | -------------------------- | ---------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Settings → API  | Public, safe to ship                                             |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API  | New-format `sb_publishable_…` or legacy `anon` JWT — both work   |
+| `GITHUB_TOKEN`                  | github.com/settings/tokens | Fine-grained, no scopes needed for public repos                  |
+| `SMTP_HOST`                     | Your mail provider         | iCloud: `smtp.mail.me.com`. Namecheap: `mail.privateemail.com`   |
+| `SMTP_PORT`                     | Your mail provider         | iCloud: `587`. Namecheap: `465`                                  |
+| `SMTP_USER`                     | Your mail provider         | iCloud: `<you>@icloud.com`. Namecheap: `me@abdielvega.com`       |
+| `EMAIL_PASSWORD`                | Your mail provider         | iCloud: **app-specific password** from appleid.apple.com         |
+| `EMAIL`                         | You                        | From address recipients see (e.g. `me@abdielvega.com`)           |
+| `CONTACT_INBOX`                 | You                        | Optional, defaults to `EMAIL`                                    |
+| `TMDB_ACCESS_TOKEN`             | themoviedb.org → API       | v4 read access token (Bearer). TV tracker metadata source        |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Settings → API  | **Server-only.** Import script + cron sync. Never ship to client |
+| `CRON_SECRET`                   | You                        | Random string guarding the TV cron sync route                    |
 
 ### Apple / iCloud SMTP setup
 
 1. https://appleid.apple.com → **Sign-In & Security → App-Specific Passwords** → generate one (label it "abdielvega.com contact"). Copy it **now** — it's shown once.
 2. If you want the form to send _from_ `me@abdielvega.com` (not your `@icloud.com`), you also need **iCloud+ Custom Email Domain** set up with `abdielvega.com` verified, and that From address added as an allowed sender in iCloud Mail settings. Otherwise set `EMAIL=<you>@icloud.com` and skip.
 3. Put the app-specific password in `EMAIL_PASSWORD`. Your Apple ID password will **not** work.
+
+---
+
+## TV tracker — tv.abdielvega.com
+
+A single-user TV show tracker, sibling to the budget app on the **same Supabase
+project**. Four `tv_*` tables cache TMDB metadata and record what you've watched.
+
+### Schema + RLS
+
+Run this once in the Supabase SQL editor. **Single-user, so RLS pins every policy
+to your own auth UID** — the anon key is public in the browser, so unprotected
+tables would be world-readable/writable. First get your UID:
+
+```sql
+select id, email from auth.users;   -- copy the id for your email
+```
+
+Then run the schema, replacing every `<OWNER_USER_ID>` with that UUID:
+
+```sql
+-- ══════════════════════════════════════════════════════════════
+-- TV tracker — single-user, owner-only RLS
+-- ══════════════════════════════════════════════════════════════
+
+create table tv_shows (
+  tmdb_id         integer primary key,
+  tvdb_id         integer,             -- TheTVDB id (matches TV Time's s_id)
+  name            text not null,
+  poster_path     text,
+  backdrop_path   text,
+  overview        text,
+  status          text,                -- 'Returning Series', 'Ended', ...
+  first_air_date  date,
+  last_synced_at  timestamptz
+);
+create index idx_tv_shows_tvdb on tv_shows(tvdb_id);
+
+create table tv_episodes (
+  tmdb_id        integer primary key,
+  show_tmdb_id   integer not null references tv_shows(tmdb_id) on delete cascade,
+  season_number  integer not null,
+  episode_number integer not null,
+  name           text,
+  overview       text,
+  air_date       date,
+  still_path     text,
+  runtime        integer,             -- minutes, nullable
+  unique (show_tmdb_id, season_number, episode_number)
+);
+create index idx_tv_episodes_show on tv_episodes(show_tmdb_id, season_number, episode_number);
+create index idx_tv_episodes_air  on tv_episodes(air_date);
+
+create table tv_follows (
+  show_tmdb_id integer primary key references tv_shows(tmdb_id) on delete cascade,
+  followed_at  timestamptz not null default now(),
+  archived     boolean not null default false
+);
+
+-- One row per watched episode. Keyed on (show, season, episode) — not the
+-- episode's tmdb_id — so imported history records even before metadata is cached.
+create table tv_watches (
+  id             bigint generated always as identity primary key,
+  show_tmdb_id   integer not null references tv_shows(tmdb_id) on delete cascade,
+  season_number  integer not null,
+  episode_number integer not null,
+  watched_at     timestamptz not null default now(),
+  unique (show_tmdb_id, season_number, episode_number)
+);
+create index idx_tv_watches_show on tv_watches(show_tmdb_id);
+
+-- ── RLS: owner-only. The import script uses the service-role key, which
+--    bypasses RLS, so these policies only gate the browser/server anon client.
+alter table tv_shows    enable row level security;
+alter table tv_episodes enable row level security;
+alter table tv_follows  enable row level security;
+alter table tv_watches  enable row level security;
+
+create policy "owner only" on tv_shows
+  for all using ((select auth.uid()) = '<OWNER_USER_ID>'::uuid)
+  with check ((select auth.uid()) = '<OWNER_USER_ID>'::uuid);
+create policy "owner only" on tv_episodes
+  for all using ((select auth.uid()) = '<OWNER_USER_ID>'::uuid)
+  with check ((select auth.uid()) = '<OWNER_USER_ID>'::uuid);
+create policy "owner only" on tv_follows
+  for all using ((select auth.uid()) = '<OWNER_USER_ID>'::uuid)
+  with check ((select auth.uid()) = '<OWNER_USER_ID>'::uuid);
+create policy "owner only" on tv_watches
+  for all using ((select auth.uid()) = '<OWNER_USER_ID>'::uuid)
+  with check ((select auth.uid()) = '<OWNER_USER_ID>'::uuid);
+```
+
+### Up Next function
+
+The home screen's "Up Next" (next aired-but-unwatched episode per followed show,
+gaps handled) runs in Postgres. Run this once — it's a plain `security invoker`
+function, so RLS still applies to whoever calls it:
+
+```sql
+create or replace function tv_up_next()
+returns table (
+  show_tmdb_id     integer,
+  episode_tmdb_id  integer,
+  season_number    integer,
+  episode_number   integer,
+  aired_total      bigint,
+  aired_watched    bigint
+) language sql stable as $$
+  with aired as (
+    select e.show_tmdb_id, e.tmdb_id, e.season_number, e.episode_number
+    from tv_episodes e
+    join tv_follows f on f.show_tmdb_id = e.show_tmdb_id and not f.archived
+    where e.season_number > 0            -- specials (season 0) excluded
+      and e.air_date is not null
+      and e.air_date <= current_date
+  ),
+  marked as (
+    select a.*, w.id as watch_id
+    from aired a
+    left join tv_watches w
+      on  w.show_tmdb_id  = a.show_tmdb_id
+      and w.season_number = a.season_number
+      and w.episode_number = a.episode_number
+  ),
+  next_ep as (
+    select distinct on (show_tmdb_id)
+      show_tmdb_id, tmdb_id, season_number, episode_number
+    from marked
+    where watch_id is null
+    order by show_tmdb_id, season_number, episode_number
+  ),
+  counts as (
+    select show_tmdb_id,
+      count(*)            as aired_total,
+      count(watch_id)     as aired_watched
+    from marked
+    group by show_tmdb_id
+  )
+  select c.show_tmdb_id, n.tmdb_id, n.season_number, n.episode_number,
+         c.aired_total, c.aired_watched
+  from counts c
+  left join next_ep n on n.show_tmdb_id = c.show_tmdb_id;
+$$;
+```
+
+### Auth redirect URL
+
+Add to **Authentication → URL Configuration → Redirect URLs**:
+
+- `https://tv.abdielvega.com/auth/callback`
+
+Sign-in reuses the existing magic-link flow; sessions are per-subdomain, so you
+sign in once on `tv.abdielvega.com` independently of the budget app.
+
+### DNS + Vercel
+
+Add `tv.abdielvega.com` as a domain on the Vercel project (same as `budget.*`)
+and point a Route 53 `CNAME` / `A` record at Vercel, mirroring the budget subdomain.
 
 ---
 

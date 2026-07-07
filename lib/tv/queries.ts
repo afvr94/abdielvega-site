@@ -1,0 +1,184 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Episode, Show, ShowDetail, UpNextItem } from './types';
+import { watchKey } from './types';
+
+type ShowRow = {
+  tmdb_id: number;
+  tvdb_id: number | null;
+  name: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview: string | null;
+  status: string | null;
+  first_air_date: string | null;
+  last_synced_at: string | null;
+};
+
+type EpisodeRow = {
+  tmdb_id: number;
+  show_tmdb_id: number;
+  season_number: number;
+  episode_number: number;
+  name: string | null;
+  overview: string | null;
+  air_date: string | null;
+  still_path: string | null;
+  runtime: number | null;
+};
+
+function mapShow(r: ShowRow): Show {
+  return {
+    tmdbId: r.tmdb_id,
+    tvdbId: r.tvdb_id,
+    name: r.name,
+    posterPath: r.poster_path,
+    backdropPath: r.backdrop_path,
+    overview: r.overview,
+    status: r.status,
+    firstAirDate: r.first_air_date,
+    lastSyncedAt: r.last_synced_at,
+  };
+}
+
+function mapEpisode(r: EpisodeRow): Episode {
+  return {
+    tmdbId: r.tmdb_id,
+    showTmdbId: r.show_tmdb_id,
+    seasonNumber: r.season_number,
+    episodeNumber: r.episode_number,
+    name: r.name,
+    overview: r.overview,
+    airDate: r.air_date,
+    stillPath: r.still_path,
+    runtime: r.runtime,
+  };
+}
+
+// PostgREST caps a single response (default 1000 rows); page through everything.
+async function fetchAll<T>(
+  db: SupabaseClient,
+  build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  const PAGE = 1000;
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await build(from, from + PAGE - 1);
+    if (error) throw error;
+    const batch = data ?? [];
+    out.push(...batch);
+    if (batch.length < PAGE) break;
+  }
+  return out;
+}
+
+type UpNextRpcRow = {
+  show_tmdb_id: number;
+  episode_tmdb_id: number | null;
+  season_number: number | null;
+  episode_number: number | null;
+  aired_total: number;
+  aired_watched: number;
+};
+
+// Up Next feed: one entry per followed, non-archived show that has aired
+// episodes. Ordering + gap handling live in the tv_up_next() SQL function.
+export async function getUpNext(db: SupabaseClient): Promise<UpNextItem[]> {
+  const { data, error } = await db.rpc('tv_up_next');
+  if (error) throw error;
+  const rows = (data ?? []) as UpNextRpcRow[];
+  if (rows.length === 0) return [];
+
+  const showIds = rows.map((r) => r.show_tmdb_id);
+  const episodeIds = rows.map((r) => r.episode_tmdb_id).filter((id): id is number => id !== null);
+
+  const [showRows, epRows] = await Promise.all([
+    db.from('tv_shows').select('*').in('tmdb_id', showIds),
+    episodeIds.length
+      ? db.from('tv_episodes').select('*').in('tmdb_id', episodeIds)
+      : Promise.resolve({ data: [] as EpisodeRow[], error: null }),
+  ]);
+  if (showRows.error) throw showRows.error;
+  if (epRows.error) throw epRows.error;
+
+  const shows = new Map((showRows.data as ShowRow[]).map((r) => [r.tmdb_id, mapShow(r)]));
+  const eps = new Map((epRows.data as EpisodeRow[]).map((r) => [r.tmdb_id, mapEpisode(r)]));
+
+  const items: UpNextItem[] = [];
+  for (const r of rows) {
+    const show = shows.get(r.show_tmdb_id);
+    if (!show) continue;
+    items.push({
+      show,
+      next: r.episode_tmdb_id ? (eps.get(r.episode_tmdb_id) ?? null) : null,
+      airedTotal: Number(r.aired_total),
+      airedWatched: Number(r.aired_watched),
+    });
+  }
+
+  // Behind shows (something to watch) first, most recently aired next episode on top.
+  items.sort((a, b) => {
+    if (!!a.next !== !!b.next) return a.next ? -1 : 1;
+    const ad = a.next?.airDate ?? '';
+    const bd = b.next?.airDate ?? '';
+    return bd.localeCompare(ad);
+  });
+  return items;
+}
+
+export async function getShowDetail(
+  db: SupabaseClient,
+  tmdbId: number
+): Promise<ShowDetail | null> {
+  const { data: showRow, error: showErr } = await db
+    .from('tv_shows')
+    .select('*')
+    .eq('tmdb_id', tmdbId)
+    .maybeSingle();
+  if (showErr) throw showErr;
+  if (!showRow) return null;
+
+  const [episodeRows, watchRows, followRow] = await Promise.all([
+    fetchAll<EpisodeRow>(db, (from, to) =>
+      db
+        .from('tv_episodes')
+        .select('*')
+        .eq('show_tmdb_id', tmdbId)
+        .order('season_number')
+        .order('episode_number')
+        .range(from, to)
+    ),
+    fetchAll<{ season_number: number; episode_number: number }>(db, (from, to) =>
+      db
+        .from('tv_watches')
+        .select('season_number,episode_number')
+        .eq('show_tmdb_id', tmdbId)
+        .range(from, to)
+    ),
+    db.from('tv_follows').select('archived').eq('show_tmdb_id', tmdbId).maybeSingle(),
+  ]);
+  if (followRow.error) throw followRow.error;
+
+  return {
+    show: mapShow(showRow as ShowRow),
+    episodes: episodeRows.map(mapEpisode),
+    watched: new Set(watchRows.map((w) => watchKey(w.season_number, w.episode_number))),
+    isFollowed: followRow.data !== null,
+    archived: followRow.data?.archived ?? false,
+  };
+}
+
+export async function isFollowing(db: SupabaseClient, tmdbId: number): Promise<boolean> {
+  const { data, error } = await db
+    .from('tv_follows')
+    .select('show_tmdb_id')
+    .eq('show_tmdb_id', tmdbId)
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+export async function getFollowedTmdbIds(db: SupabaseClient): Promise<Set<number>> {
+  const { data, error } = await db.from('tv_follows').select('show_tmdb_id');
+  if (error) throw error;
+  return new Set((data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id));
+}
