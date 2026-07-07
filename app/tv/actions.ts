@@ -66,6 +66,56 @@ export async function setWatchlist(tmdbId: number, watchlist: boolean): Promise<
   revalidatePath(`/tv/show/${tmdbId}`);
 }
 
+// ── Custom lists ─────────────────────────────────────────────────────────────
+
+export async function createList(name: string): Promise<number | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const db = await createClient();
+  const { data, error } = await db.from('tv_lists').insert({ name: trimmed }).select('id').single();
+  if (error) throw error;
+  revalidatePath('/tv/shows');
+  return (data as { id: number }).id;
+}
+
+export async function deleteList(listId: number): Promise<void> {
+  const db = await createClient();
+  const { error } = await db.from('tv_lists').delete().eq('id', listId);
+  if (error) throw error;
+  revalidatePath('/tv/shows');
+}
+
+export async function addShowToList(listId: number, tmdbId: number): Promise<void> {
+  const db = await createClient();
+  const { error } = await db
+    .from('tv_list_shows')
+    .upsert(
+      { list_id: listId, show_tmdb_id: tmdbId },
+      { onConflict: 'list_id,show_tmdb_id', ignoreDuplicates: true }
+    );
+  if (error) throw error;
+  revalidatePath('/tv/shows');
+  revalidatePath(`/tv/show/${tmdbId}`);
+}
+
+export async function removeShowFromList(listId: number, tmdbId: number): Promise<void> {
+  const db = await createClient();
+  const { error } = await db
+    .from('tv_list_shows')
+    .delete()
+    .eq('list_id', listId)
+    .eq('show_tmdb_id', tmdbId);
+  if (error) throw error;
+  revalidatePath('/tv/shows');
+  revalidatePath(`/tv/show/${tmdbId}`);
+}
+
+// Create a list and immediately add a show to it.
+export async function createListWithShow(name: string, tmdbId: number): Promise<void> {
+  const listId = await createList(name);
+  if (listId != null) await addShowToList(listId, tmdbId);
+}
+
 // "Want to watch": cache the show and follow it straight onto the watchlist.
 export async function addToWatchlist(tmdbId: number): Promise<void> {
   const db = await createClient();

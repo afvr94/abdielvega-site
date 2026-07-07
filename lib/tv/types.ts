@@ -32,6 +32,9 @@ export type UpNextItem = {
 };
 
 // A followed show in the /shows library grid.
+export type TvList = { id: number; name: string };
+export type TvListWithCount = TvList & { count: number };
+
 export type LibraryItem = {
   show: Show;
   archived: boolean;
@@ -40,6 +43,7 @@ export type LibraryItem = {
   airedWatched: number;
   nextAirDate: string | null; // earliest future episode, for "returns" hints
   lastWatchedAt: string | null; // most recent watch, for recency ordering
+  listIds: number[]; // custom lists this show belongs to
 };
 
 // A future episode on the calendar.
@@ -56,6 +60,8 @@ export type ShowDetail = {
   isFollowed: boolean;
   archived: boolean;
   watchlist: boolean;
+  allLists: TvList[]; // every list (for the add-to-list menu)
+  listIds: number[]; // lists this show is in
 };
 
 export function watchKey(season: number, episode: number): string {

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { LibraryItem } from '@/lib/tv/types';
+import type { LibraryItem, TvListWithCount } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { formatAirDate } from '@/lib/tv/format';
 
@@ -31,23 +31,30 @@ function isDone(i: LibraryItem) {
   return isActive(i) && !!i.show.status && DONE_STATUSES.has(i.show.status);
 }
 
-export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
+export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: TvListWithCount[] }) {
   const [filter, setFilter] = useState<Filter>('behind');
+  const [listId, setListId] = useState<number | null>(null);
+
+  // The status tabs operate within the selected list (or the whole library).
+  const scoped = useMemo(
+    () => (listId == null ? items : items.filter((i) => i.listIds.includes(listId))),
+    [items, listId]
+  );
 
   const counts = useMemo(
     () => ({
-      all: items.filter(isActive).length,
-      watchlist: items.filter(isWatchlist).length,
-      'not-started': items.filter(isNotStarted).length,
-      behind: items.filter(isBehind).length,
-      'caught-up': items.filter(isCaughtUp).length,
-      done: items.filter(isDone).length,
-      archived: items.filter((i) => i.archived).length,
+      all: scoped.filter(isActive).length,
+      watchlist: scoped.filter(isWatchlist).length,
+      'not-started': scoped.filter(isNotStarted).length,
+      behind: scoped.filter(isBehind).length,
+      'caught-up': scoped.filter(isCaughtUp).length,
+      done: scoped.filter(isDone).length,
+      archived: scoped.filter((i) => i.archived).length,
     }),
-    [items]
+    [scoped]
   );
 
-  const shown = items.filter((i) => {
+  const shown = scoped.filter((i) => {
     if (filter === 'all') return isActive(i);
     if (filter === 'watchlist') return isWatchlist(i);
     if (filter === 'not-started') return isNotStarted(i);
@@ -72,6 +79,35 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
       <div className="mb-5 flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Shows</h1>
       </div>
+
+      {lists.length > 0 ? (
+        <div className="no-scrollbar -mx-5 mb-3 flex items-center gap-1.5 overflow-x-auto px-5">
+          <button
+            onClick={() => setListId(null)}
+            className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              listId == null
+                ? 'border-savings bg-savings text-white'
+                : 'border-hairline text-muted hover:text-ink'
+            }`}
+          >
+            All lists
+          </button>
+          {lists.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => setListId(l.id)}
+              className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                listId === l.id
+                  ? 'border-savings bg-savings text-white'
+                  : 'border-hairline text-muted hover:text-ink'
+              }`}
+            >
+              {l.name}
+              <span className="font-mono-tab ml-1.5 opacity-60">{l.count}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="no-scrollbar -mx-5 mb-5 flex gap-1.5 overflow-x-auto px-5">
         {tabs.map((t) => (

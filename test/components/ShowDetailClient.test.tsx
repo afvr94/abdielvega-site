@@ -11,6 +11,9 @@ vi.mock('@/app/tv/actions', () => ({
   setWatchlist: vi.fn().mockResolvedValue(undefined),
   followShow: vi.fn().mockResolvedValue(undefined),
   unfollowShow: vi.fn().mockResolvedValue(undefined),
+  addShowToList: vi.fn().mockResolvedValue(undefined),
+  removeShowFromList: vi.fn().mockResolvedValue(undefined),
+  createList: vi.fn().mockResolvedValue(1),
 }));
 
 import { ShowDetailClient } from '@/components/tv/ShowDetailClient';

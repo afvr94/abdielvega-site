@@ -5,6 +5,8 @@ import type {
   Show,
   ShowDetail,
   Stats,
+  TvList,
+  TvListWithCount,
   UpcomingEpisode,
   UpNextItem,
 } from './types';
@@ -145,7 +147,7 @@ export async function getShowDetail(
   if (showErr) throw showErr;
   if (!showRow) return null;
 
-  const [episodeRows, watchRows, followRow] = await Promise.all([
+  const [episodeRows, watchRows, followRow, allListsRes, memberRes] = await Promise.all([
     fetchAll<EpisodeRow>(db, (from, to) =>
       db
         .from('tv_episodes')
@@ -163,8 +165,12 @@ export async function getShowDetail(
         .range(from, to)
     ),
     db.from('tv_follows').select('archived,watchlist').eq('show_tmdb_id', tmdbId).maybeSingle(),
+    db.from('tv_lists').select('id,name').order('name'),
+    db.from('tv_list_shows').select('list_id').eq('show_tmdb_id', tmdbId),
   ]);
   if (followRow.error) throw followRow.error;
+  if (allListsRes.error) throw allListsRes.error;
+  if (memberRes.error) throw memberRes.error;
 
   const follow = followRow.data as { archived: boolean; watchlist: boolean } | null;
   return {
@@ -174,6 +180,8 @@ export async function getShowDetail(
     isFollowed: follow !== null,
     archived: follow?.archived ?? false,
     watchlist: follow?.watchlist ?? false,
+    allLists: (allListsRes.data ?? []) as TvList[],
+    listIds: ((memberRes.data ?? []) as { list_id: number }[]).map((r) => r.list_id),
   };
 }
 
@@ -249,6 +257,34 @@ type LibraryRpcRow = {
   last_watched_at: string | null;
 };
 
+// All custom lists with their member counts.
+export async function getLists(db: SupabaseClient): Promise<TvListWithCount[]> {
+  const [listRes, memberRes] = await Promise.all([
+    db.from('tv_lists').select('id,name').order('name'),
+    db.from('tv_list_shows').select('list_id'),
+  ]);
+  if (listRes.error) throw listRes.error;
+  if (memberRes.error) throw memberRes.error;
+  const counts = new Map<number, number>();
+  for (const m of (memberRes.data ?? []) as { list_id: number }[]) {
+    counts.set(m.list_id, (counts.get(m.list_id) ?? 0) + 1);
+  }
+  return ((listRes.data ?? []) as TvList[]).map((l) => ({
+    id: l.id,
+    name: l.name,
+    count: counts.get(l.id) ?? 0,
+  }));
+}
+
+async function listIdsByShow(db: SupabaseClient): Promise<Map<number, number[]>> {
+  const rows = await fetchAll<{ list_id: number; show_tmdb_id: number }>(db, (from, to) =>
+    db.from('tv_list_shows').select('list_id,show_tmdb_id').range(from, to)
+  );
+  const map = new Map<number, number[]>();
+  for (const r of rows) map.set(r.show_tmdb_id, [...(map.get(r.show_tmdb_id) ?? []), r.list_id]);
+  return map;
+}
+
 // Every followed show (archived included) with aired progress + next air date.
 export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
   const { data, error } = await db.rpc('tv_library');
@@ -256,13 +292,16 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
   const rows = (data ?? []) as LibraryRpcRow[];
   if (rows.length === 0) return [];
 
-  const { data: showData, error: showErr } = await db
-    .from('tv_shows')
-    .select('*')
-    .in(
-      'tmdb_id',
-      rows.map((r) => r.show_tmdb_id)
-    );
+  const [{ data: showData, error: showErr }, listMap] = await Promise.all([
+    db
+      .from('tv_shows')
+      .select('*')
+      .in(
+        'tmdb_id',
+        rows.map((r) => r.show_tmdb_id)
+      ),
+    listIdsByShow(db),
+  ]);
   if (showErr) throw showErr;
   const shows = new Map((showData as ShowRow[]).map((r) => [r.tmdb_id, mapShow(r)]));
 
@@ -278,6 +317,7 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,
       lastWatchedAt: r.last_watched_at ?? null,
+      listIds: listMap.get(r.show_tmdb_id) ?? [],
     });
   }
   // Most recently watched first; shows with no watches (null) fall to the

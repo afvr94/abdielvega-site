@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getUpNext, getShowDetail, getLibrary, getStats } from '@/lib/tv/queries';
+import { getUpNext, getShowDetail, getLibrary, getStats, getLists } from '@/lib/tv/queries';
 
 // Minimal chainable stand-in for the Supabase query builder. Each method that
 // filters is honored so getShowDetail's per-show reads behave; everything
@@ -252,6 +252,8 @@ describe('getShowDetail', () => {
         ],
         tv_watches: [{ show_tmdb_id: 1, season_number: 1, episode_number: 1 }],
         tv_follows: [{ show_tmdb_id: 1, archived: true, watchlist: false }],
+        tv_lists: [{ id: 7, name: 'Anime' }],
+        tv_list_shows: [{ list_id: 7, show_tmdb_id: 1 }],
       },
     });
     const detail = await getShowDetail(db, 1);
@@ -265,5 +267,25 @@ describe('getShowDetail', () => {
     expect(detail!.isFollowed).toBe(true);
     expect(detail!.archived).toBe(true);
     expect(detail!.watchlist).toBe(false);
+    expect(detail!.allLists).toEqual([{ id: 7, name: 'Anime' }]);
+    expect(detail!.listIds).toEqual([7]);
+  });
+});
+
+describe('getLists', () => {
+  it('returns lists with member counts', async () => {
+    const db = makeDb({
+      tables: {
+        tv_lists: [
+          { id: 7, name: 'Anime' },
+          { id: 8, name: 'Comfort' },
+        ],
+        tv_list_shows: [{ list_id: 7 }, { list_id: 7 }, { list_id: 8 }],
+      },
+    });
+    expect(await getLists(db)).toEqual([
+      { id: 7, name: 'Anime', count: 2 },
+      { id: 8, name: 'Comfort', count: 1 },
+    ]);
   });
 });

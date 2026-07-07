@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import { getLibrary } from '@/lib/tv/queries';
+import { getLibrary, getLists } from '@/lib/tv/queries';
 import { ShowsLibrary } from '@/components/tv/ShowsLibrary';
 
 export const metadata = { title: 'Shows' };
 
 export default async function ShowsPage() {
   const db = await createClient();
-  const items = await getLibrary(db);
+  const [items, lists] = await Promise.all([getLibrary(db), getLists(db)]);
 
   if (items.length === 0) {
     return (
@@ -24,5 +24,5 @@ export default async function ShowsPage() {
     );
   }
 
-  return <ShowsLibrary items={items} />;
+  return <ShowsLibrary items={items} lists={lists} />;
 }

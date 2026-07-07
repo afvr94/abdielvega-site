@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { Check, CheckCheck, Archive, Bookmark } from 'lucide-react';
-import type { Episode, Show } from '@/lib/tv/types';
+import type { Episode, Show, TvList } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
+import { ListPicker } from './ListPicker';
 import { imageUrl, type WatchProvider } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import {
@@ -29,6 +30,8 @@ export function ShowDetailClient({
   watchlist,
   providers = [],
   providerLink = null,
+  allLists = [],
+  listIds = [],
 }: {
   show: Show;
   episodes: Episode[];
@@ -38,6 +41,8 @@ export function ShowDetailClient({
   watchlist: boolean;
   providers?: WatchProvider[];
   providerLink?: string | null;
+  allLists?: TvList[];
+  listIds?: number[];
 }) {
   const [watched, setWatched] = useState<Set<string>>(() => new Set(watchedKeys));
   const [isArchived, setIsArchived] = useState(archived);
@@ -284,6 +289,10 @@ export function ShowDetailClient({
             ) : null}
           </div>
         </div>
+      ) : null}
+
+      {isFollowed ? (
+        <ListPicker tmdbId={show.tmdbId} allLists={allLists} initialListIds={listIds} />
       ) : null}
 
       {/* Season selector */}

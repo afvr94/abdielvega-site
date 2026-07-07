@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { ShowsLibrary } from '@/components/tv/ShowsLibrary';
 import { makeLibraryItem, makeShow } from '../factories';
 
+const LISTS = [{ id: 7, name: 'Anime', count: 1 }];
+
 // One of each state. Distinct names so they don't collide with tab labels.
 const items = [
   makeLibraryItem({ show: makeShow({ tmdbId: 1, name: 'Alpha' }), airedTotal: 5, airedWatched: 0 }), // not started
@@ -11,6 +13,7 @@ const items = [
     show: makeShow({ tmdbId: 2, name: 'Bravo' }),
     airedTotal: 10,
     airedWatched: 3,
+    listIds: [7], // in the "Anime" list
   }), // behind
   makeLibraryItem({
     show: makeShow({ tmdbId: 3, name: 'Charlie' }),
@@ -42,7 +45,7 @@ function tab(name: RegExp) {
 
 describe('ShowsLibrary', () => {
   it('defaults to the Behind filter', () => {
-    render(<ShowsLibrary items={items} />);
+    render(<ShowsLibrary items={items} lists={LISTS} />);
     expect(screen.getByText('Bravo')).toBeInTheDocument();
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     expect(screen.queryByText('Charlie')).not.toBeInTheDocument();
@@ -50,8 +53,8 @@ describe('ShowsLibrary', () => {
   });
 
   it('shows per-filter counts in the tabs', () => {
-    render(<ShowsLibrary items={items} />);
-    expect(tab(/^All/)).toHaveTextContent('4'); // non-archived
+    render(<ShowsLibrary items={items} lists={LISTS} />);
+    expect(tab(/^All\d/)).toHaveTextContent('4'); // non-archived
     expect(tab(/not started/i)).toHaveTextContent('1');
     expect(tab(/^Behind/)).toHaveTextContent('1');
     expect(tab(/caught up/i)).toHaveTextContent('2'); // Charlie + Delta
@@ -60,40 +63,51 @@ describe('ShowsLibrary', () => {
   });
 
   it('filters to not-started shows', async () => {
-    render(<ShowsLibrary items={items} />);
+    render(<ShowsLibrary items={items} lists={LISTS} />);
     await userEvent.click(tab(/not started/i));
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(screen.queryByText('Bravo')).not.toBeInTheDocument();
   });
 
   it('Done shows ended/canceled series regardless of progress', async () => {
-    render(<ShowsLibrary items={items} />);
+    render(<ShowsLibrary items={items} lists={LISTS} />);
     await userEvent.click(tab(/^Done/));
     expect(screen.getByText('Delta')).toBeInTheDocument();
     expect(screen.queryByText('Bravo')).not.toBeInTheDocument();
   });
 
   it('Watchlist is a separate lane, excluded from All/Not started', async () => {
-    render(<ShowsLibrary items={items} />);
+    render(<ShowsLibrary items={items} lists={LISTS} />);
     expect(tab(/watchlist/i)).toHaveTextContent('1');
     // Default (Behind) doesn't show the watchlist item
     expect(screen.queryByText('Foxtrot')).not.toBeInTheDocument();
-    await userEvent.click(tab(/^All/));
+    await userEvent.click(tab(/^All\d/));
     expect(screen.queryByText('Foxtrot')).not.toBeInTheDocument();
     await userEvent.click(tab(/watchlist/i));
     expect(screen.getByText('Foxtrot')).toBeInTheDocument();
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
   });
 
+  it('filters by custom list (scoping the status tabs to that list)', async () => {
+    render(<ShowsLibrary items={items} lists={LISTS} />);
+    await userEvent.click(screen.getByRole('button', { name: /Anime/ }));
+    // Only Bravo is in the Anime list; it's "behind", the default tab
+    expect(screen.getByText('Bravo')).toBeInTheDocument();
+    // Switch to All within the Anime list → still only Bravo
+    await userEvent.click(tab(/^All\d/));
+    expect(screen.getByText('Bravo')).toBeInTheDocument();
+    expect(screen.queryByText('Charlie')).not.toBeInTheDocument();
+  });
+
   it('Archived shows only archived series', async () => {
-    render(<ShowsLibrary items={items} />);
+    render(<ShowsLibrary items={items} lists={LISTS} />);
     await userEvent.click(tab(/archived/i));
     expect(screen.getByText('Echo')).toBeInTheDocument();
     expect(screen.queryByText('Charlie')).not.toBeInTheDocument();
   });
 
   it('renders a remaining-count badge for behind shows', () => {
-    render(<ShowsLibrary items={items} />);
+    render(<ShowsLibrary items={items} lists={LISTS} />);
     // Bravo is 3/10 → 7 remaining
     const link = screen.getByText('Bravo').closest('a')!;
     expect(within(link).getByText('7')).toBeInTheDocument();

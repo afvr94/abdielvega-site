@@ -52,6 +52,8 @@ export default async function ShowPage({ params }: { params: Promise<{ tmdbId: s
       watchlist={detail.watchlist}
       providers={watch.providers}
       providerLink={watch.link}
+      allLists={detail.allLists}
+      listIds={detail.listIds}
     />
   );
 }

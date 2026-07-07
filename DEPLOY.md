@@ -577,6 +577,40 @@ create trigger tv_watch_clears_watchlist
   for each row execute function tv_clear_watchlist();
 ```
 
+### Custom lists
+
+User-defined lists (Anime, Comfort, …) with a many-to-many to shows, filterable
+on `/shows`. Replace the UID with the account you sign into the TV app with
+(same one your other `tv_*` policies use).
+
+```sql
+create table tv_lists (
+  id          bigint generated always as identity primary key,
+  name        text not null,
+  created_at  timestamptz not null default now()
+);
+create unique index tv_lists_name_uniq on tv_lists (lower(name));
+
+create table tv_list_shows (
+  list_id       bigint  not null references tv_lists(id) on delete cascade,
+  show_tmdb_id  integer not null references tv_shows(tmdb_id) on delete cascade,
+  primary key (list_id, show_tmdb_id)
+);
+
+alter table tv_lists      enable row level security;
+alter table tv_list_shows enable row level security;
+
+create policy "owner only" on tv_lists for all
+  using ((select auth.uid()) = '44245891-ff3f-436a-819f-87d18c2b72ec'::uuid)
+  with check ((select auth.uid()) = '44245891-ff3f-436a-819f-87d18c2b72ec'::uuid);
+create policy "owner only" on tv_list_shows for all
+  using ((select auth.uid()) = '44245891-ff3f-436a-819f-87d18c2b72ec'::uuid)
+  with check ((select auth.uid()) = '44245891-ff3f-436a-819f-87d18c2b72ec'::uuid);
+```
+
+Optionally seed an "Anime" list from TMDB genres: `npx tsx scripts/seed-anime-list.ts`
+(detects Animation genre + Japanese origin; run after the tables exist).
+
 ### Stats function
 
 Backs the `/stats` page — totals, time watched, activity by year, and most-watched
