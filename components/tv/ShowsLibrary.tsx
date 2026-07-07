@@ -7,7 +7,10 @@ import type { LibraryItem } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { formatAirDate } from '@/lib/tv/format';
 
-type Filter = 'all' | 'not-started' | 'behind' | 'caught-up' | 'archived';
+type Filter = 'all' | 'not-started' | 'behind' | 'caught-up' | 'done' | 'archived';
+
+// Production statuses that mean the show won't get new episodes.
+const DONE_STATUSES = new Set(['Ended', 'Canceled']);
 
 function isNotStarted(i: LibraryItem) {
   return !i.archived && i.airedTotal > 0 && i.airedWatched === 0;
@@ -17,6 +20,9 @@ function isBehind(i: LibraryItem) {
 }
 function isCaughtUp(i: LibraryItem) {
   return !i.archived && i.airedTotal > 0 && i.airedWatched >= i.airedTotal;
+}
+function isDone(i: LibraryItem) {
+  return !i.archived && !!i.show.status && DONE_STATUSES.has(i.show.status);
 }
 
 export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
@@ -28,6 +34,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
       'not-started': items.filter(isNotStarted).length,
       behind: items.filter(isBehind).length,
       'caught-up': items.filter(isCaughtUp).length,
+      done: items.filter(isDone).length,
       archived: items.filter((i) => i.archived).length,
     }),
     [items]
@@ -38,6 +45,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
     if (filter === 'not-started') return isNotStarted(i);
     if (filter === 'behind') return isBehind(i);
     if (filter === 'caught-up') return isCaughtUp(i);
+    if (filter === 'done') return isDone(i);
     return i.archived;
   });
 
@@ -46,6 +54,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
     { key: 'not-started', label: 'Not started' },
     { key: 'behind', label: 'Behind' },
     { key: 'caught-up', label: 'Caught up' },
+    { key: 'done', label: 'Done' },
     { key: 'archived', label: 'Archived' },
   ];
 
