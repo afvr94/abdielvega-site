@@ -1,13 +1,19 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { Check, CheckCheck, Archive } from 'lucide-react';
 import type { Episode, Show } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
-import { markWatched, markUnwatched, markSeasonWatched, setArchived } from '@/app/tv/actions';
+import {
+  markWatched,
+  markUnwatched,
+  markSeasonWatched,
+  markPreviousWatched,
+  setArchived,
+} from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -29,6 +35,17 @@ export function ShowDetailClient({
   const [watched, setWatched] = useState<Set<string>>(() => new Set(watchedKeys));
   const [isArchived, setIsArchived] = useState(archived);
   const [, startTransition] = useTransition();
+  const [neverAsk, setNeverAsk] = useState(false);
+  const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
+
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNeverAsk(localStorage.getItem('tv:neverMarkPrev:' + show.tmdbId) === '1');
+    } catch {
+      // storage disabled — just keep asking
+    }
+  }, [show.tmdbId]);
 
   const seasons = useMemo(
     () => [...new Set(episodes.map((e) => e.seasonNumber))].sort((a, b) => a - b),
@@ -66,9 +83,21 @@ export function ShowDetailClient({
     [episodes, season]
   );
 
+  function isBefore(x: Episode, season: number, episode: number) {
+    return x.seasonNumber < season || (x.seasonNumber === season && x.episodeNumber < episode);
+  }
+
   function toggle(e: Episode) {
     const key = watchKey(e.seasonNumber, e.episodeNumber);
     const nowWatched = !watched.has(key);
+    // Are there earlier aired episodes still unwatched? (checked before the update)
+    const hasEarlierGap =
+      nowWatched &&
+      airedRegular.some(
+        (x) =>
+          isBefore(x, e.seasonNumber, e.episodeNumber) &&
+          !watched.has(watchKey(x.seasonNumber, x.episodeNumber))
+      );
     setWatched((prev) => {
       const copy = new Set(prev);
       if (nowWatched) copy.add(key);
@@ -79,6 +108,38 @@ export function ShowDetailClient({
       if (nowWatched) await markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
       else await markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
     });
+    if (hasEarlierGap && !neverAsk) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
+  }
+
+  function confirmMarkPrevious() {
+    if (!prompt) return;
+    const { season, episode } = prompt;
+    setWatched((prev) => {
+      const copy = new Set(prev);
+      for (const x of airedRegular) {
+        if (
+          isBefore(x, season, episode) ||
+          (x.seasonNumber === season && x.episodeNumber === episode)
+        ) {
+          copy.add(watchKey(x.seasonNumber, x.episodeNumber));
+        }
+      }
+      return copy;
+    });
+    startTransition(async () => {
+      await markPreviousWatched(show.tmdbId, season, episode);
+    });
+    setPrompt(null);
+  }
+
+  function neverForShow() {
+    try {
+      localStorage.setItem('tv:neverMarkPrev:' + show.tmdbId, '1');
+    } catch {
+      // ignore
+    }
+    setNeverAsk(true);
+    setPrompt(null);
   }
 
   function markSeason() {
@@ -235,6 +296,40 @@ export function ShowDetailClient({
           );
         })}
       </div>
+
+      {prompt ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setPrompt(null)} />
+          <div className="card relative z-10 w-full max-w-xs overflow-hidden border border-hairline text-center">
+            <div className="p-5">
+              <h3 className="font-display text-lg font-semibold tracking-tightest-2">
+                Mark previous episodes?
+              </h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                Do you want to mark all previous episodes as watched?
+              </p>
+            </div>
+            <button
+              onClick={confirmMarkPrevious}
+              className="w-full border-t border-hairline py-3.5 text-sm font-semibold text-income transition-colors hover:bg-income/5"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setPrompt(null)}
+              className="w-full border-t border-hairline py-3.5 text-sm text-ink transition-colors hover:bg-ink/5"
+            >
+              No
+            </button>
+            <button
+              onClick={neverForShow}
+              className="w-full border-t border-hairline py-3 text-xs text-muted transition-colors hover:bg-ink/5"
+            >
+              Never for this show
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
