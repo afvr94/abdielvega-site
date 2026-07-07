@@ -73,7 +73,11 @@ export function ShowDetailClient({
     return n ? watchKey(n.seasonNumber, n.episodeNumber) : null;
   }, [airedRegular, watched]);
 
-  const [season, setSeason] = useState<number>(() => regularSeasons[0] ?? seasons[0] ?? 1);
+  // Open on the season of the next-up episode; if caught up, the latest season.
+  const [season, setSeason] = useState<number>(() => {
+    if (nextKey) return Number(nextKey.split('-')[0]);
+    return regularSeasons[regularSeasons.length - 1] ?? seasons[0] ?? 1;
+  });
 
   const seasonEpisodes = useMemo(
     () =>
