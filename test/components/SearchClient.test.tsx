@@ -6,6 +6,7 @@ vi.mock('@/app/tv/actions', () => ({
   searchShows: vi.fn(),
   followShow: vi.fn().mockResolvedValue(undefined),
   unfollowShow: vi.fn().mockResolvedValue(undefined),
+  addToWatchlist: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { SearchClient } from '@/components/tv/SearchClient';

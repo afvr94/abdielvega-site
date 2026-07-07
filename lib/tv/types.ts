@@ -35,6 +35,7 @@ export type UpNextItem = {
 export type LibraryItem = {
   show: Show;
   archived: boolean;
+  watchlist: boolean;
   airedTotal: number;
   airedWatched: number;
   nextAirDate: string | null; // earliest future episode, for "returns" hints
@@ -54,6 +55,7 @@ export type ShowDetail = {
   watched: Set<string>; // `${season}-${episode}` keys
   isFollowed: boolean;
   archived: boolean;
+  watchlist: boolean;
 };
 
 export function watchKey(season: number, episode: number): string {

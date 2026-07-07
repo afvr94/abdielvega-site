@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { searchShows, type SearchHit } from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
+import { WantToWatchButton } from './WantToWatchButton';
 
 export function SearchClient() {
   const [query, setQuery] = useState('');
@@ -84,7 +85,10 @@ export function SearchClient() {
                 </p>
               ) : null}
             </div>
-            <FollowButton tmdbId={hit.tmdbId} initialFollowed={hit.isFollowed} />
+            <div className="flex shrink-0 items-center gap-1.5">
+              {!hit.isFollowed ? <WantToWatchButton tmdbId={hit.tmdbId} /> : null}
+              <FollowButton tmdbId={hit.tmdbId} initialFollowed={hit.isFollowed} />
+            </div>
           </div>
         ))}
 

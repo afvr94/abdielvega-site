@@ -8,6 +8,13 @@ export const metadata = {
     template: '%s · The Marquee',
   },
   description: 'Personal TV tracker — private.',
+  manifest: '/api/tv/manifest',
+  appleWebApp: { capable: true, title: 'The Marquee', statusBarStyle: 'default' as const },
+  icons: { apple: '/api/tv/icon/180' },
+};
+
+export const viewport = {
+  themeColor: '#1A1815',
 };
 
 export default async function TvLayout({ children }: { children: React.ReactNode }) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import Image from 'next/image';
-import { Check, CheckCheck, Archive } from 'lucide-react';
+import { Check, CheckCheck, Archive, Bookmark } from 'lucide-react';
 import type { Episode, Show } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
@@ -13,6 +13,7 @@ import {
   markSeasonWatched,
   markWatchedMany,
   setArchived,
+  setWatchlist,
 } from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
 
@@ -25,15 +26,18 @@ export function ShowDetailClient({
   watchedKeys,
   isFollowed,
   archived,
+  watchlist,
 }: {
   show: Show;
   episodes: Episode[];
   watchedKeys: string[];
   isFollowed: boolean;
   archived: boolean;
+  watchlist: boolean;
 }) {
   const [watched, setWatched] = useState<Set<string>>(() => new Set(watchedKeys));
   const [isArchived, setIsArchived] = useState(archived);
+  const [isWatchlist, setIsWatchlist] = useState(watchlist);
   const [, startTransition] = useTransition();
   const [neverAsk, setNeverAsk] = useState(false);
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
@@ -112,7 +116,17 @@ export function ShowDetailClient({
       if (nowWatched) await markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
       else await markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
     });
+    // Watching a show moves it off the watchlist (a DB trigger does this server-side).
+    if (nowWatched && isWatchlist) setIsWatchlist(false);
     if (hasEarlierGap && !neverAsk) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
+  }
+
+  function toggleWatchlist() {
+    const next = !isWatchlist;
+    setIsWatchlist(next);
+    startTransition(async () => {
+      await setWatchlist(show.tmdbId, next);
+    });
   }
 
   function confirmMarkPrevious() {
@@ -205,17 +219,34 @@ export function ShowDetailClient({
         </div>
         <div className="flex items-center gap-2">
           {isFollowed ? (
-            <button
-              onClick={toggleArchive}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                isArchived
-                  ? 'bg-ink text-cream'
-                  : 'border border-hairline bg-card text-muted hover:text-ink'
-              }`}
-            >
-              <Archive size={13} strokeWidth={2.2} />
-              {isArchived ? 'Archived' : 'Archive'}
-            </button>
+            <>
+              <button
+                onClick={toggleWatchlist}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                  isWatchlist
+                    ? 'bg-savings text-white'
+                    : 'border border-hairline bg-card text-muted hover:text-ink'
+                }`}
+              >
+                <Bookmark
+                  size={13}
+                  strokeWidth={2.2}
+                  fill={isWatchlist ? 'currentColor' : 'none'}
+                />
+                {isWatchlist ? 'Watchlist' : 'Watch later'}
+              </button>
+              <button
+                onClick={toggleArchive}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                  isArchived
+                    ? 'bg-ink text-cream'
+                    : 'border border-hairline bg-card text-muted hover:text-ink'
+                }`}
+              >
+                <Archive size={13} strokeWidth={2.2} />
+                {isArchived ? 'Archived' : 'Archive'}
+              </button>
+            </>
           ) : null}
           <FollowButton tmdbId={show.tmdbId} initialFollowed={isFollowed} />
         </div>

@@ -28,6 +28,12 @@ const items = [
     airedTotal: 4,
     airedWatched: 2,
   }), // archived
+  makeLibraryItem({
+    show: makeShow({ tmdbId: 6, name: 'Foxtrot' }),
+    watchlist: true,
+    airedTotal: 5,
+    airedWatched: 0,
+  }), // watchlist
 ];
 
 function tab(name: RegExp) {
@@ -65,6 +71,18 @@ describe('ShowsLibrary', () => {
     await userEvent.click(tab(/^Done/));
     expect(screen.getByText('Delta')).toBeInTheDocument();
     expect(screen.queryByText('Bravo')).not.toBeInTheDocument();
+  });
+
+  it('Watchlist is a separate lane, excluded from All/Not started', async () => {
+    render(<ShowsLibrary items={items} />);
+    expect(tab(/watchlist/i)).toHaveTextContent('1');
+    // Default (Behind) doesn't show the watchlist item
+    expect(screen.queryByText('Foxtrot')).not.toBeInTheDocument();
+    await userEvent.click(tab(/^All/));
+    expect(screen.queryByText('Foxtrot')).not.toBeInTheDocument();
+    await userEvent.click(tab(/watchlist/i));
+    expect(screen.getByText('Foxtrot')).toBeInTheDocument();
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
   });
 
   it('Archived shows only archived series', async () => {

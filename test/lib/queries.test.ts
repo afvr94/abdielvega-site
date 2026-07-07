@@ -249,7 +249,7 @@ describe('getShowDetail', () => {
           },
         ],
         tv_watches: [{ show_tmdb_id: 1, season_number: 1, episode_number: 1 }],
-        tv_follows: [{ show_tmdb_id: 1, archived: true }],
+        tv_follows: [{ show_tmdb_id: 1, archived: true, watchlist: false }],
       },
     });
     const detail = await getShowDetail(db, 1);
@@ -262,5 +262,6 @@ describe('getShowDetail', () => {
     expect(detail!.watched.has('1-2')).toBe(false);
     expect(detail!.isFollowed).toBe(true);
     expect(detail!.archived).toBe(true);
+    expect(detail!.watchlist).toBe(false);
   });
 });

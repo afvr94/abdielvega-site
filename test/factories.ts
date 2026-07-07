@@ -38,6 +38,7 @@ export function makeLibraryItem(over: Partial<LibraryItem> = {}): LibraryItem {
   return {
     show: makeShow(),
     archived: false,
+    watchlist: false,
     airedTotal: 10,
     airedWatched: 0,
     nextAirDate: null,

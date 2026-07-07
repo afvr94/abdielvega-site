@@ -162,16 +162,18 @@ export async function getShowDetail(
         .eq('show_tmdb_id', tmdbId)
         .range(from, to)
     ),
-    db.from('tv_follows').select('archived').eq('show_tmdb_id', tmdbId).maybeSingle(),
+    db.from('tv_follows').select('archived,watchlist').eq('show_tmdb_id', tmdbId).maybeSingle(),
   ]);
   if (followRow.error) throw followRow.error;
 
+  const follow = followRow.data as { archived: boolean; watchlist: boolean } | null;
   return {
     show: mapShow(showRow as ShowRow),
     episodes: episodeRows.map(mapEpisode),
     watched: new Set(watchRows.map((w) => watchKey(w.season_number, w.episode_number))),
-    isFollowed: followRow.data !== null,
-    archived: followRow.data?.archived ?? false,
+    isFollowed: follow !== null,
+    archived: follow?.archived ?? false,
+    watchlist: follow?.watchlist ?? false,
   };
 }
 
@@ -224,8 +226,13 @@ export async function getStats(db: SupabaseClient): Promise<Stats> {
   };
 }
 
+// Actively-followed shows: not archived and not on the watchlist.
 export async function getActiveFollowIds(db: SupabaseClient): Promise<number[]> {
-  const { data, error } = await db.from('tv_follows').select('show_tmdb_id').eq('archived', false);
+  const { data, error } = await db
+    .from('tv_follows')
+    .select('show_tmdb_id')
+    .eq('archived', false)
+    .eq('watchlist', false);
   if (error) throw error;
   return (data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id);
 }
@@ -233,6 +240,7 @@ export async function getActiveFollowIds(db: SupabaseClient): Promise<number[]> 
 type LibraryRpcRow = {
   show_tmdb_id: number;
   archived: boolean;
+  watchlist: boolean;
   aired_total: number;
   aired_watched: number;
   next_air_date: string | null;
@@ -263,6 +271,7 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
     items.push({
       show,
       archived: r.archived,
+      watchlist: r.watchlist ?? false,
       airedTotal: Number(r.aired_total),
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,

@@ -8,6 +8,7 @@ vi.mock('@/app/tv/actions', () => ({
   markSeasonWatched: vi.fn().mockResolvedValue(undefined),
   markWatchedMany: vi.fn().mockResolvedValue(undefined),
   setArchived: vi.fn().mockResolvedValue(undefined),
+  setWatchlist: vi.fn().mockResolvedValue(undefined),
   followShow: vi.fn().mockResolvedValue(undefined),
   unfollowShow: vi.fn().mockResolvedValue(undefined),
 }));
@@ -33,6 +34,7 @@ function renderDetail(watchedKeys: string[]) {
       watchedKeys={watchedKeys}
       isFollowed={true}
       archived={false}
+      watchlist={false}
     />
   );
 }

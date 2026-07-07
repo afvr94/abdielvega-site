@@ -46,6 +46,7 @@ export default async function ShowPage({ params }: { params: Promise<{ tmdbId: s
       watchedKeys={[...detail.watched]}
       isFollowed={detail.isFollowed}
       archived={detail.archived}
+      watchlist={detail.watchlist}
     />
   );
 }

@@ -7,22 +7,28 @@ import type { LibraryItem } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { formatAirDate } from '@/lib/tv/format';
 
-type Filter = 'all' | 'not-started' | 'behind' | 'caught-up' | 'done' | 'archived';
+type Filter = 'all' | 'watchlist' | 'not-started' | 'behind' | 'caught-up' | 'done' | 'archived';
 
 // Production statuses that mean the show won't get new episodes.
 const DONE_STATUSES = new Set(['Ended', 'Canceled']);
 
+// Watchlist and archived shows live in their own lanes, out of the progress filters.
+const isActive = (i: LibraryItem) => !i.archived && !i.watchlist;
+
+function isWatchlist(i: LibraryItem) {
+  return !i.archived && i.watchlist;
+}
 function isNotStarted(i: LibraryItem) {
-  return !i.archived && i.airedTotal > 0 && i.airedWatched === 0;
+  return isActive(i) && i.airedTotal > 0 && i.airedWatched === 0;
 }
 function isBehind(i: LibraryItem) {
-  return !i.archived && i.airedWatched > 0 && i.airedWatched < i.airedTotal;
+  return isActive(i) && i.airedWatched > 0 && i.airedWatched < i.airedTotal;
 }
 function isCaughtUp(i: LibraryItem) {
-  return !i.archived && i.airedTotal > 0 && i.airedWatched >= i.airedTotal;
+  return isActive(i) && i.airedTotal > 0 && i.airedWatched >= i.airedTotal;
 }
 function isDone(i: LibraryItem) {
-  return !i.archived && !!i.show.status && DONE_STATUSES.has(i.show.status);
+  return isActive(i) && !!i.show.status && DONE_STATUSES.has(i.show.status);
 }
 
 export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
@@ -30,7 +36,8 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
 
   const counts = useMemo(
     () => ({
-      all: items.filter((i) => !i.archived).length,
+      all: items.filter(isActive).length,
+      watchlist: items.filter(isWatchlist).length,
       'not-started': items.filter(isNotStarted).length,
       behind: items.filter(isBehind).length,
       'caught-up': items.filter(isCaughtUp).length,
@@ -41,7 +48,8 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
   );
 
   const shown = items.filter((i) => {
-    if (filter === 'all') return !i.archived;
+    if (filter === 'all') return isActive(i);
+    if (filter === 'watchlist') return isWatchlist(i);
     if (filter === 'not-started') return isNotStarted(i);
     if (filter === 'behind') return isBehind(i);
     if (filter === 'caught-up') return isCaughtUp(i);
@@ -51,6 +59,7 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
 
   const tabs: { key: Filter; label: string }[] = [
     { key: 'all', label: 'All' },
+    { key: 'watchlist', label: 'Watchlist' },
     { key: 'not-started', label: 'Not started' },
     { key: 'behind', label: 'Behind' },
     { key: 'caught-up', label: 'Caught up' },
@@ -64,12 +73,12 @@ export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
         <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Shows</h1>
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-1.5">
+      <div className="no-scrollbar -mx-5 mb-5 flex gap-1.5 overflow-x-auto px-5">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setFilter(t.key)}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
               filter === t.key ? 'bg-ink text-cream' : 'text-muted hover:text-ink'
             }`}
           >

@@ -458,7 +458,7 @@ returns table (
   with aired as (
     select e.show_tmdb_id, e.tmdb_id, e.season_number, e.episode_number
     from tv_episodes e
-    join tv_follows f on f.show_tmdb_id = e.show_tmdb_id and not f.archived
+    join tv_follows f on f.show_tmdb_id = e.show_tmdb_id and not f.archived and not f.watchlist
     where e.season_number > 0            -- specials (season 0) excluded
       and e.air_date is not null
       and e.air_date <= current_date
@@ -506,13 +506,14 @@ create or replace function tv_library()
 returns table (
   show_tmdb_id     integer,
   archived         boolean,
+  watchlist        boolean,
   aired_total      bigint,
   aired_watched    bigint,
   next_air_date    date,
   last_watched_at  timestamptz
 ) language sql stable as $$
   with foll as (
-    select show_tmdb_id, archived from tv_follows
+    select show_tmdb_id, archived, watchlist from tv_follows
   ),
   aired as (
     select show_tmdb_id, season_number, episode_number
@@ -542,7 +543,7 @@ returns table (
     from tv_watches
     group by show_tmdb_id
   )
-  select f.show_tmdb_id, f.archived,
+  select f.show_tmdb_id, f.archived, f.watchlist,
     coalesce(c.aired_total, 0), coalesce(c.aired_watched, 0),
     u.next_air_date, l.last_watched_at
   from foll f
@@ -550,6 +551,30 @@ returns table (
   left join upcoming u on u.show_tmdb_id = f.show_tmdb_id
   left join lastw l    on l.show_tmdb_id = f.show_tmdb_id;
 $$;
+```
+
+### Watchlist
+
+A `watchlist` flag on `tv_follows` marks "want to watch" shows that stay out of
+Up Next until you start them. A trigger clears the flag automatically once you
+mark any episode watched. Run this, **then re-run `tv_up_next()` and `tv_library()`
+above** (they now reference `watchlist`; `tv_library()` needs `drop function if
+exists tv_library();` first because its columns changed):
+
+```sql
+alter table tv_follows add column if not exists watchlist boolean not null default false;
+
+create or replace function tv_clear_watchlist() returns trigger language plpgsql as $$
+begin
+  update tv_follows set watchlist = false
+  where show_tmdb_id = new.show_tmdb_id and watchlist;
+  return new;
+end $$;
+
+drop trigger if exists tv_watch_clears_watchlist on tv_watches;
+create trigger tv_watch_clears_watchlist
+  after insert on tv_watches
+  for each row execute function tv_clear_watchlist();
 ```
 
 ### Stats function

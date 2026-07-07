@@ -57,6 +57,27 @@ export async function setArchived(tmdbId: number, archived: boolean): Promise<vo
   revalidatePath(`/tv/show/${tmdbId}`);
 }
 
+// Toggle a followed show's watchlist flag (kept out of Up Next while true).
+export async function setWatchlist(tmdbId: number, watchlist: boolean): Promise<void> {
+  const db = await createClient();
+  const { error } = await db.from('tv_follows').update({ watchlist }).eq('show_tmdb_id', tmdbId);
+  if (error) throw error;
+  revalidatePath('/tv');
+  revalidatePath(`/tv/show/${tmdbId}`);
+}
+
+// "Want to watch": cache the show and follow it straight onto the watchlist.
+export async function addToWatchlist(tmdbId: number): Promise<void> {
+  const db = await createClient();
+  await cacheShow(db, tmdbId);
+  const { error } = await db
+    .from('tv_follows')
+    .upsert({ show_tmdb_id: tmdbId, watchlist: true }, { onConflict: 'show_tmdb_id' });
+  if (error) throw error;
+  revalidatePath('/tv');
+  revalidatePath(`/tv/show/${tmdbId}`);
+}
+
 export async function markWatched(tmdbId: number, season: number, episode: number): Promise<void> {
   const db = await createClient();
   const { error } = await db
