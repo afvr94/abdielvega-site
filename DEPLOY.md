@@ -602,6 +602,10 @@ returns json language sql stable as $$
       select coalesce(json_agg(row_to_json(t) order by t.year), '[]'::json) from (
         select extract(year from watched_at)::int as year, count(*)::int as count
         from tv_watches group by 1) t),
+    'by_day', (
+      select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
+        select watched_at::date::text as date, count(*)::int as count
+        from tv_watches group by 1) t),
     'top_shows', (
       select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
         select w.show_tmdb_id, s.name, count(*)::int as count,

@@ -6,6 +6,7 @@ import { getUpNext, getUpcoming } from '@/lib/tv/queries';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, dayHeading } from '@/lib/tv/format';
 import { UpNextCard } from '@/components/tv/UpNextCard';
+import { SurpriseButton } from '@/components/tv/SurpriseButton';
 
 export const metadata = { title: 'Up Next' };
 
@@ -68,9 +69,12 @@ export default async function TvHomePage() {
       ) : null}
 
       <section>
-        <div className="mb-4 flex items-baseline justify-between">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Up Next</h1>
-          <span className="label-tag">{behind.length} to watch</span>
+          <div className="flex items-center gap-2">
+            <SurpriseButton showIds={behind.map((i) => i.show.tmdbId)} />
+            <span className="label-tag shrink-0">{behind.length} to watch</span>
+          </div>
         </div>
         {behind.length > 0 ? (
           <div className="space-y-3">

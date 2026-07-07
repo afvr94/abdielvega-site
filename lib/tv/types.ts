@@ -71,5 +71,6 @@ export type Stats = {
   firstWatch: string | null;
   lastWatch: string | null;
   byYear: { year: number; count: number }[];
+  byDay: { date: string; count: number }[];
   topShows: { showTmdbId: number; name: string; count: number; runtimeMin: number }[];
 };

@@ -191,6 +191,7 @@ describe('getStats', () => {
             { year: 2018, count: 100 },
             { year: 2019, count: 200 },
           ],
+          by_day: [{ date: '2026-07-06', count: 5 }],
           top_shows: [{ show_tmdb_id: 1, name: 'Arrow', count: 170, runtime_min: 6800 }],
         },
       },
@@ -205,6 +206,7 @@ describe('getStats', () => {
       { year: 2018, count: 100 },
       { year: 2019, count: 200 },
     ]);
+    expect(s.byDay).toEqual([{ date: '2026-07-06', count: 5 }]);
     expect(s.topShows[0]).toEqual({
       showTmdbId: 1,
       name: 'Arrow',

@@ -201,6 +201,7 @@ type StatsJson = {
   first_watch: string | null;
   last_watch: string | null;
   by_year: { year: number; count: number }[];
+  by_day: { date: string; count: number }[];
   top_shows: { show_tmdb_id: number; name: string; count: number; runtime_min: number }[];
 };
 
@@ -217,6 +218,7 @@ export async function getStats(db: SupabaseClient): Promise<Stats> {
     firstWatch: d.first_watch ?? null,
     lastWatch: d.last_watch ?? null,
     byYear: (d.by_year ?? []).map((r) => ({ year: Number(r.year), count: Number(r.count) })),
+    byDay: (d.by_day ?? []).map((r) => ({ date: String(r.date), count: Number(r.count) })),
     topShows: (d.top_shows ?? []).map((r) => ({
       showTmdbId: Number(r.show_tmdb_id),
       name: r.name,

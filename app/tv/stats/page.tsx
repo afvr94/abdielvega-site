@@ -3,8 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 import { getStats } from '@/lib/tv/queries';
 import type { Stats } from '@/lib/tv/types';
 import { formatAirDate, humanizeMinutes, daysFromMinutes } from '@/lib/tv/format';
+import { buildHeatmap, heatLevel } from '@/lib/tv/heatmap';
 
 export const metadata = { title: 'Stats' };
+
+const LEVEL_BG = ['bg-ink/[0.06]', 'bg-income/30', 'bg-income/55', 'bg-income/80', 'bg-income'];
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -38,6 +41,8 @@ export default async function StatsPage() {
 
   const maxYear = Math.max(1, ...stats.byYear.map((y) => y.count));
   const maxTop = Math.max(1, ...stats.topShows.map((s) => s.count));
+  const today = new Date().toISOString().slice(0, 10);
+  const heat = buildHeatmap(stats.byDay, today, 53);
 
   return (
     <div className="space-y-9">
@@ -64,6 +69,46 @@ export default async function StatsPage() {
           sub={`${stats.showsArchived} archived`}
         />
       </div>
+
+      {stats.byDay.length > 0 ? (
+        <section>
+          <div className="label-tag mb-3">Activity · last year</div>
+          <div className="no-scrollbar overflow-x-auto pb-1">
+            <div>
+              <div className="mb-1 flex gap-[3px] text-[9px] text-muted">
+                {heat.columns.map((_, w) => {
+                  const label = heat.months.find((m) => m.col === w)?.label;
+                  return (
+                    <span key={w} className="w-[11px] shrink-0">
+                      {label ?? ''}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="flex gap-[3px]">
+                {heat.columns.map((col, w) => (
+                  <div key={w} className="flex shrink-0 flex-col gap-[3px]">
+                    {col.map((cell, d) => (
+                      <span
+                        key={d}
+                        title={cell ? `${cell.date} · ${cell.count}` : undefined}
+                        className={`h-[11px] w-[11px] rounded-[2px] ${cell ? LEVEL_BG[heatLevel(cell.count)] : ''}`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-muted">
+                Less
+                {LEVEL_BG.map((bg, i) => (
+                  <span key={i} className={`h-[10px] w-[10px] rounded-[2px] ${bg}`} />
+                ))}
+                More
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {stats.byYear.length > 0 ? (
         <section>
