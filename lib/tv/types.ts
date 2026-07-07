@@ -38,6 +38,7 @@ export type LibraryItem = {
   airedTotal: number;
   airedWatched: number;
   nextAirDate: string | null; // earliest future episode, for "returns" hints
+  lastWatchedAt: string | null; // most recent watch, for recency ordering
 };
 
 // A future episode on the calendar.

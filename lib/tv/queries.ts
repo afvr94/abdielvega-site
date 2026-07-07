@@ -195,6 +195,7 @@ type LibraryRpcRow = {
   aired_total: number;
   aired_watched: number;
   next_air_date: string | null;
+  last_watched_at: string | null;
 };
 
 // Every followed show (archived included) with aired progress + next air date.
@@ -224,9 +225,17 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
       airedTotal: Number(r.aired_total),
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,
+      lastWatchedAt: r.last_watched_at ?? null,
     });
   }
-  items.sort((a, b) => a.show.name.localeCompare(b.show.name));
+  // Most recently watched first; shows with no watches (null) fall to the
+  // bottom, alphabetically. ISO timestamps compare lexicographically.
+  items.sort((a, b) => {
+    const at = a.lastWatchedAt ?? '';
+    const bt = b.lastWatchedAt ?? '';
+    if (at !== bt) return bt.localeCompare(at);
+    return a.show.name.localeCompare(b.show.name);
+  });
   return items;
 }
 

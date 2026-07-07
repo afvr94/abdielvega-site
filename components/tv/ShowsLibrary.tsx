@@ -20,7 +20,7 @@ function isCaughtUp(i: LibraryItem) {
 }
 
 export function ShowsLibrary({ items }: { items: LibraryItem[] }) {
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>('behind');
 
   const counts = useMemo(
     () => ({

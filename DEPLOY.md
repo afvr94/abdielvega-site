@@ -495,16 +495,18 @@ $$;
 ### Library function
 
 Backs the `/shows` grid — every followed show (archived included), its aired
-progress, and the next future air date. Run once:
+progress, the next future air date, and the most recent watch (for recency
+ordering). Run once:
 
 ```sql
 create or replace function tv_library()
 returns table (
-  show_tmdb_id   integer,
-  archived       boolean,
-  aired_total    bigint,
-  aired_watched  bigint,
-  next_air_date  date
+  show_tmdb_id     integer,
+  archived         boolean,
+  aired_total      bigint,
+  aired_watched    bigint,
+  next_air_date    date,
+  last_watched_at  timestamptz
 ) language sql stable as $$
   with foll as (
     select show_tmdb_id, archived from tv_follows
@@ -531,12 +533,19 @@ returns table (
     from tv_episodes
     where season_number > 0 and air_date is not null and air_date > current_date
     group by show_tmdb_id
+  ),
+  lastw as (
+    select show_tmdb_id, max(watched_at) as last_watched_at
+    from tv_watches
+    group by show_tmdb_id
   )
   select f.show_tmdb_id, f.archived,
-    coalesce(c.aired_total, 0), coalesce(c.aired_watched, 0), u.next_air_date
+    coalesce(c.aired_total, 0), coalesce(c.aired_watched, 0),
+    u.next_air_date, l.last_watched_at
   from foll f
   left join counts c   on c.show_tmdb_id = f.show_tmdb_id
-  left join upcoming u on u.show_tmdb_id = f.show_tmdb_id;
+  left join upcoming u on u.show_tmdb_id = f.show_tmdb_id
+  left join lastw l    on l.show_tmdb_id = f.show_tmdb_id;
 $$;
 ```
 
