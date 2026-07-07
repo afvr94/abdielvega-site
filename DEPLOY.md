@@ -496,9 +496,12 @@ $$;
 
 Backs the `/shows` grid — every followed show (archived included), its aired
 progress, the next future air date, and the most recent watch (for recency
-ordering). Run once:
+ordering). Run once (the `drop` is only needed when re-running after the return
+columns changed):
 
 ```sql
+drop function if exists tv_library();
+
 create or replace function tv_library()
 returns table (
   show_tmdb_id     integer,
