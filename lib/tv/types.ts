@@ -31,6 +31,21 @@ export type UpNextItem = {
   airedWatched: number;
 };
 
+// A followed show in the /shows library grid.
+export type LibraryItem = {
+  show: Show;
+  archived: boolean;
+  airedTotal: number;
+  airedWatched: number;
+  nextAirDate: string | null; // earliest future episode, for "returns" hints
+};
+
+// A future episode on the calendar.
+export type UpcomingEpisode = {
+  show: Show;
+  episode: Episode;
+};
+
 // Everything the show detail page needs, read in one pass.
 export type ShowDetail = {
   show: Show;

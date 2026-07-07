@@ -492,6 +492,62 @@ returns table (
 $$;
 ```
 
+### Library function
+
+Backs the `/shows` grid — every followed show (archived included), its aired
+progress, and the next future air date. Run once:
+
+```sql
+create or replace function tv_library()
+returns table (
+  show_tmdb_id   integer,
+  archived       boolean,
+  aired_total    bigint,
+  aired_watched  bigint,
+  next_air_date  date
+) language sql stable as $$
+  with foll as (
+    select show_tmdb_id, archived from tv_follows
+  ),
+  aired as (
+    select show_tmdb_id, season_number, episode_number
+    from tv_episodes
+    where season_number > 0 and air_date is not null and air_date <= current_date
+  ),
+  counts as (
+    select f.show_tmdb_id,
+      count(a.season_number) as aired_total,
+      count(w.id)            as aired_watched
+    from foll f
+    left join aired a on a.show_tmdb_id = f.show_tmdb_id
+    left join tv_watches w
+      on  w.show_tmdb_id  = a.show_tmdb_id
+      and w.season_number = a.season_number
+      and w.episode_number = a.episode_number
+    group by f.show_tmdb_id
+  ),
+  upcoming as (
+    select show_tmdb_id, min(air_date) as next_air_date
+    from tv_episodes
+    where season_number > 0 and air_date is not null and air_date > current_date
+    group by show_tmdb_id
+  )
+  select f.show_tmdb_id, f.archived,
+    coalesce(c.aired_total, 0), coalesce(c.aired_watched, 0), u.next_air_date
+  from foll f
+  left join counts c   on c.show_tmdb_id = f.show_tmdb_id
+  left join upcoming u on u.show_tmdb_id = f.show_tmdb_id;
+$$;
+```
+
+### Scheduled sync (Vercel Cron)
+
+`vercel.json` registers a daily `GET /api/tv/sync`. Vercel automatically sends
+`Authorization: Bearer $CRON_SECRET` with cron invocations, so set **`CRON_SECRET`**
+(and `SUPABASE_SERVICE_ROLE_KEY`) in the Vercel project's environment variables.
+The route re-fetches followed, still-airing shows from TMDB and upserts new
+episodes / corrected air dates; ended & archived shows are skipped.
+
 ### Auth redirect URL
 
 Add to **Authentication → URL Configuration → Redirect URLs**:

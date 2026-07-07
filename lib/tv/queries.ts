@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Episode, Show, ShowDetail, UpNextItem } from './types';
+import type { Episode, LibraryItem, Show, ShowDetail, UpcomingEpisode, UpNextItem } from './types';
 import { watchKey } from './types';
 
 type ShowRow = {
@@ -181,4 +181,88 @@ export async function getFollowedTmdbIds(db: SupabaseClient): Promise<Set<number
   const { data, error } = await db.from('tv_follows').select('show_tmdb_id');
   if (error) throw error;
   return new Set((data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id));
+}
+
+export async function getActiveFollowIds(db: SupabaseClient): Promise<number[]> {
+  const { data, error } = await db.from('tv_follows').select('show_tmdb_id').eq('archived', false);
+  if (error) throw error;
+  return (data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id);
+}
+
+type LibraryRpcRow = {
+  show_tmdb_id: number;
+  archived: boolean;
+  aired_total: number;
+  aired_watched: number;
+  next_air_date: string | null;
+};
+
+// Every followed show (archived included) with aired progress + next air date.
+export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
+  const { data, error } = await db.rpc('tv_library');
+  if (error) throw error;
+  const rows = (data ?? []) as LibraryRpcRow[];
+  if (rows.length === 0) return [];
+
+  const { data: showData, error: showErr } = await db
+    .from('tv_shows')
+    .select('*')
+    .in(
+      'tmdb_id',
+      rows.map((r) => r.show_tmdb_id)
+    );
+  if (showErr) throw showErr;
+  const shows = new Map((showData as ShowRow[]).map((r) => [r.tmdb_id, mapShow(r)]));
+
+  const items: LibraryItem[] = [];
+  for (const r of rows) {
+    const show = shows.get(r.show_tmdb_id);
+    if (!show) continue;
+    items.push({
+      show,
+      archived: r.archived,
+      airedTotal: Number(r.aired_total),
+      airedWatched: Number(r.aired_watched),
+      nextAirDate: r.next_air_date,
+    });
+  }
+  items.sort((a, b) => a.show.name.localeCompare(b.show.name));
+  return items;
+}
+
+// Future episodes across active (non-archived) follows, within `days`.
+export async function getUpcoming(db: SupabaseClient, days = 90): Promise<UpcomingEpisode[]> {
+  const ids = await getActiveFollowIds(db);
+  if (ids.length === 0) return [];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const end = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+
+  const epRows = await fetchAll<EpisodeRow>(db, (from, to) =>
+    db
+      .from('tv_episodes')
+      .select('*')
+      .in('show_tmdb_id', ids)
+      .gt('season_number', 0)
+      .gte('air_date', today)
+      .lte('air_date', end)
+      .order('air_date')
+      .range(from, to)
+  );
+  if (epRows.length === 0) return [];
+
+  const showIds = [...new Set(epRows.map((e) => e.show_tmdb_id))];
+  const { data: showData, error: showErr } = await db
+    .from('tv_shows')
+    .select('*')
+    .in('tmdb_id', showIds);
+  if (showErr) throw showErr;
+  const shows = new Map((showData as ShowRow[]).map((r) => [r.tmdb_id, mapShow(r)]));
+
+  const out: UpcomingEpisode[] = [];
+  for (const e of epRows) {
+    const show = shows.get(e.show_tmdb_id);
+    if (show) out.push({ show, episode: mapEpisode(e) });
+  }
+  return out;
 }
