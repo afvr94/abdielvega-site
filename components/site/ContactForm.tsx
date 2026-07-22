@@ -10,6 +10,8 @@ export function ContactForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  // Honeypot: real users never see or fill this; bots do.
+  const [company, setCompany] = useState('');
   const [errors, setErrors] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<Status>('idle');
   const [serverError, setServerError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({ name, email, message, company }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -68,6 +70,23 @@ export function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card border border-hairline p-6 sm:p-8">
+      {/* Honeypot — hidden from real users, catches bots that fill every field. */}
+      <div
+        aria-hidden="true"
+        className="absolute left-[-9999px] top-[-9999px] h-0 w-0 overflow-hidden"
+      >
+        <label htmlFor="company">Company (leave this empty)</label>
+        <input
+          type="text"
+          id="company"
+          name="company"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       <Field label="Name" folio="01" error={errors.has('name') ? 'Name is required' : null}>
         <input
           type="text"
