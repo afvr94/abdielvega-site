@@ -39,3 +39,6 @@ yarn-error.log*
 
 .env
 .env*
+
+# design tooling working state (taste-skill gate history, Chrome profiles)
+/.taste-skill/

@@ -196,11 +196,11 @@ export function ShowDetailClient({
     <div>
       {/* Hero */}
       <div className="relative mb-6 overflow-hidden rounded-card bg-ink/5">
-        <div className="relative aspect-[16/7] w-full">
+        <div className="relative aspect-16/7 w-full">
           {backdrop ? (
             <Image src={backdrop} alt="" fill sizes="900px" className="object-cover" priority />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
         </div>
         <div className="absolute inset-x-0 bottom-0 p-5">
           <h1 className="font-display text-2xl font-semibold tracking-tightest-2 text-white sm:text-3xl">
@@ -231,7 +231,7 @@ export function ShowDetailClient({
             <>
               <button
                 onClick={toggleWatchlist}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition-colors ${
                   isWatchlist
                     ? 'bg-savings text-white'
                     : 'border border-hairline bg-card text-muted hover:text-ink'
@@ -246,7 +246,7 @@ export function ShowDetailClient({
               </button>
               <button
                 onClick={toggleArchive}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition-colors ${
                   isArchived
                     ? 'bg-ink text-cream'
                     : 'border border-hairline bg-card text-muted hover:text-ink'
@@ -264,12 +264,12 @@ export function ShowDetailClient({
       {/* Where to watch */}
       {providers.length > 0 ? (
         <div className="mb-6">
-          <div className="label-tag mb-2">Where to watch</div>
+          <div className="mb-2 label-tag">Where to watch</div>
           <div className="flex flex-wrap items-center gap-2">
             {providers.map((p) => (
               <span
                 key={p.name}
-                className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-card py-1 pl-1 pr-2.5 text-xs"
+                className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-card py-1 pr-2.5 pl-1 text-xs"
               >
                 {p.logoUrl ? (
                   <Image src={p.logoUrl} alt="" width={18} height={18} className="rounded-[4px]" />
@@ -313,7 +313,7 @@ export function ShowDetailClient({
         {!seasonAllWatched && seasonEpisodes.some(hasAired) ? (
           <button
             onClick={markSeason}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-card px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted transition-colors hover:border-income hover:text-income"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-card px-3 py-1.5 text-[11px] font-semibold tracking-wider text-muted uppercase transition-colors hover:border-income hover:text-income"
           >
             <CheckCheck size={13} strokeWidth={2.2} /> Mark season
           </button>
@@ -331,7 +331,7 @@ export function ShowDetailClient({
           return (
             <div
               key={e.tmdbId}
-              className={`card flex items-center gap-3 border p-2.5 transition-colors ${
+              className={`flex items-center gap-3 card border p-2.5 transition-colors ${
                 isNext ? 'border-income/50 bg-income/5' : 'border-hairline'
               } ${isWatched ? 'opacity-60' : ''}`}
             >
@@ -376,7 +376,7 @@ export function ShowDetailClient({
       {prompt ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-black/50" onClick={() => setPrompt(null)} />
-          <div className="card relative z-10 w-full max-w-xs overflow-hidden border border-hairline text-center">
+          <div className="relative z-10 w-full max-w-xs overflow-hidden card border border-hairline text-center">
             <div className="p-5">
               <h3 className="font-display text-lg font-semibold tracking-tightest-2">
                 Mark previous episodes?

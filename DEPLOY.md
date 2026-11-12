@@ -334,9 +334,9 @@ Only after production is confirmed working on Vercel:
 | `GITHUB_TOKEN`                  | github.com/settings/tokens | Fine-grained, no scopes needed for public repos                  |
 | `SMTP_HOST`                     | Your mail provider         | iCloud: `smtp.mail.me.com`. Namecheap: `mail.privateemail.com`   |
 | `SMTP_PORT`                     | Your mail provider         | iCloud: `587`. Namecheap: `465`                                  |
-| `SMTP_USER`                     | Your mail provider         | iCloud: `<you>@icloud.com`. Namecheap: `me@abdielvega.com`       |
+| `SMTP_USER`                     | Your mail provider         | iCloud: `<you>@icloud.com`. Namecheap: `hey@abdielvega.com`      |
 | `EMAIL_PASSWORD`                | Your mail provider         | iCloud: **app-specific password** from appleid.apple.com         |
-| `EMAIL`                         | You                        | From address recipients see (e.g. `me@abdielvega.com`)           |
+| `EMAIL`                         | You                        | From address recipients see (e.g. `hey@abdielvega.com`)          |
 | `CONTACT_INBOX`                 | You                        | Optional, defaults to `EMAIL`                                    |
 | `TMDB_ACCESS_TOKEN`             | themoviedb.org → API       | v4 read access token (Bearer). TV tracker metadata source        |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Settings → API  | **Server-only.** Import script + cron sync. Never ship to client |
@@ -345,7 +345,7 @@ Only after production is confirmed working on Vercel:
 ### Apple / iCloud SMTP setup
 
 1. https://appleid.apple.com → **Sign-In & Security → App-Specific Passwords** → generate one (label it "abdielvega.com contact"). Copy it **now** — it's shown once.
-2. If you want the form to send _from_ `me@abdielvega.com` (not your `@icloud.com`), you also need **iCloud+ Custom Email Domain** set up with `abdielvega.com` verified, and that From address added as an allowed sender in iCloud Mail settings. Otherwise set `EMAIL=<you>@icloud.com` and skip.
+2. If you want the form to send _from_ `hey@abdielvega.com` (not your `@icloud.com`), you also need **iCloud+ Custom Email Domain** set up with `abdielvega.com` verified, and that From address added as an allowed sender in iCloud Mail settings. Otherwise set `EMAIL=<you>@icloud.com` and skip.
 3. Put the app-specific password in `EMAIL_PASSWORD`. Your Apple ID password will **not** work.
 
 ---

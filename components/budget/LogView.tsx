@@ -49,8 +49,8 @@ export function LogView({ categories, transactions, onAdd, onRemove }: Props) {
 
   return (
     <div>
-      <section className="card mb-6 p-5">
-        <div className="label-tag mb-4">Record a transaction</div>
+      <section className="mb-6 card p-5">
+        <div className="mb-4 label-tag">Record a transaction</div>
 
         {/* Type pills */}
         <div className="mb-4 flex gap-2">
@@ -60,7 +60,7 @@ export function LogView({ categories, transactions, onAdd, onRemove }: Props) {
               <button
                 key={k}
                 onClick={() => setType(k)}
-                className="flex-1 rounded-full py-2 text-xs font-semibold uppercase tracking-wider transition-all"
+                className="flex-1 rounded-full py-2 text-xs font-semibold tracking-wider uppercase transition-all"
                 style={{
                   backgroundColor: type === k ? info.color : '#1A181508',
                   color: type === k ? '#F5EFE4' : '#1A1815',
@@ -73,7 +73,7 @@ export function LogView({ categories, transactions, onAdd, onRemove }: Props) {
         </div>
 
         {/* Amount */}
-        <div className="hairline mb-4 flex items-center gap-3 border-b pb-3">
+        <div className="mb-4 flex items-center gap-3 border-b hairline pb-3">
           <span className="font-display text-3xl text-muted">$</span>
           <input
             type="number"
@@ -125,13 +125,13 @@ export function LogView({ categories, transactions, onAdd, onRemove }: Props) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && add()}
-            className="focus-ring rounded-lg bg-ink/[0.04] px-3 py-2 text-sm"
+            className="rounded-lg bg-ink/4 px-3 py-2 text-sm focus-ring"
           />
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="focus-ring font-mono-tab rounded-lg bg-ink/[0.04] px-3 py-2 text-sm"
+            className="rounded-lg bg-ink/4 px-3 py-2 font-mono-tab text-sm focus-ring"
           />
         </div>
       </section>
@@ -147,14 +147,14 @@ export function LogView({ categories, transactions, onAdd, onRemove }: Props) {
             No transactions logged this month.
           </div>
         ) : (
-          <ul className="card divide-y divide-hairline overflow-hidden">
+          <ul className="divide-y divide-hairline overflow-hidden card">
             {sorted.map((t) => {
               const cat = categories.find((c) => c.id === t.categoryId);
               const info = cat ? TYPE_META[cat.type] : null;
               const d = new Date(t.date);
               return (
                 <li key={t.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="font-mono-tab w-11 text-[10px] leading-tight text-muted">
+                  <div className="w-11 font-mono-tab text-[10px] leading-tight text-muted">
                     {d
                       .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                       .toUpperCase()}

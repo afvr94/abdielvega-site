@@ -14,7 +14,7 @@ Plus `/hiit` — a standalone, public interval timer on the apex host (linked fr
 `lib/portfolio/content.ts`). No auth, no database; workouts live in the URL and
 `localStorage`.
 
-The subdomain split is handled in `middleware.ts`, driven by a `GATED_APPS` list
+The subdomain split is handled in `proxy.ts` (Next 16's renamed middleware), driven by a `GATED_APPS` list
 that pairs a host pattern with a path prefix (`budget.` → `/budget`, `tv.` → `/tv`):
 
 - Requests to a gated host are **rewritten** to `<prefix>/*` internally, and only pass when there is an authenticated Supabase session (otherwise → `/login`).
@@ -28,7 +28,7 @@ gate, and the apex-side hiding all follow from it.
 
 ```
 app/
-  (site)/               # portfolio (uses shared Masthead/Nav/Footer)
+  (site)/               # portfolio: own fonts (fonts.ts), crate.css, template.tsx route transition
     layout.tsx
     page.tsx            # /
     about/page.tsx
@@ -58,7 +58,7 @@ app/
   fonts.ts
   globals.css
 components/
-  site/                 # portfolio-only UI
+  site/                 # portfolio-only UI (SiteHeader, SiteFooter, GroveScene, ProjectLabel, ContactForm)
   budget/               # budget-tracker UI (BudgetTracker, Dashboard, LogView, PlanView, SetupView, LoginForm)
   tv/                   # TvNav, ShowsLibrary, ShowDetailClient, UpNextCard,
                         # FollowButton, WantToWatchButton, ListPicker,
@@ -73,14 +73,18 @@ lib/
   mail.ts               # nodemailer SMTP helper
 scripts/                # one-off tsx scripts (import-tvtime, seed-anime-list)
 test/                   # vitest — lib/ unit tests + components/ RTL tests
-middleware.ts           # subdomain rewrite + auth gate
+proxy.ts                # subdomain rewrite + auth gate
 vercel.json             # cron: /api/tv/sync daily at 08:00 UTC
-tailwind.config.ts      # editorial palette + font vars
 ```
 
-## Design system — preserve
+## Design systems — preserve
 
-Editorial/newsprint aesthetic shared across the portfolio and both trackers.
+The **portfolio** (`app/(site)`) has its own crate-label system, documented in
+`DESIGN.md`: lake-blue ground, flat lithographic inks, Ultra / Big Shoulders /
+Libre Franklin, all scoped under `.crate` in `app/(site)/crate.css`. It must not
+leak into the trackers.
+
+The **trackers** (budget, TV) share an editorial/newsprint aesthetic:
 
 - Fonts: Fraunces (display) + Instrument Sans (body) + JetBrains Mono (numerics)
 - Palette: cream `#F5EFE4` / ink `#1A1815` / muted `#8A8178`, plus income/expense/savings accents
@@ -88,7 +92,8 @@ Editorial/newsprint aesthetic shared across the portfolio and both trackers.
 - Cards: white, 14px radius, flat
 - Label tags: 10px tracking-wider uppercase
 
-Tailwind exposes these as named values: `bg-cream`, `text-ink`, `text-muted`, `border-hairline`, `text-income/expense/savings/warn`, `font-display`, `font-mono-tab`.
+Tailwind v4 is configured CSS-first in `app/globals.css` (`@theme`; there is no
+`tailwind.config.ts`) and exposes these as named values: `bg-cream`, `text-ink`, `text-muted`, `border-hairline`, `text-income/expense/savings/warn`, `font-display`, `font-mono-tab`.
 
 **Dark mode** is TV-only. Colors are RGB triples in CSS custom properties
 (`--ink`, …) in `app/globals.css`, re-declared under `:root.dark`. An inline
@@ -137,7 +142,7 @@ header: `curl -H "Host: budget.abdielvega.com" http://localhost:3000/` or
 - **Add a portfolio project manually:** not possible — projects come from GitHub. Edit `lib/portfolio/github.ts` `HIDDEN` set to hide repos, or push a new repo with a good description.
 - **Add a budget category:** Setup tab in the tracker UI. Defaults seeded on first login via the SQL in `DEPLOY.md`.
 - **Change bio / skills / socials:** edit `lib/portfolio/content.ts`. Single source of truth for the portfolio (including the nav links).
-- **Change typography:** edit `app/fonts.ts` + `tailwind.config.ts` (fontFamily) + `app/globals.css`.
+- **Change typography:** trackers: `app/fonts.ts` + the `@theme` block in `app/globals.css`. Portfolio: `app/(site)/fonts.ts` + the `@theme inline` font block in `app/globals.css`.
 - **Change contact form behavior:** `app/api/contact/route.ts` validates, filters via `lib/portfolio/spam.ts`, and calls `lib/mail.ts`.
 - **Add a TV mutation:** add a server action to `app/tv/actions.ts` — every write goes through there, and each one revalidates the affected paths.
 - **Change what TMDB data is stored:** `lib/tv/cache.ts` maps the API response onto `tv_shows` / `tv_episodes`; add the column in `DEPLOY.md`'s schema too.

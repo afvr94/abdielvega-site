@@ -51,7 +51,7 @@ export function SearchClient() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Find a show to follow…"
           autoFocus
-          className="w-full bg-transparent py-2.5 text-[15px] focus:outline-none"
+          className="w-full bg-transparent py-2.5 text-[15px] focus:outline-hidden"
         />
       </div>
 
@@ -59,7 +59,7 @@ export function SearchClient() {
         {hits.map((hit) => (
           <div
             key={hit.tmdbId}
-            className="card flex items-center gap-3 border border-hairline p-2.5"
+            className="flex items-center gap-3 card border border-hairline p-2.5"
           >
             <Link
               href={`/show/${hit.tmdbId}`}
@@ -72,11 +72,11 @@ export function SearchClient() {
             <div className="min-w-0 flex-1">
               <Link
                 href={`/show/${hit.tmdbId}`}
-                className="font-display font-semibold leading-tight hover:underline"
+                className="font-display leading-tight font-semibold hover:underline"
               >
                 {hit.name}
                 {hit.year ? (
-                  <span className="font-mono-tab ml-1.5 text-xs text-muted">{hit.year}</span>
+                  <span className="ml-1.5 font-mono-tab text-xs text-muted">{hit.year}</span>
                 ) : null}
               </Link>
               {hit.overview ? (

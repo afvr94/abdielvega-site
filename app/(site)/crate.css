@@ -1,0 +1,220 @@
+/* The portfolio's material layer: lake-blue ground, flat inks, press-run motion.
+   Everything is scoped under .crate so the trackers never inherit it. */
+
+body:has(.crate) {
+  background: var(--color-lake);
+}
+
+.crate {
+  --crate-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--color-lake);
+  color: var(--color-paper);
+  font-family: var(--font-franklin-gothic), 'Franklin Gothic Medium', sans-serif;
+  caret-color: var(--color-tangelo);
+  scrollbar-color: var(--color-lemon) var(--color-lake-deep);
+}
+
+.crate ::selection {
+  background: var(--color-lemon);
+  color: var(--color-lake);
+}
+
+.crate :focus-visible {
+  outline: 3px solid var(--color-tangelo);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Crate labels are framed by a heavy rule, a gap of ground, then a fine rule.
+   --rule comes from an inline style per label, so states override --rule-on. */
+.label-rule {
+  border: 3px solid var(--rule-on, var(--rule, currentColor));
+  box-shadow:
+    inset 0 0 0 5px var(--ground, transparent),
+    inset 0 0 0 6px var(--rule-on, var(--rule, currentColor));
+  transition:
+    border-color 260ms var(--crate-ease),
+    box-shadow 260ms var(--crate-ease);
+}
+
+/* Underlines draw in from the left rather than appearing. */
+.ink-link {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  padding-bottom: 2px;
+  transition: background-size 420ms var(--crate-ease);
+}
+.ink-link:hover,
+.ink-link:focus-visible,
+[aria-current='page'] .ink-link {
+  background-size: 100% 2px;
+}
+
+/* Buttons step up on hover and press on click. */
+.press {
+  transition:
+    transform 180ms var(--crate-ease),
+    background-color 220ms var(--crate-ease),
+    color 220ms var(--crate-ease);
+}
+.press:hover {
+  transform: translateY(-2px);
+}
+.press:active {
+  transform: translateY(1px);
+  transition-duration: 60ms;
+}
+
+/* Linked labels lift 2px and their rule takes the active ink. */
+.lift {
+  transition:
+    transform 260ms var(--crate-ease),
+    border-color 260ms var(--crate-ease),
+    box-shadow 260ms var(--crate-ease);
+}
+.lift:hover,
+.lift:focus-visible {
+  transform: translateY(-2px);
+  --rule-on: var(--color-tangelo);
+}
+
+/* ── The press run: the hero prints one ink plate at a time, each landing
+   slightly out of register before it settles. ── */
+@keyframes plate-print {
+  0% {
+    opacity: 0;
+    transform: translate(var(--mx, 0), var(--my, 0));
+  }
+  35% {
+    opacity: 1;
+  }
+  70% {
+    transform: translate(calc(var(--mx, 0) * -0.18), calc(var(--my, 0) * -0.18));
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Route changes arrive like a fresh label slapped onto the next crate. */
+@keyframes slap {
+  from {
+    opacity: 0.4;
+    transform: translateY(10px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .plate {
+    animation: plate-print 1100ms var(--crate-ease) both;
+    animation-delay: var(--d, 0ms);
+  }
+  .plate-lemon {
+    --d: 150ms;
+    --mx: -14px;
+    --my: 8px;
+  }
+  .plate-blue {
+    --d: 380ms;
+    --mx: 12px;
+    --my: -10px;
+  }
+  .plate-green {
+    --d: 600ms;
+    --mx: -10px;
+    --my: -12px;
+  }
+  .plate-tangelo {
+    --d: 840ms;
+    --mx: 16px;
+    --my: 12px;
+  }
+
+  .enter-stamp {
+    animation: stamp 900ms var(--crate-ease) both;
+    animation-delay: var(--d, 0ms);
+  }
+  .enter-wipe {
+    animation: wipe 800ms var(--crate-ease) 320ms both;
+  }
+  .enter-rise {
+    animation: rise 800ms var(--crate-ease) both;
+    animation-delay: var(--d, 0ms);
+  }
+  .route-slap {
+    animation: slap 520ms var(--crate-ease) both;
+  }
+
+  /* The lede inks itself line by line as it scrolls into view. */
+  @supports (animation-timeline: view()) {
+    @keyframes ink-word {
+      from {
+        color: rgb(255 252 245 / 0.22);
+      }
+      to {
+        color: var(--color-paper);
+      }
+    }
+    .ink-words > span {
+      animation: ink-word linear both;
+      animation-timeline: view();
+      animation-range: entry 100% cover 45%;
+    }
+  }
+}
+
+/* Portrait printed as a two-ink duotone; it comes to full colour on hover. */
+.duotone {
+  background: var(--color-lemon);
+}
+.duotone img {
+  filter: grayscale(1) contrast(1.15);
+  mix-blend-mode: multiply;
+  transition:
+    filter 700ms var(--crate-ease),
+    transform 700ms var(--crate-ease);
+}
+.duotone:hover img {
+  filter: none;
+  transform: scale(1.03);
+}

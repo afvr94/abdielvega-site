@@ -1,6 +1,6 @@
+import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import { Download } from 'lucide-react';
-import { SectionHeader } from '@/components/site/SectionHeader';
 import { profile, bio, stack, languages } from '@/lib/portfolio/content';
 
 export const metadata = {
@@ -8,122 +8,126 @@ export const metadata = {
   description: 'A longer reading on Abdiel Vega — training, practice, and current interests.',
 };
 
+const paper = { '--rule': 'var(--color-lake)', '--ground': 'var(--color-paper)' } as CSSProperties;
+
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-4xl px-5 pb-24 pt-12 sm:px-8 sm:pt-16">
-      <SectionHeader
-        folio="01 — Biography"
-        kicker="In which a portrait is attempted"
-        title={`About ${profile.name}`}
-        summary={bio.lede}
-      />
-
-      <div className="grid gap-10 sm:grid-cols-[1fr_220px] sm:gap-12">
-        <article className="prose prose-lg max-w-none font-display text-[18px] leading-[1.6]">
-          {bio.full.map((para, i) => (
-            <p
-              key={i}
-              className={
-                i === 0
-                  ? 'first-letter:float-left first-letter:mr-2 first-letter:font-display first-letter:text-[72px] first-letter:font-semibold first-letter:leading-[0.85]'
-                  : 'mt-6'
-              }
-            >
-              {para}
-            </p>
-          ))}
-        </article>
-
-        <aside className="sm:sticky sm:top-8 sm:self-start">
-          <figure className="card overflow-hidden border border-hairline">
-            <div className="relative aspect-[3/4] w-full">
+    <div className="mx-auto max-w-[1320px] px-4 pt-10 sm:px-8 sm:pt-16">
+      <header className="grid gap-12 lg:grid-cols-12 lg:items-center">
+        <div className="lg:col-span-8">
+          <h1 className="enter-stamp font-wordmark text-[clamp(3rem,8vw,7rem)] leading-[0.9]">
+            About
+            <br />
+            {profile.name}
+          </h1>
+          <p className="mt-8 max-w-[36ch] text-[clamp(1.25rem,2vw,1.6rem)] leading-snug text-mist">
+            {bio.lede}
+          </p>
+        </div>
+        <div className="lg:col-span-4">
+          <div className="mx-auto w-full max-w-[300px] rounded-[50%] border-[3px] border-lemon p-2">
+            <div className="duotone relative aspect-[3/4] overflow-hidden rounded-[50%]">
               <Image
                 src={profile.photo}
-                alt={profile.fullName}
+                alt={`Portrait of ${profile.fullName}`}
                 fill
-                sizes="220px"
+                priority
+                sizes="300px"
                 className="object-cover"
               />
             </div>
-            <figcaption className="hairline border-t px-4 py-3">
-              <div className="font-display text-sm font-semibold">{profile.fullName}</div>
-              <div className="font-mono-tab mt-0.5 text-[10px] uppercase tracking-wider text-muted">
-                {profile.city}
-              </div>
-            </figcaption>
-          </figure>
-        </aside>
-      </div>
-
-      {/* ─────────────────── STACK ─────────────────── */}
-      <section className="mt-24">
-        <div className="mb-6 flex items-baseline gap-3">
-          <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-            § 02
-          </span>
-          <h2 className="font-display text-3xl font-semibold">The stack</h2>
+          </div>
         </div>
-        <div className="card divide-y divide-hairline overflow-hidden border border-hairline">
+      </header>
+
+      <section aria-labelledby="bio-title" className="mt-24 sm:mt-32">
+        <div
+          style={paper}
+          className="label-rule grid gap-8 bg-paper p-7 text-lake sm:p-12 lg:grid-cols-12 lg:p-16"
+        >
+          <h2 id="bio-title" className="font-wordmark text-3xl sm:text-4xl lg:col-span-4">
+            Biography
+          </h2>
+          <div className="max-w-[65ch] space-y-6 text-[18px] leading-[1.7] sm:text-[19px] lg:col-span-8">
+            {bio.full.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="stack-title" className="mt-24 sm:mt-32">
+        <h2 id="stack-title" className="font-wordmark text-[clamp(2.5rem,6vw,5rem)] leading-[0.95]">
+          The stack
+        </h2>
+        <dl className="mt-10 border-t-2 border-reef">
           {stack.map((group) => (
             <div
               key={group.label}
-              className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-baseline sm:gap-6"
+              className="grid gap-2 border-b-2 border-reef py-6 sm:grid-cols-12 sm:items-baseline sm:gap-8"
             >
-              <div className="label-tag sm:w-40 sm:shrink-0">{group.label}</div>
-              <ul className="font-mono-tab flex flex-wrap items-baseline text-[14px]">
-                {group.items.map((item, i) => (
-                  <li key={item} className="inline-flex items-center">
-                    {i > 0 ? <span className="mx-2 text-muted">·</span> : null}
-                    {item}
-                  </li>
-                ))}
-              </ul>
+              <dt className="font-wordmark text-2xl text-lemon sm:col-span-4">{group.label}</dt>
+              <dd className="font-gothic text-xl font-bold tracking-[0.08em] uppercase sm:col-span-8">
+                {group.items.join(' · ')}
+              </dd>
             </div>
           ))}
-        </div>
+        </dl>
       </section>
 
-      {/* ─────────────────── LANGUAGES ─────────────────── */}
-      <section className="mt-16">
-        <div className="mb-6 flex items-baseline gap-3">
-          <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-            § 03
-          </span>
-          <h2 className="font-display text-3xl font-semibold">Languages</h2>
-        </div>
-        <div className="card divide-y divide-hairline overflow-hidden border border-hairline">
-          {languages.map((l) => (
-            <div key={l.name} className="flex items-baseline justify-between gap-4 px-5 py-4">
-              <span className="font-display text-xl font-semibold">{l.name}</span>
-              <span className="font-mono-tab text-xs uppercase tracking-wider text-muted">
+      <section aria-labelledby="lang-title" className="mt-24 sm:mt-32">
+        <h2 id="lang-title" className="font-wordmark text-[clamp(2.5rem,6vw,5rem)] leading-[0.95]">
+          Languages
+        </h2>
+        <ul className="mt-10 grid gap-5 sm:grid-cols-2">
+          {languages.map((l, i) => (
+            <li
+              key={l.name}
+              style={
+                {
+                  '--rule': 'var(--color-lemon)',
+                  '--ground': i === 0 ? 'var(--color-grove)' : 'var(--color-lake-deep)',
+                } as CSSProperties
+              }
+              className={`label-rule flex items-baseline justify-between gap-4 p-7 sm:p-9 ${
+                i === 0 ? 'bg-grove' : 'bg-lake-deep'
+              }`}
+            >
+              <span className="font-wordmark text-3xl">{l.name}</span>
+              <span className="font-gothic text-lg font-bold tracking-[0.16em] text-lemon uppercase">
                 {l.note}
               </span>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      {/* ─────────────────── RESUME ─────────────────── */}
-      <section className="mt-16">
-        <div className="mb-6 flex items-baseline gap-3">
-          <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-            § 04
-          </span>
-          <h2 className="font-display text-3xl font-semibold">Résumé</h2>
-        </div>
+      <section aria-labelledby="resume-title" className="mt-24 sm:mt-32">
+        <h2 id="resume-title" className="sr-only">
+          Résumé
+        </h2>
         <a
           href={profile.resume}
           target="_blank"
           rel="noreferrer noopener"
-          className="card group flex items-center justify-between gap-4 border border-hairline px-6 py-5 transition-colors hover:bg-ink/[0.02]"
+          style={
+            { '--rule': 'var(--color-lake)', '--ground': 'var(--color-lemon)' } as CSSProperties
+          }
+          className="lift label-rule group flex flex-col gap-6 bg-lemon p-8 text-lake sm:flex-row sm:items-center sm:justify-between sm:p-12"
         >
-          <div>
-            <div className="label-tag mb-1">PDF · One page</div>
-            <div className="font-display text-xl font-semibold">Download the long form</div>
-          </div>
+          <span>
+            <span className="block font-wordmark text-[clamp(2rem,4.5vw,3.75rem)] leading-none">
+              Download the long form
+            </span>
+            <span className="mt-3 block font-gothic text-lg font-bold tracking-[0.16em] uppercase">
+              Résumé · PDF · One page
+            </span>
+          </span>
           <Download
-            size={20}
-            className="text-muted transition-transform group-hover:translate-y-0.5 group-hover:text-ink"
+            size={44}
+            aria-hidden
+            strokeWidth={2.25}
+            className="shrink-0 transition-transform duration-300 group-hover:translate-y-1"
           />
         </a>
       </section>
