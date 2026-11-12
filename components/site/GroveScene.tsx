@@ -75,10 +75,36 @@ export function PackersSeal({
 
 const ARCH = 'M0 660V250C0 112 134 0 300 0s300 112 300 250v410Z';
 
-export function GroveScene({ className = '' }: { className?: string }) {
+// The page paints with the theme's CSS variables; the OG image renders outside
+// the page (Satori) and passes literal hex instead.
+const CSS_INKS = {
+  lemon: 'var(--color-lemon)',
+  paper: 'var(--color-paper)',
+  grove: 'var(--color-grove)',
+  sprout: 'var(--color-sprout)',
+  reef: 'var(--color-reef)',
+  lake: 'var(--color-lake)',
+  tangelo: 'var(--color-tangelo)',
+};
+
+export type GroveInks = typeof CSS_INKS;
+
+export function GroveScene({
+  className = '',
+  inks = CSS_INKS,
+  width,
+  height,
+}: {
+  className?: string;
+  inks?: GroveInks;
+  width?: number;
+  height?: number;
+}) {
   return (
     <svg
       viewBox="0 0 620 720"
+      width={width}
+      height={height}
       role="img"
       aria-label="A lake at sunset behind a citrus grove, with a Minneola tangelo in front"
       className={className}
@@ -91,19 +117,19 @@ export function GroveScene({ className = '' }: { className?: string }) {
 
       <g clipPath="url(#grove-arch)">
         <g className="plate plate-lemon">
-          <rect width="600" height="660" fill="var(--color-lemon)" />
-          <circle cx="410" cy="300" r="80" fill="var(--color-paper)" />
+          <rect width="600" height="660" fill={inks.lemon} />
+          <circle cx="410" cy="300" r="80" fill={inks.paper} />
         </g>
 
         <g className="plate plate-green">
           <path
             d="M0 352c48-30 96-38 150-22 40-34 96-44 150-18 44-26 104-30 150-6 56-22 112-14 150 10v74H0Z"
-            fill="var(--color-grove)"
+            fill={inks.grove}
           />
         </g>
 
         <g className="plate plate-blue">
-          <rect y="362" width="600" height="300" fill="var(--color-reef)" />
+          <rect y="362" width="600" height="300" fill={inks.reef} />
           {[392, 414, 436, 458, 480, 502].map((y, i) => (
             <line
               key={y}
@@ -111,7 +137,7 @@ export function GroveScene({ className = '' }: { className?: string }) {
               x2={410 + (70 - i * 10)}
               y1={y}
               y2={y}
-              stroke="var(--color-paper)"
+              stroke={inks.paper}
               strokeWidth="7"
               strokeLinecap="round"
             />
@@ -121,7 +147,7 @@ export function GroveScene({ className = '' }: { className?: string }) {
               key={y}
               d={`M300 ${y}q30-12 60 0t60 0 60 0 60 0 60 0 60 0`}
               fill="none"
-              stroke="var(--color-lake)"
+              stroke={inks.lake}
               strokeWidth="5"
               strokeLinecap="round"
             />
@@ -129,33 +155,33 @@ export function GroveScene({ className = '' }: { className?: string }) {
         </g>
 
         <g className="plate plate-green">
-          <path d="M0 660V470c70-34 170-30 250 6 52 24 92 70 112 184Z" fill="var(--color-sprout)" />
+          <path d="M0 660V470c70-34 170-30 250 6 52 24 92 70 112 184Z" fill={inks.sprout} />
           {TREES.map(([cx, cy, r]) => (
-            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill="var(--color-grove)" />
+            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill={inks.grove} />
           ))}
         </g>
 
         <g className="plate plate-tangelo">
           {FRUIT_DOTS.map(([cx, cy]) => (
-            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="5.5" fill="var(--color-tangelo)" />
+            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="5.5" fill={inks.tangelo} />
           ))}
         </g>
       </g>
 
       <g className="plate plate-lemon">
-        <path d={ARCH} fill="none" stroke="var(--color-lemon)" strokeWidth="5" />
+        <path d={ARCH} fill="none" stroke={inks.lemon} strokeWidth="5" />
       </g>
 
       {/* The tangelo breaks out of the arch, as the hero fruit on a crate label does. */}
       <g className="plate plate-tangelo">
-        <circle cx="492" cy="598" r="112" fill="var(--color-tangelo)" />
+        <circle cx="492" cy="598" r="112" fill={inks.tangelo} />
         <ellipse
           cx="462"
           cy="484"
           rx="34"
           ry="26"
           transform="rotate(-24 462 484)"
-          fill="var(--color-tangelo)"
+          fill={inks.tangelo}
         />
         <ellipse
           cx="440"
@@ -163,15 +189,15 @@ export function GroveScene({ className = '' }: { className?: string }) {
           rx="26"
           ry="13"
           transform="rotate(-38 440 560)"
-          fill="var(--color-lemon)"
+          fill={inks.lemon}
         />
       </g>
 
       <g className="plate plate-green">
-        <path d="M452 466c-28-44-84-60-128-40 26 42 82 58 128 40Z" fill="var(--color-grove)" />
-        <path d="M452 466c-38-14-80-24-118-36" stroke="var(--color-sprout)" strokeWidth="3" />
-        <path d="M466 462c16-48 64-78 112-70-12 48-62 76-112 70Z" fill="var(--color-grove)" />
-        <path d="M466 462c32-22 70-48 104-62" stroke="var(--color-sprout)" strokeWidth="3" />
+        <path d="M452 466c-28-44-84-60-128-40 26 42 82 58 128 40Z" fill={inks.grove} />
+        <path d="M452 466c-38-14-80-24-118-36" stroke={inks.sprout} strokeWidth="3" />
+        <path d="M466 462c16-48 64-78 112-70-12 48-62 76-112 70Z" fill={inks.grove} />
+        <path d="M466 462c32-22 70-48 104-62" stroke={inks.sprout} strokeWidth="3" />
       </g>
     </svg>
   );
