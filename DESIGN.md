@@ -212,6 +212,11 @@ Square corners throughout (radius 0). Two exceptions, both from the label world:
 
 - AV seal (2px lemon ring, Ultra initials) plus the name, then five gothic uppercase links. Mist at rest, paper on hover, lemon when current, with an underline that draws in from the left. Links wrap tighter below 400px; there's no hamburger menu.
 
+### Share image and 404
+
+- `app/opengraph-image.tsx` renders the hero label (wordmark, lemon variety band, `GroveScene` with literal hex inks) at 1200×630.
+- `app/not-found.tsx` serves a crate label (seal, Ultra 404, script line, lemon button) on the portfolio, and the editorial 404 on the tracker hosts.
+
 ### Footer (crate end)
 
 - A grove field with a stencilled "MINNEOLA · FLA." in sprout, then colophon, correspondence, and © columns with lemon gothic headings.
