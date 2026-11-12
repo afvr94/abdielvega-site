@@ -141,7 +141,7 @@ export default function Builder({
 
   return (
     <div
-      className="min-h-[100dvh] w-full"
+      className="min-h-dvh w-full"
       style={{
         background: '#faf6f0',
         color: '#1a1a1a',
@@ -357,7 +357,7 @@ export default function Builder({
             value={editorText}
             onChange={(e) => handleEditorChange(e.target.value)}
             spellCheck={false}
-            className="w-full rounded-xl border p-4 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-lime-400/30"
+            className="w-full rounded-xl border p-4 text-xs leading-relaxed outline-hidden focus:ring-2 focus:ring-lime-400/30"
             style={{
               fontFamily: 'var(--font-jetbrains, "JetBrains Mono", monospace)',
               minHeight: 320,
@@ -404,7 +404,7 @@ export default function Builder({
             </p>
             <p>
               <span className="font-bold">Quick links</span>:{' '}
-              <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">
+              <code className="rounded-sm bg-stone-100 px-1.5 py-0.5 text-xs">
                 /hiit?ex=Squats,Lunges&work=40&rest=20&rounds=3
               </code>
             </p>

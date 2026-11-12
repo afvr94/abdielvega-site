@@ -52,7 +52,7 @@ export function ListPicker({
 
   return (
     <div className="mb-6">
-      <div className="label-tag mb-2">Lists</div>
+      <div className="mb-2 label-tag">Lists</div>
       <div className="flex flex-wrap items-center gap-2">
         {memberLists.map((l) => (
           <span
@@ -107,7 +107,7 @@ export function ListPicker({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="New list…"
-                    className="min-w-0 flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-2 py-1 text-sm focus:outline-hidden"
                   />
                   <button
                     type="submit"

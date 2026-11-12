@@ -3,7 +3,8 @@ export const profile = {
   fullName: 'Abdiel F. Vega Ramos',
   title: 'Full-stack engineer',
   city: 'Minneola, Florida',
-  email: 'me@abdielvega.com',
+  town: 'Minneola',
+  email: 'hey@abdielvega.com',
   since: 2018,
   photo: 'https://abdielvegabucket.s3.amazonaws.com/1639234866541.jpeg',
   resume: 'https://abdielvegabucket.s3.amazonaws.com/Abdiel_Vega_Resume.pdf',
@@ -59,6 +60,9 @@ export const bio = {
     'When I’m not shipping, I’m cycling around central Florida, lifting, or disappearing into whatever engineering rabbit hole caught me that week.',
   ],
 } as const;
+
+export const contactSummary =
+  'For work, ideas, corrections, or simply to say hello. I read everything and reply to what deserves a reply — usually within a day or two.';
 
 export const nav = [
   { href: '/', label: 'Home' },

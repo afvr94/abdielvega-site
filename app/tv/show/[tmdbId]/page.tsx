@@ -25,7 +25,7 @@ export default async function ShowPage({ params }: { params: Promise<{ tmdbId: s
     const backdrop = imageUrl(show.backdrop_path, 'w780');
     return (
       <div>
-        <div className="relative mb-6 aspect-[16/7] w-full overflow-hidden rounded-card bg-ink/5">
+        <div className="relative mb-6 aspect-16/7 w-full overflow-hidden rounded-card bg-ink/5">
           {backdrop ? (
             <Image src={backdrop} alt="" fill sizes="900px" className="object-cover" />
           ) : null}

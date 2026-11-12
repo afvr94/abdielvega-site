@@ -47,7 +47,7 @@ export function PlanView({
   return (
     <div>
       <section className="mb-5">
-        <div className="label-tag mb-1">Planning</div>
+        <div className="mb-1 label-tag">Planning</div>
         <h2 className="font-display text-3xl font-semibold">
           Set {formatMonthLong(currentMonth)}&rsquo;s plan
         </h2>
@@ -56,7 +56,7 @@ export function PlanView({
         </p>
       </section>
 
-      <div className="card mb-5 p-4">
+      <div className="mb-5 card p-4">
         <div className="mb-3 grid grid-cols-3 gap-3">
           {TYPE_ORDER.map((k) => (
             <div key={k}>
@@ -67,7 +67,7 @@ export function PlanView({
             </div>
           ))}
         </div>
-        <div className="hairline flex items-center justify-between border-t pt-3">
+        <div className="flex items-center justify-between border-t hairline pt-3">
           <span className="label-tag">Unallocated</span>
           <span
             className="font-display text-xl font-semibold"
@@ -89,13 +89,13 @@ export function PlanView({
       <div className="mb-5 flex gap-2">
         <button
           onClick={copyFromPrevMonth}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-ink/10 py-2.5 text-xs font-semibold uppercase tracking-wider"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-ink/10 py-2.5 text-xs font-semibold tracking-wider uppercase"
         >
           <Copy size={13} /> Copy previous
         </button>
         <button
           onClick={resetToDefaults}
-          className="flex-1 rounded-full bg-ink/10 py-2.5 text-xs font-semibold uppercase tracking-wider"
+          className="flex-1 rounded-full bg-ink/10 py-2.5 text-xs font-semibold tracking-wider uppercase"
         >
           Reset to defaults
         </button>
@@ -115,12 +115,12 @@ export function PlanView({
                 {fmtUSD(draftTotals[typeKey])}
               </span>
             </div>
-            <div className="card overflow-hidden">
+            <div className="overflow-hidden card">
               {cats.map((c, i) => (
                 <div
                   key={c.id}
                   className={`flex items-center gap-2 px-3 py-2.5 ${
-                    i < cats.length - 1 ? 'hairline border-b' : ''
+                    i < cats.length - 1 ? 'border-b hairline' : ''
                   }`}
                 >
                   <span className="flex-1 text-sm font-medium">{c.name}</span>
@@ -131,7 +131,7 @@ export function PlanView({
                     value={plan[c.id] ?? c.defaultAmount ?? ''}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => onUpdate(c.id, parseFloat(e.target.value) || 0)}
-                    className="focus-ring font-mono-tab w-24 rounded bg-ink/[0.03] px-2 py-1.5 text-right text-sm"
+                    className="w-24 rounded-sm bg-ink/3 px-2 py-1.5 text-right font-mono-tab text-sm focus-ring"
                   />
                 </div>
               ))}

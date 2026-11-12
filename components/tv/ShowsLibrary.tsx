@@ -81,10 +81,10 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
       </div>
 
       {lists.length > 0 ? (
-        <div className="no-scrollbar -mx-5 mb-3 flex items-center gap-1.5 overflow-x-auto px-5">
+        <div className="-mx-5 mb-3 no-scrollbar flex items-center gap-1.5 overflow-x-auto px-5">
           <button
             onClick={() => setListId(null)}
-            className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
               listId == null
                 ? 'border-savings bg-savings text-white'
                 : 'border-hairline text-muted hover:text-ink'
@@ -96,30 +96,30 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
             <button
               key={l.id}
               onClick={() => setListId(l.id)}
-              className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
                 listId === l.id
                   ? 'border-savings bg-savings text-white'
                   : 'border-hairline text-muted hover:text-ink'
               }`}
             >
               {l.name}
-              <span className="font-mono-tab ml-1.5 opacity-60">{l.count}</span>
+              <span className="ml-1.5 font-mono-tab opacity-60">{l.count}</span>
             </button>
           ))}
         </div>
       ) : null}
 
-      <div className="no-scrollbar -mx-5 mb-5 flex gap-1.5 overflow-x-auto px-5">
+      <div className="-mx-5 mb-5 no-scrollbar flex gap-1.5 overflow-x-auto px-5">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setFilter(t.key)}
-            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
               filter === t.key ? 'bg-ink text-cream' : 'text-muted hover:text-ink'
             }`}
           >
             {t.label}
-            <span className="font-mono-tab ml-1.5 opacity-60">{counts[t.key]}</span>
+            <span className="ml-1.5 font-mono-tab opacity-60">{counts[t.key]}</span>
           </button>
         ))}
       </div>
@@ -135,7 +135,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
             return (
               <Link key={i.show.tmdbId} href={`/show/${i.show.tmdbId}`} className="group">
                 <div
-                  className={`relative aspect-[2/3] overflow-hidden rounded-lg bg-cream ${
+                  className={`relative aspect-2/3 overflow-hidden rounded-lg bg-cream ${
                     i.archived ? 'opacity-50' : ''
                   }`}
                 >
@@ -153,7 +153,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
                     </div>
                   )}
                   {behind > 0 && !i.archived ? (
-                    <span className="font-mono-tab absolute right-1.5 top-1.5 rounded-full bg-expense px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    <span className="absolute top-1.5 right-1.5 rounded-full bg-expense px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-white">
                       {behind}
                     </span>
                   ) : null}
@@ -161,7 +161,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
                     <span className="block h-full bg-income" style={{ width: `${pct}%` }} />
                   </span>
                 </div>
-                <div className="mt-1.5 truncate text-xs font-medium leading-tight text-ink">
+                <div className="mt-1.5 truncate text-xs leading-tight font-medium text-ink">
                   {i.show.name}
                 </div>
                 <div className="font-mono-tab text-[10px] text-muted">

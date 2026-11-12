@@ -1,228 +1,323 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowUpRight } from 'lucide-react';
-import { profile, stack, bio } from '@/lib/portfolio/content';
+import { ArrowRight, ArrowUpRight, Download } from 'lucide-react';
+import { profile, stack, bio, contactSummary } from '@/lib/portfolio/content';
 import { fetchRepos } from '@/lib/portfolio/github';
+import { GroveScene, PackersSeal } from '@/components/site/GroveScene';
+import { ProjectLabel } from '@/components/site/ProjectLabel';
+
+const currently = [
+  {
+    label: 'Building',
+    body: 'A zero-based budget tracker at budget.abdielvega.com — Supabase + Next.js.',
+  },
+  { label: 'Reading', body: 'Whatever engineering rabbit hole caught me this week.' },
+  { label: 'Away from a keyboard', body: 'Cycling Central Florida. Lifting. Learning.' },
+];
+
+const TOOL_INKS = [
+  {
+    box: 'bg-paper text-lake',
+    head: 'text-lake',
+    rule: 'var(--color-lake)',
+    ground: 'var(--color-paper)',
+  },
+  {
+    box: 'bg-grove text-paper',
+    head: 'text-lemon',
+    rule: 'var(--color-lemon)',
+    ground: 'var(--color-grove)',
+  },
+  {
+    box: 'bg-reef text-paper',
+    head: 'text-paper',
+    rule: 'var(--color-paper)',
+    ground: 'var(--color-reef)',
+  },
+  {
+    box: 'bg-lemon text-lake',
+    head: 'text-lake',
+    rule: 'var(--color-lake)',
+    ground: 'var(--color-lemon)',
+  },
+] as const;
+
+const FEATURE_SPANS = ['lg:col-span-7', 'lg:col-span-5', 'lg:col-span-12'];
+
+function inks(rule: string, ground: string) {
+  return { '--rule': rule, '--ground': ground } as CSSProperties;
+}
 
 export default async function HomePage() {
   const repos = await fetchRepos();
   const featured = repos.slice(0, 3);
 
+  const contents = [
+    { name: 'HIIT timer', note: 'Interval timer · public', href: '/hiit' },
+    { name: 'The Ledger', note: 'Zero-based budget tracker · private' },
+    { name: 'The Marquee', note: 'TV series tracker · private' },
+    {
+      name: repos.length > 0 ? `${repos.length} repositories` : 'Repositories',
+      note: 'Open source on GitHub',
+      href: '/projects',
+    },
+  ];
+
   return (
-    <div className="mx-auto max-w-5xl px-5 pb-24 pt-12 sm:px-8 sm:pt-20">
-      {/* ─────────────────── HERO ─────────────────── */}
-      <section className="grid gap-10 sm:grid-cols-[1fr_minmax(220px,280px)] sm:gap-16">
-        <div>
-          <div className="mb-5 flex items-center gap-3">
-            <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-              § 01 — Masthead
-            </span>
-            <span className="hairline flex-1 border-t" />
-          </div>
-          <h1 className="font-display text-[56px] font-medium leading-[0.92] tracking-tightest-3 sm:text-[84px] md:text-[96px]">
-            Abdiel
-            <br />
-            <span className="italic">Vega</span>,
-            <br />
-            full-stack
-            <br />
-            engineer.
-          </h1>
-          <p className="mt-10 max-w-xl text-[17px] leading-[1.55] text-ink/85 sm:text-[19px]">
-            <span className="float-left mr-2 mt-1 font-display text-[58px] font-medium leading-[0.85]">
-              {bio.lede.charAt(0)}
-            </span>
-            {bio.lede.slice(1)}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/projects"
-              className="group inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-cream transition-opacity hover:opacity-90"
+    <>
+      {/* ── The label ── */}
+      <section aria-labelledby="hero-title" className="mx-auto max-w-[1320px] px-4 pt-5 sm:px-8">
+        <div
+          style={inks('var(--color-lemon)', 'var(--color-lake)')}
+          className="label-rule grid gap-x-8 gap-y-10 p-5 sm:p-8 lg:min-h-[calc(100svh-6.5rem)] lg:grid-cols-12 lg:grid-rows-[1fr_auto] lg:p-10"
+        >
+          <div className="relative flex flex-col lg:col-span-7">
+            <PackersSeal
+              style={{ '--d': '1300ms' } as CSSProperties}
+              className="enter-stamp absolute top-0 right-0 hidden w-28 -rotate-12 sm:block xl:w-32"
+            />
+            <h1
+              id="hero-title"
+              className="enter-stamp font-wordmark text-[clamp(3.5rem,10vw,8rem)] leading-[0.86] text-paper"
             >
-              See the index
-              <ArrowUpRight
-                size={14}
-                className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              />
-            </Link>
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-1.5 rounded-full border border-ink/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-ink/5"
-            >
-              Read the bio
-            </Link>
-          </div>
-        </div>
-
-        {/* Aside — masthead card */}
-        <aside className="card border border-hairline sm:sticky sm:top-8 sm:self-start">
-          <div className="hairline border-b p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="label-tag">Folio</span>
-              <span className="font-mono-tab text-xs text-muted">I.I</span>
-            </div>
-            <div className="font-display text-xl font-semibold leading-none">
-              The <span className="italic">standing</span> card
-            </div>
-          </div>
-
-          <dl className="divide-y divide-hairline text-sm">
-            <div className="flex items-baseline justify-between px-5 py-3">
-              <dt className="label-tag">Location</dt>
-              <dd className="font-mono-tab text-xs">{profile.city}</dd>
-            </div>
-            <div className="flex items-baseline justify-between px-5 py-3">
-              <dt className="label-tag">Practising since</dt>
-              <dd className="font-mono-tab text-xs">{profile.since}</dd>
-            </div>
-            <div className="flex items-baseline justify-between px-5 py-3">
-              <dt className="label-tag">Correspondence</dt>
-              <dd>
-                <a
-                  href={`mailto:${profile.email}`}
-                  className="font-mono-tab text-xs hover:text-expense"
-                >
-                  {profile.email}
-                </a>
-              </dd>
-            </div>
-            <div className="flex items-baseline justify-between px-5 py-3">
-              <dt className="label-tag">Status</dt>
-              <dd className="font-mono-tab text-xs text-income">
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full bg-income align-middle" />
-                Open to work
-              </dd>
-            </div>
-          </dl>
-
-          <div className="hairline border-t p-5">
-            <div className="relative mx-auto aspect-[3/4] w-28 overflow-hidden rounded-sm">
-              <Image
-                src={profile.photo}
-                alt={profile.fullName}
-                fill
-                sizes="120px"
-                className="object-cover grayscale"
-              />
-            </div>
-            <p className="font-mono-tab mt-3 text-center text-[10px] uppercase tracking-wider text-muted">
-              Photographed, Minneola FL
+              Abdiel
+              <br />
+              Vega
+            </h1>
+            <p className="enter-wipe mt-6 self-start bg-lemon px-4 py-2 font-gothic text-[clamp(1.2rem,2.3vw,1.9rem)] leading-tight font-extrabold tracking-[0.1em] text-lake uppercase">
+              {profile.title} · {profile.town}, Fla.
             </p>
-          </div>
-        </aside>
-      </section>
+            <p
+              style={{ '--d': '480ms' } as CSSProperties}
+              className="enter-rise mt-4 font-gothic text-base font-bold tracking-[0.16em] text-mist uppercase"
+            >
+              {profile.strapline}
+            </p>
 
-      {/* ─────────────────── DIVIDER ─────────────────── */}
-      <div className="my-20 flex items-center gap-6">
-        <span className="hairline flex-1 border-t" />
-        <span className="font-display text-xl text-muted">§</span>
-        <span className="hairline flex-1 border-t" />
-      </div>
-
-      {/* ─────────────────── CURRENTLY ─────────────────── */}
-      <section className="mb-20">
-        <div className="mb-6 flex items-baseline gap-3">
-          <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-            § 02
-          </span>
-          <h2 className="font-display text-2xl font-semibold sm:text-3xl">Currently</h2>
-        </div>
-        <div className="card divide-y divide-hairline border border-hairline">
-          <CurrentlyRow
-            label="Building"
-            body="A zero-based budget tracker at budget.abdielvega.com — Supabase + Next.js, editorial twin of this site."
-          />
-          <CurrentlyRow
-            label="Reading"
-            body="Whatever engineering rabbit hole caught me this week."
-          />
-          <CurrentlyRow
-            label="Away from a keyboard"
-            body="Cycling Central Florida. Lifting. Learning."
-          />
-        </div>
-      </section>
-
-      {/* ─────────────────── STACK ─────────────────── */}
-      <section className="mb-20">
-        <div className="mb-6 flex items-baseline gap-3">
-          <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-            § 03
-          </span>
-          <h2 className="font-display text-2xl font-semibold sm:text-3xl">The tools</h2>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2">
-          {stack.map((group) => (
-            <div key={group.label} className="card border border-hairline p-5">
-              <div className="label-tag mb-3">{group.label}</div>
-              <ul className="font-mono-tab flex flex-wrap gap-x-2 gap-y-1 text-[13px]">
-                {group.items.map((item, i) => (
-                  <li key={item} className="inline-flex items-center">
-                    {i > 0 ? <span className="mx-1 text-muted">·</span> : null}
-                    {item}
-                  </li>
-                ))}
+            <div
+              style={{ '--d': '700ms' } as CSSProperties}
+              className="enter-rise mt-10 lg:mt-auto lg:pt-10"
+            >
+              <h2 className="font-script text-[2rem] leading-none text-lemon">In this crate</h2>
+              <ul className="mt-3 border-t-2 border-reef">
+                {contents.map((item) => {
+                  const row = (
+                    <>
+                      <span>
+                        <span className="block font-gothic text-lg font-extrabold tracking-[0.1em] uppercase">
+                          {item.name}
+                        </span>
+                        <span className="block text-[15px] text-mist">{item.note}</span>
+                      </span>
+                      {item.href ? (
+                        <ArrowRight
+                          size={22}
+                          aria-hidden
+                          className="text-lemon transition-transform duration-300 group-hover:translate-x-1"
+                        />
+                      ) : null}
+                    </>
+                  );
+                  return (
+                    <li key={item.name} className="border-b-2 border-reef">
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          className="group flex min-h-11 items-center justify-between gap-4 py-2.5 hover:text-lemon"
+                        >
+                          {row}
+                        </Link>
+                      ) : (
+                        <div className="flex min-h-11 items-center justify-between gap-4 py-2.5">
+                          {row}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
-          ))}
+          </div>
+
+          <div className="flex items-end justify-center lg:col-span-5 lg:row-span-1">
+            <GroveScene className="w-full max-w-[460px] lg:max-w-none" />
+          </div>
+
+          <div
+            style={{ '--d': '900ms' } as CSSProperties}
+            className="enter-rise flex flex-col gap-5 border-t-2 border-lemon pt-6 lg:col-span-12 lg:flex-row lg:items-center lg:justify-between"
+          >
+            <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-script text-[1.75rem] leading-none text-lemon">Packed by</span>
+              <span className="font-gothic text-lg font-bold tracking-[0.12em] uppercase">
+                {profile.fullName} · Est. {profile.since} ·{' '}
+                <span className="text-lemon">Open to work</span>
+              </span>
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a
+                href={profile.resume}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="press inline-flex min-h-12 items-center justify-center gap-2 bg-lemon px-6 font-gothic text-lg font-extrabold tracking-[0.12em] text-lake uppercase hover:bg-tangelo hover:text-paper"
+              >
+                <Download size={18} aria-hidden strokeWidth={2.5} />
+                Download résumé
+              </a>
+              <Link
+                href="/contact"
+                className="press inline-flex min-h-12 items-center justify-center gap-2 border-2 border-paper px-6 font-gothic text-lg font-extrabold tracking-[0.12em] uppercase hover:border-tangelo hover:bg-tangelo"
+              >
+                Write to me
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ─────────────────── SELECTED WORK ─────────────────── */}
-      <section>
-        <div className="mb-6 flex items-baseline justify-between">
-          <div className="flex items-baseline gap-3">
-            <span className="font-mono-tab text-[11px] font-semibold uppercase tracking-wider text-muted">
-              § 04
-            </span>
-            <h2 className="font-display text-2xl font-semibold sm:text-3xl">Selected work</h2>
-          </div>
-          <Link href="/projects" className="label-tag text-ink hover:text-expense">
-            Full index →
+      {/* ── The lede inks in as it scrolls into view ── */}
+      <section
+        aria-labelledby="lede-title"
+        className="mx-auto max-w-[1320px] px-4 pt-28 sm:px-8 sm:pt-40"
+      >
+        <h2 id="lede-title" className="sr-only">
+          Introduction
+        </h2>
+        <p className="ink-words max-w-[26ch] text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.14] font-semibold tracking-[-0.02em]">
+          {bio.lede.split(' ').map((word, i) => (
+            <span key={i}>{word} </span>
+          ))}
+        </p>
+        <Link
+          href="/about"
+          className="mt-10 inline-flex min-h-11 items-center gap-2 font-gothic text-xl font-extrabold tracking-[0.12em] text-lemon uppercase"
+        >
+          <span className="ink-link">Read the bio</span>
+          <ArrowRight size={20} aria-hidden strokeWidth={2.5} />
+        </Link>
+      </section>
+
+      {/* ── Currently ── */}
+      <section aria-labelledby="currently-title" className="mt-28 bg-lemon text-lake sm:mt-40">
+        <div className="mx-auto max-w-[1320px] px-4 py-20 sm:px-8 sm:py-28">
+          <h2
+            id="currently-title"
+            className="font-wordmark text-[clamp(2.75rem,6.5vw,5.5rem)] leading-[0.95]"
+          >
+            Currently
+          </h2>
+          <dl className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+            {currently.map((row) => (
+              <div key={row.label} className="border-t-[3px] border-lake pt-5">
+                <dt className="font-gothic text-xl font-extrabold tracking-[0.12em] uppercase">
+                  {row.label}
+                </dt>
+                <dd className="mt-3 text-lg leading-relaxed">{row.body}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* ── The tools ── */}
+      <section
+        aria-labelledby="tools-title"
+        className="mx-auto max-w-[1320px] px-4 pt-28 sm:px-8 sm:pt-40"
+      >
+        <h2
+          id="tools-title"
+          className="font-wordmark text-[clamp(2.75rem,6.5vw,5.5rem)] leading-[0.95] text-paper"
+        >
+          The tools
+        </h2>
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {stack.map((group, i) => {
+            const ink = TOOL_INKS[i % TOOL_INKS.length]!;
+            return (
+              <div
+                key={group.label}
+                style={inks(ink.rule, ink.ground)}
+                className={`label-rule p-6 sm:p-7 ${ink.box}`}
+              >
+                <h3 className={`font-wordmark text-2xl ${ink.head}`}>{group.label}</h3>
+                <ul className="mt-5 space-y-1.5 font-gothic text-lg font-bold tracking-[0.08em] uppercase">
+                  {group.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Selected work ── */}
+      <section
+        aria-labelledby="work-title"
+        className="mx-auto max-w-[1320px] px-4 pt-28 sm:px-8 sm:pt-40"
+      >
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2
+            id="work-title"
+            className="font-wordmark text-[clamp(2.75rem,6.5vw,5.5rem)] leading-[0.95] text-paper"
+          >
+            Selected work
+          </h2>
+          <Link
+            href="/projects"
+            className="inline-flex min-h-11 items-center gap-2 font-gothic text-xl font-extrabold tracking-[0.12em] text-lemon uppercase"
+          >
+            <span className="ink-link">Full index</span>
+            <ArrowUpRight size={20} aria-hidden strokeWidth={2.5} />
           </Link>
         </div>
         {featured.length === 0 ? (
-          <div className="card border border-hairline p-8 text-center text-sm text-muted">
+          <p className="mt-12 border-2 border-reef p-8 text-lg text-mist">
             Repositories failed to load. Try again in a moment.
-          </div>
+          </p>
         ) : (
-          <ul className="card divide-y divide-hairline overflow-hidden border border-hairline">
+          <div className="mt-12 grid gap-5 lg:grid-cols-12">
             {featured.map((repo, i) => (
-              <li key={repo.id}>
-                <a
-                  href={repo.homepage || repo.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="group flex items-start gap-4 px-5 py-5 transition-colors hover:bg-ink/[0.02]"
-                >
-                  <span className="font-mono-tab mt-1 w-6 text-xs text-muted">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <div className="flex-1">
-                    <div className="font-display text-lg font-semibold">{repo.name}</div>
-                    {repo.description ? (
-                      <p className="mt-1 text-sm leading-relaxed text-ink/80">{repo.description}</p>
-                    ) : null}
-                  </div>
-                  <ArrowUpRight
-                    size={16}
-                    className="mt-2 text-muted transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-ink"
-                  />
-                </a>
-              </li>
+              <ProjectLabel key={repo.id} repo={repo} index={i} className={FEATURE_SPANS[i]} />
             ))}
-          </ul>
+          </div>
         )}
       </section>
-    </div>
-  );
-}
 
-function CurrentlyRow({ label, body }: { label: string; body: string }) {
-  return (
-    <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-baseline sm:gap-6">
-      <span className="label-tag sm:w-48 sm:shrink-0">{label}</span>
-      <span className="text-[15px] leading-relaxed text-ink/90">{body}</span>
-    </div>
+      {/* ── Close ── */}
+      <section
+        aria-labelledby="close-title"
+        className="mx-auto max-w-[1320px] px-4 pt-28 sm:px-8 sm:pt-40"
+      >
+        <div
+          style={inks('var(--color-lake)', 'var(--color-paper)')}
+          className="label-rule grid gap-8 bg-paper p-8 text-lake sm:p-12 lg:grid-cols-12 lg:items-end lg:p-16"
+        >
+          <h2
+            id="close-title"
+            className="font-wordmark text-[clamp(2.75rem,6vw,5.25rem)] leading-[0.9] lg:col-span-7"
+          >
+            Write to me
+          </h2>
+          <div className="lg:col-span-5">
+            <p className="text-lg leading-relaxed">{contactSummary}</p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+              <Link
+                href="/contact"
+                className="press inline-flex min-h-12 items-center justify-center bg-lake px-6 font-gothic text-lg font-extrabold tracking-[0.12em] text-paper uppercase hover:bg-tangelo"
+              >
+                Send a letter
+              </Link>
+              <a
+                href={`mailto:${profile.email}`}
+                className="inline-flex min-h-11 items-center text-lg font-semibold"
+              >
+                <span className="ink-link">{profile.email}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

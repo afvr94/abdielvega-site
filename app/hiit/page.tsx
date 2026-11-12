@@ -64,7 +64,7 @@ export default function HIITPage() {
   }, [voiceEnabled, hydrated]);
 
   if (!workout) {
-    return <div className="min-h-[100dvh]" style={{ background: '#faf6f0' }} />;
+    return <div className="min-h-dvh" style={{ background: '#faf6f0' }} />;
   }
 
   if (view === 'running') {

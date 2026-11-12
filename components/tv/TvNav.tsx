@@ -29,20 +29,20 @@ export function TvNav() {
       <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3">
         <Link
           href="/"
-          className="whitespace-nowrap font-display text-lg font-semibold tracking-tightest-2"
+          className="font-display text-lg font-semibold tracking-tightest-2 whitespace-nowrap"
         >
           The Marquee
         </Link>
 
         {/* Full-width scrollable row on mobile, inline on sm+ */}
-        <nav className="no-scrollbar order-3 -mx-5 flex w-full items-center gap-0.5 overflow-x-auto px-5 sm:order-none sm:mx-0 sm:w-auto sm:flex-1 sm:px-0">
+        <nav className="order-3 -mx-5 no-scrollbar flex w-full items-center gap-0.5 overflow-x-auto px-5 sm:order-0 sm:mx-0 sm:w-auto sm:flex-1 sm:px-0">
           {LINKS.map((l) => {
             const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wider whitespace-nowrap uppercase transition-colors ${
                   active ? 'bg-ink text-cream' : 'text-muted hover:text-ink'
                 }`}
               >

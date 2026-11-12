@@ -7,12 +7,12 @@ import { buildHeatmap, heatLevel } from '@/lib/tv/heatmap';
 
 export const metadata = { title: 'Stats' };
 
-const LEVEL_BG = ['bg-ink/[0.06]', 'bg-income/30', 'bg-income/55', 'bg-income/80', 'bg-income'];
+const LEVEL_BG = ['bg-ink/6', 'bg-income/30', 'bg-income/55', 'bg-income/80', 'bg-income'];
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="card border border-hairline p-4">
-      <div className="label-tag mb-1.5">{label}</div>
+      <div className="mb-1.5 label-tag">{label}</div>
       <div className="font-mono-tab text-2xl font-semibold tracking-tightest-2 sm:text-3xl">
         {value}
       </div>
@@ -72,7 +72,7 @@ export default async function StatsPage() {
 
       {stats.byDay.length > 0 ? (
         <section>
-          <div className="label-tag mb-3">Activity · last year</div>
+          <div className="mb-3 label-tag">Activity · last year</div>
           <div className="no-scrollbar overflow-x-auto pb-1">
             <div>
               <div className="mb-1 flex gap-[3px] text-[9px] text-muted">
@@ -112,18 +112,18 @@ export default async function StatsPage() {
 
       {stats.byYear.length > 0 ? (
         <section>
-          <div className="label-tag mb-3">Episodes by year</div>
+          <div className="mb-3 label-tag">Episodes by year</div>
           <div className="space-y-1.5">
             {stats.byYear.map((y) => (
               <div key={y.year} className="flex items-center gap-3">
-                <span className="font-mono-tab w-10 shrink-0 text-xs text-muted">{y.year}</span>
-                <span className="h-4 flex-1 overflow-hidden rounded bg-hairline">
+                <span className="w-10 shrink-0 font-mono-tab text-xs text-muted">{y.year}</span>
+                <span className="h-4 flex-1 overflow-hidden rounded-sm bg-hairline">
                   <span
-                    className="block h-full rounded bg-income"
+                    className="block h-full rounded-sm bg-income"
                     style={{ width: `${(y.count / maxYear) * 100}%` }}
                   />
                 </span>
-                <span className="font-mono-tab w-12 shrink-0 text-right text-xs">{y.count}</span>
+                <span className="w-12 shrink-0 text-right font-mono-tab text-xs">{y.count}</span>
               </div>
             ))}
           </div>
@@ -132,17 +132,17 @@ export default async function StatsPage() {
 
       {stats.topShows.length > 0 ? (
         <section>
-          <div className="label-tag mb-3">Most watched</div>
+          <div className="mb-3 label-tag">Most watched</div>
           <div className="space-y-1.5">
             {stats.topShows.map((s, i) => (
               <Link
                 key={s.showTmdbId}
                 href={`/show/${s.showTmdbId}`}
-                className="card flex items-center gap-3 border border-hairline p-2.5 transition-colors hover:border-ink/25"
+                className="flex items-center gap-3 card border border-hairline p-2.5 transition-colors hover:border-ink/25"
               >
-                <span className="font-mono-tab w-5 shrink-0 text-xs text-muted">{i + 1}</span>
+                <span className="w-5 shrink-0 font-mono-tab text-xs text-muted">{i + 1}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-display font-semibold leading-tight">{s.name}</div>
+                  <div className="truncate font-display leading-tight font-semibold">{s.name}</div>
                   <span className="mt-1 block h-1 overflow-hidden rounded-full bg-hairline">
                     <span
                       className="block h-full rounded-full bg-ink/50"

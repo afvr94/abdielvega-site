@@ -45,7 +45,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card border border-hairline p-6 sm:p-8">
-      <label className="label-tag mb-2 block">Email</label>
+      <label className="mb-2 block label-tag">Email</label>
       <input
         type="email"
         required
@@ -53,12 +53,12 @@ export function LoginForm() {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
         autoFocus
-        className="font-mono-tab w-full border-0 border-b border-ink/20 bg-transparent px-0 py-2 text-[15px] focus:border-ink focus:outline-none"
+        className="w-full border-0 border-b border-ink/20 bg-transparent px-0 py-2 font-mono-tab text-[15px] focus:border-ink focus:outline-hidden"
       />
       <button
         type="submit"
         disabled={status === 'sending' || !email.trim()}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold uppercase tracking-wider text-cream transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {status === 'sending' ? 'Sending…' : 'Send magic link'}
         <Mail size={14} strokeWidth={2} />

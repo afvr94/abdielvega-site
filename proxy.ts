@@ -25,7 +25,7 @@ const GATED_APPS: GatedApp[] = [
   { host: TV_HOST_PATTERN, prefix: '/tv' },
 ];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const url = req.nextUrl.clone();
   const host = req.headers.get('host') ?? '';
   const pathname = url.pathname;
@@ -50,7 +50,10 @@ export async function middleware(req: NextRequest) {
       const loginUrl = url.clone();
       loginUrl.pathname = '/login';
       loginUrl.search = '';
-      return NextResponse.redirect(loginUrl);
+      const redirect = NextResponse.redirect(loginUrl);
+      // Carry over cookies updateSession cleared, or the browser keeps retrying dead tokens.
+      response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+      return redirect;
     }
     const rewritten = url.clone();
     rewritten.pathname = pathname === '/' ? app.prefix : `${app.prefix}${pathname}`;

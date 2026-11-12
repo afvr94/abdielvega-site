@@ -30,7 +30,7 @@ export function SetupView({ categories, onSave, onRemove }: Props) {
   return (
     <div>
       <section className="mb-5">
-        <div className="label-tag mb-1">Setup</div>
+        <div className="mb-1 label-tag">Setup</div>
         <h2 className="font-display text-3xl font-semibold">Categories &amp; defaults</h2>
         <p className="mt-1 text-sm text-muted">
           Add, remove, or rename the buckets you track. Default amounts fill in when you create a
@@ -49,7 +49,7 @@ export function SetupView({ categories, onSave, onRemove }: Props) {
               </h3>
               <span className="label-tag">{cats.length}</span>
             </div>
-            <div className="card mb-2 overflow-hidden">
+            <div className="mb-2 overflow-hidden card">
               {cats.length === 0 ? (
                 <div className="px-4 py-5 text-center text-xs text-muted">
                   No {info.label.toLowerCase()} categories yet
@@ -59,14 +59,14 @@ export function SetupView({ categories, onSave, onRemove }: Props) {
                   <div
                     key={c.id}
                     className={`flex items-center gap-2 px-3 py-2 ${
-                      i < cats.length - 1 ? 'hairline border-b' : ''
+                      i < cats.length - 1 ? 'border-b hairline' : ''
                     }`}
                   >
                     <input
                       type="text"
                       value={c.name}
                       onChange={(e) => updateCat(c, { name: e.target.value })}
-                      className="focus-ring flex-1 rounded bg-transparent px-2 py-1.5 text-sm font-medium"
+                      className="flex-1 rounded-sm bg-transparent px-2 py-1.5 text-sm font-medium focus-ring"
                     />
                     <span className="font-display text-base text-muted">$</span>
                     <input
@@ -77,7 +77,7 @@ export function SetupView({ categories, onSave, onRemove }: Props) {
                       onChange={(e) =>
                         updateCat(c, { defaultAmount: parseFloat(e.target.value) || 0 })
                       }
-                      className="focus-ring font-mono-tab w-20 rounded bg-ink/[0.03] px-2 py-1.5 text-right text-sm"
+                      className="w-20 rounded-sm bg-ink/3 px-2 py-1.5 text-right font-mono-tab text-sm focus-ring"
                     />
                     <button
                       onClick={() => onRemove(c.id)}
@@ -92,7 +92,7 @@ export function SetupView({ categories, onSave, onRemove }: Props) {
             </div>
             <button
               onClick={() => addCat(typeKey)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-ink/[0.04] py-2.5 text-xs font-semibold uppercase tracking-wider"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-ink/4 py-2.5 text-xs font-semibold tracking-wider uppercase"
               style={{ color: info.color }}
             >
               <Plus size={13} /> Add {info.label.toLowerCase()}

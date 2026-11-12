@@ -311,7 +311,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
   if (isComplete) {
     return (
       <div
-        className="flex min-h-[100dvh] w-full flex-col items-center justify-center px-6 text-stone-50"
+        className="flex min-h-dvh w-full flex-col items-center justify-center px-6 text-stone-50"
         style={{
           background: 'radial-gradient(ellipse at center, rgba(163,230,53,0.18) 0%, #0a0a0a 60%)',
         }}
@@ -327,7 +327,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
             WORKOUT COMPLETE
           </div>
           <h1
-            className="mb-6 italic leading-[0.9]"
+            className="mb-6 leading-[0.9] italic"
             style={{
               fontFamily: 'var(--font-fraunces, "Fraunces", serif)',
               fontSize: 'clamp(4rem, 18vw, 8rem)',
@@ -381,7 +381,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
 
   return (
     <div
-      className="flex min-h-[100dvh] w-full select-none flex-col text-stone-50"
+      className="flex min-h-dvh w-full flex-col text-stone-50 select-none"
       style={{
         background: `radial-gradient(ellipse 80% 50% at 50% 100%, ${style.glow} 0%, transparent 70%), #0a0a0a`,
         fontFamily: 'var(--font-instrument, "Instrument Sans", system-ui, sans-serif)',
@@ -389,7 +389,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
       }}
     >
       {/* Top bar */}
-      <div className="px-5 pb-3 pt-5">
+      <div className="px-5 pt-5 pb-3">
         <div className="mb-3 flex items-center justify-between">
           <button
             onClick={onExit}
@@ -424,7 +424,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
             }}
           />
         </div>
-        <div className="mt-2 flex justify-between text-[0.6rem] font-bold tabular-nums tracking-[0.25em] text-stone-600">
+        <div className="mt-2 flex justify-between text-[0.6rem] font-bold tracking-[0.25em] text-stone-600 tabular-nums">
           <span>{formatTime(elapsed)}</span>
           <span>{formatTime(total - elapsed)} LEFT</span>
         </div>
@@ -433,7 +433,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
       {/* Phase label */}
       <div className="mt-3 px-5 text-center">
         <div
-          className="text-[0.7rem] font-bold uppercase tracking-[0.3em]"
+          className="text-[0.7rem] font-bold tracking-[0.3em] uppercase"
           style={{ color: style.text }}
         >
           {currentSeg ? currentSeg.phase : '—'}
@@ -443,9 +443,9 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
       {/* Main content */}
       <div className="flex flex-1 flex-col items-center justify-center px-5">
         {/* Exercise name */}
-        <div className="mb-4 flex min-h-[4.5rem] items-center justify-center px-4 text-center">
+        <div className="mb-4 flex min-h-18 items-center justify-center px-4 text-center">
           <h1
-            className="italic leading-[1] tracking-tight"
+            className="leading-none tracking-tight italic"
             style={{
               fontFamily: 'var(--font-fraunces, "Fraunces", serif)',
               fontSize: 'clamp(2rem, 7.5vw, 3.75rem)',
@@ -514,7 +514,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
             }}
           />
           <span
-            className="text-xs font-bold uppercase tracking-[0.4em]"
+            className="text-xs font-bold tracking-[0.4em] uppercase"
             style={{ color: style.text }}
           >
             {style.label}
@@ -522,7 +522,7 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
         </div>
 
         {/* Next up */}
-        <div className="mt-8 min-h-[3rem] text-center">
+        <div className="mt-8 min-h-12 text-center">
           {nextExercise ? (
             <>
               <div className="mb-1.5 text-[0.6rem] font-bold tracking-[0.35em] text-stone-600">
@@ -534,13 +534,13 @@ export default function Runner({ workout, voiceEnabled, onVoiceToggle, onExit }:
               </div>
             </>
           ) : (
-            <div className="text-sm italic text-stone-500">last one — finish strong</div>
+            <div className="text-sm text-stone-500 italic">last one — finish strong</div>
           )}
         </div>
       </div>
 
       {/* Controls */}
-      <div className="px-5 pb-8 pt-4">
+      <div className="px-5 pt-4 pb-8">
         <div className="mx-auto flex max-w-sm items-center justify-between gap-3">
           <button
             onClick={handleBack}

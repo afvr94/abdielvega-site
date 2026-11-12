@@ -1,6 +1,135 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Scan only source folders: v4's auto-detection otherwise walks tooling output
+   (.impeccable, .taste-skill) and once crashed Turbopack on a socket file. */
+@import 'tailwindcss' source(none);
+@source '../app';
+@source '../components';
+@source '../lib';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-cream: rgb(var(--cream));
+  --color-ink: rgb(var(--ink));
+  --color-muted: rgb(var(--muted));
+  --color-hairline: rgb(var(--hairline) / 0.13);
+  --color-income: rgb(var(--income));
+  --color-expense: rgb(var(--expense));
+  --color-savings: rgb(var(--savings));
+  --color-warn: rgb(var(--warn));
+  --color-card: rgb(var(--card));
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --tracking-tightest-2: -0.02em;
+  --tracking-tightest-3: -0.03em;
+
+  --radius-card: 14px;
+
+  /* Portfolio (crate label) inks — flat lithographic colours, no tints. */
+  --color-lake: #14246a;
+  --color-lake-deep: #0d1849;
+  --color-reef: #2d55c4;
+  --color-mist: #c9d3f2;
+  --color-grove: #1d673c;
+  --color-sprout: #74a845;
+  --color-lemon: #f7c838;
+  --color-tangelo: #f0601a;
+  --color-paper: #fffcf5;
+
+  --animate-fadein: fadein 0.3s ease-out;
+
+  @keyframes fadein {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* inline: the face variables live on the portfolio wrapper, not :root. */
+@theme inline {
+  --font-wordmark: var(--font-ultra), 'Rockwell Extra Bold', serif;
+  --font-gothic: var(--font-shoulders), 'Arial Narrow', sans-serif;
+  --font-stencil: var(--font-shoulders-stencil), var(--font-shoulders), sans-serif;
+  --font-script: var(--font-yellowtail), cursive;
+  --font-franklin: var(--font-franklin-gothic), 'Franklin Gothic Medium', sans-serif;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* Tailwind v4 dropped these v3 defaults; the trackers rely on them. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
+
+@utility font-mono-tab {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility hairline {
+  border-color: rgb(var(--hairline) / 0.13);
+}
+
+@utility card {
+  background: rgb(var(--card));
+  border-radius: 14px;
+}
+
+@utility label-tag {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: rgb(var(--muted));
+}
+
+@utility focus-ring {
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--ink));
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 @layer base {
   /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working.
@@ -45,49 +174,5 @@
   ::selection {
     background: rgb(var(--ink));
     color: rgb(var(--cream));
-  }
-}
-
-@layer components {
-  .font-display {
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-optical-sizing: auto;
-    letter-spacing: -0.02em;
-  }
-
-  .font-mono-tab {
-    font-family: var(--font-jetbrains), ui-monospace, monospace;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .hairline {
-    border-color: rgb(var(--hairline) / 0.13);
-  }
-
-  .card {
-    background: rgb(var(--card));
-    border-radius: 14px;
-  }
-
-  .label-tag {
-    font-size: 10px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: rgb(var(--muted));
-  }
-
-  .focus-ring:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgb(var(--ink));
-  }
-}
-
-@layer utilities {
-  .no-scrollbar {
-    scrollbar-width: none;
-  }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
   }
 }
