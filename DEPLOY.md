@@ -514,6 +514,58 @@ returns table (
 $$;
 ```
 
+### Home function
+
+The Up Next page reads everything it shows in one call, because each Supabase
+round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
+`tv_home()` wraps `tv_up_next()` with the show and episode columns the page
+needs, plus the next 7 days of airings, as one JSON value. Run once, after the
+Up Next and Watchlist sections:
+
+```sql
+create or replace function tv_home()
+returns jsonb language sql stable as $$
+  with active as (
+    select show_tmdb_id from tv_follows where not archived and not watchlist
+  )
+  select jsonb_build_object(
+    'up_next', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'show', jsonb_build_object(
+          'tmdb_id', s.tmdb_id, 'name', s.name, 'poster_path', s.poster_path,
+          'backdrop_path', s.backdrop_path, 'status', s.status,
+          'first_air_date', s.first_air_date),
+        'next', case when e.tmdb_id is null then null else jsonb_build_object(
+          'tmdb_id', e.tmdb_id, 'show_tmdb_id', e.show_tmdb_id,
+          'season_number', e.season_number, 'episode_number', e.episode_number,
+          'name', e.name, 'air_date', e.air_date, 'still_path', e.still_path) end,
+        'aired_total', u.aired_total,
+        'aired_watched', u.aired_watched))
+      from tv_up_next() u
+      join tv_shows s on s.tmdb_id = u.show_tmdb_id
+      left join tv_episodes e on e.tmdb_id = u.episode_tmdb_id
+    ), '[]'::jsonb),
+    'this_week', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'show', jsonb_build_object(
+          'tmdb_id', s.tmdb_id, 'name', s.name, 'poster_path', s.poster_path,
+          'backdrop_path', s.backdrop_path, 'status', s.status,
+          'first_air_date', s.first_air_date),
+        'episode', jsonb_build_object(
+          'tmdb_id', e.tmdb_id, 'show_tmdb_id', e.show_tmdb_id,
+          'season_number', e.season_number, 'episode_number', e.episode_number,
+          'name', e.name, 'air_date', e.air_date, 'still_path', e.still_path))
+        order by e.air_date, s.name, e.season_number, e.episode_number)
+      from tv_episodes e
+      join active a on a.show_tmdb_id = e.show_tmdb_id
+      join tv_shows s on s.tmdb_id = e.show_tmdb_id
+      where e.season_number > 0
+        and e.air_date between public.tv_today() and public.tv_today() + 7
+    ), '[]'::jsonb)
+  );
+$$;
+```
+
 ### Library function
 
 Backs the `/shows` grid — every followed show (archived included), its aired
