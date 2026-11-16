@@ -2,15 +2,16 @@ export function ProgressRing({
   pct,
   children,
   className = 'size-12 p-1.5',
+  decorative = false,
 }: {
   pct: number;
+  decorative?: boolean;
   children?: React.ReactNode;
   className?: string;
 }) {
   return (
     <div
-      role="img"
-      aria-label={`${pct}% watched`}
+      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': `${pct}% watched` })}
       className={`grid shrink-0 place-items-center rounded-full ${className}`}
       style={{
         background: `conic-gradient(rgb(var(--savings)) ${pct}%, rgb(var(--hairline) / 0.13) 0)`,

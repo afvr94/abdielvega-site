@@ -112,7 +112,7 @@ export function TvNav() {
           <button
             onClick={signOut}
             aria-label="Sign out"
-            className="grid size-11 place-items-center rounded-full text-muted hover:text-ink"
+            className="grid size-11 place-items-center rounded-full text-muted hover:text-ink sm:size-auto sm:p-1.5"
           >
             <LogOut size={15} strokeWidth={2} />
           </button>

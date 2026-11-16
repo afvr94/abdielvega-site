@@ -74,8 +74,8 @@ export function ListPicker({
 
           {open ? (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-              <div className="absolute left-0 z-20 mt-1.5 w-56 overflow-hidden rounded-card border border-hairline bg-card shadow-lg">
+              <div className="fixed inset-0 z-50" onClick={() => setOpen(false)} />
+              <div className="absolute left-0 z-[60] mt-1.5 w-56 overflow-hidden rounded-card border border-hairline bg-card shadow-lg">
                 <div className="max-h-56 overflow-y-auto py-1">
                   {lists.map((l) => {
                     const member = memberIds.has(l.id);
