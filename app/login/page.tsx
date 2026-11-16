@@ -7,7 +7,18 @@ export const metadata = {
   title: 'Sign in',
 };
 
-export default async function LoginPage() {
+const ERRORS: Record<string, string> = {
+  denied: "That Google account can't sign in here.",
+  failed: "Sign-in didn't finish. Try again.",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  const message = error ? (ERRORS[error] ?? ERRORS.failed) : null;
   const host = (await headers()).get('host') ?? '';
   const isTv = host.split('.')[0] === 'tv';
   return (
@@ -30,8 +41,13 @@ export default async function LoginPage() {
           )}
           <h1 className="font-display text-4xl font-semibold tracking-tightest-3">Sign in</h1>
           <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted">
-            Enter your email. A single-use magic link will land in your inbox.
+            Sign in with your Google account.
           </p>
+          {message ? (
+            <p role="alert" className="mt-4 text-sm text-expense">
+              {message}
+            </p>
+          ) : null}
         </div>
         <LoginForm />
       </div>

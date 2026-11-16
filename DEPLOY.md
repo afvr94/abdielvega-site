@@ -107,7 +107,7 @@ create trigger on_auth_user_created
   for each row execute function seed_default_categories_for_user();
 ```
 
-4. Go to **Authentication → Providers → Email**. Enable email auth. Magic links are on by default.
+4. Set up Google sign-in (see step 7, **Google sign-in**).
 5. Keep signups enabled through step 7 so you can create your own account. After that, switch to invite-only (see step 7).
 
 ### Migrating an existing single-user deployment to multi-user
@@ -223,7 +223,7 @@ Visit:
 
 - `http://localhost:3000/` — portfolio
 - `http://localhost:3000/login` — login form
-- Sign in with your email, check your inbox for the magic link, click it, land on `/budget`
+- Continue with Google, land on `/budget`
 - Add a category, add a transaction, refresh — data should persist
 
 To simulate the subdomain locally: `curl -H "Host: budget.abdielvega.com" http://localhost:3000/`. You should be redirected to `/login`.
@@ -299,9 +299,17 @@ Back in Supabase, **Authentication → URL Configuration**:
   - `https://abdielvega.com/auth/callback` (harmless belt-and-suspenders)
   - `http://localhost:3000/auth/callback` (for local dev)
 
-**Create your account:** visit `https://budget.abdielvega.com/login`, enter your email, click the magic link. You now have a user, and the `on_auth_user_created` trigger has seeded your default categories.
+**Create your account:** visit `https://budget.abdielvega.com/login` and continue with Google. You now have a user, and the `on_auth_user_created` trigger has seeded your default categories.
 
-**Switch to invite-only:** Authentication → Providers → Email → **disable** "Enable new user signups". The tracker is multi-user at the database layer, but signups are gated — strangers hitting `/login` get a magic-link email but the account-creation step fails silently. To add someone, invite them from Authentication → Users → **Invite user**; the same trigger seeds their categories on first login.
+**Switch to invite-only:** Authentication → Sign In / Providers → **disable** "Allow new users to sign up". The tracker is multi-user at the database layer, but signups are gated: any other Google account is refused, and `/login` says "That Google account can't sign in here." To add someone, invite them from Authentication → Users → **Invite user** with their Google address; the same trigger seeds their categories on first login.
+
+**Google sign-in** (the only way in; magic links are off):
+
+1. Google Cloud console → APIs & Services → **OAuth consent screen**: External, app name "cliffo", and leave it in **Testing** with only your own Gmail under **Test users**. Google then refuses every other account before Supabase sees it.
+2. **Credentials → Create credentials → OAuth client ID → Web application.** Authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`.
+3. Supabase → Authentication → Sign In / Providers → **Google**: enable it and paste the client ID and secret.
+4. The redirect URLs above (`…/auth/callback` on each host) are where Supabase sends you back after Google.
+5. Once Google sign-in works, disable the **Email** provider so magic links stop working. A Google account with the same verified email as an existing user signs in as that user.
 
 ---
 
@@ -817,7 +825,7 @@ Add to **Authentication → URL Configuration → Redirect URLs**:
 
 - `https://tv.abdielvega.com/auth/callback`
 
-Sign-in reuses the existing magic-link flow; sessions are per-subdomain, so you
+Sign-in is the same Google flow; sessions are per-subdomain, so you
 sign in once on `tv.abdielvega.com` independently of the budget app.
 
 ### DNS + Vercel
