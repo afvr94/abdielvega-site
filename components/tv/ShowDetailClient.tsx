@@ -6,7 +6,7 @@ import { Check, CheckCheck, Archive, Bookmark } from 'lucide-react';
 import type { Episode, Show, TvList } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
 import { ListPicker } from './ListPicker';
-import { imageUrl, type WatchProvider } from '@/lib/tv/tmdb';
+import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import {
   markWatched,
@@ -28,8 +28,7 @@ export function ShowDetailClient({
   isFollowed,
   archived,
   watchlist,
-  providers = [],
-  providerLink = null,
+  whereToWatch,
   allLists = [],
   listIds = [],
 }: {
@@ -39,8 +38,7 @@ export function ShowDetailClient({
   isFollowed: boolean;
   archived: boolean;
   watchlist: boolean;
-  providers?: WatchProvider[];
-  providerLink?: string | null;
+  whereToWatch?: React.ReactNode;
   allLists?: TvList[];
   listIds?: number[];
 }) {
@@ -50,6 +48,28 @@ export function ShowDetailClient({
   const [, startTransition] = useTransition();
   const [neverAsk, setNeverAsk] = useState(false);
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
+  const [retry, setRetry] = useState<(() => void) | null>(null);
+  // Episode taps still saving. markWatched doesn't refresh this page, so a refresh from another
+  // action could carry older data; these are re-applied on top of it until they settle.
+  const [pending, setPending] = useState<ReadonlyMap<string, boolean>>(() => new Map());
+
+  // Local state seeds from props once, so adopt fresh server data after a refresh.
+  const [synced, setSynced] = useState({ watchedKeys, archived, watchlist });
+  if (
+    synced.watchedKeys !== watchedKeys ||
+    synced.archived !== archived ||
+    synced.watchlist !== watchlist
+  ) {
+    setSynced({ watchedKeys, archived, watchlist });
+    const fresh = new Set(watchedKeys);
+    for (const [key, isWatched] of pending) {
+      if (isWatched) fresh.add(key);
+      else fresh.delete(key);
+    }
+    setWatched(fresh);
+    setIsArchived(archived);
+    setIsWatchlist(watchlist);
+  }
 
   useEffect(() => {
     try {
@@ -104,6 +124,30 @@ export function ShowDetailClient({
     return x.seasonNumber < season || (x.seasonNumber === season && x.episodeNumber < episode);
   }
 
+  function setKeys(keys: string[], watchedNow: boolean) {
+    setWatched((prev) => {
+      const copy = new Set(prev);
+      for (const k of keys) {
+        if (watchedNow) copy.add(k);
+        else copy.delete(k);
+      }
+      return copy;
+    });
+  }
+
+  function optimistic(apply: () => void, revert: () => void, save: () => Promise<void>) {
+    apply();
+    setRetry(null);
+    startTransition(async () => {
+      try {
+        await save();
+      } catch {
+        revert();
+        setRetry(() => () => optimistic(apply, revert, save));
+      }
+    });
+  }
+
   function toggle(e: Episode) {
     const key = watchKey(e.seasonNumber, e.episodeNumber);
     const nowWatched = !watched.has(key);
@@ -115,27 +159,40 @@ export function ShowDetailClient({
           isBefore(x, e.seasonNumber, e.episodeNumber) &&
           !watched.has(watchKey(x.seasonNumber, x.episodeNumber))
       );
-    setWatched((prev) => {
-      const copy = new Set(prev);
-      if (nowWatched) copy.add(key);
-      else copy.delete(key);
-      return copy;
-    });
-    startTransition(async () => {
-      if (nowWatched) await markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
-      else await markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
-    });
     // Watching a show moves it off the watchlist (a DB trigger does this server-side).
-    if (nowWatched && isWatchlist) setIsWatchlist(false);
+    const leavesWatchlist = nowWatched && isWatchlist;
+    optimistic(
+      () => {
+        setKeys([key], nowWatched);
+        setPending((p) => new Map(p).set(key, nowWatched));
+        if (leavesWatchlist) setIsWatchlist(false);
+      },
+      () => {
+        setKeys([key], !nowWatched);
+        if (leavesWatchlist) setIsWatchlist(true);
+      },
+      () =>
+        (nowWatched
+          ? markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber)
+          : markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber)
+        ).finally(() =>
+          setPending((p) => {
+            const rest = new Map(p);
+            rest.delete(key);
+            return rest;
+          })
+        )
+    );
     if (hasEarlierGap && !neverAsk) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
   }
 
   function toggleWatchlist() {
     const next = !isWatchlist;
-    setIsWatchlist(next);
-    startTransition(async () => {
-      await setWatchlist(show.tmdbId, next);
-    });
+    optimistic(
+      () => setIsWatchlist(next),
+      () => setIsWatchlist(!next),
+      () => setWatchlist(show.tmdbId, next)
+    );
   }
 
   function confirmMarkPrevious() {
@@ -145,15 +202,15 @@ export function ShowDetailClient({
       (x) =>
         isBefore(x, season, episode) || (x.seasonNumber === season && x.episodeNumber === episode)
     );
-    setWatched((prev) => {
-      const copy = new Set(prev);
-      for (const x of toMark) copy.add(watchKey(x.seasonNumber, x.episodeNumber));
-      return copy;
-    });
+    const added = toMark
+      .map((x) => watchKey(x.seasonNumber, x.episodeNumber))
+      .filter((k) => !watched.has(k));
     const payload = toMark.map((x) => ({ season: x.seasonNumber, episode: x.episodeNumber }));
-    startTransition(async () => {
-      await markWatchedMany(show.tmdbId, payload);
-    });
+    optimistic(
+      () => setKeys(added, true),
+      () => setKeys(added, false),
+      () => markWatchedMany(show.tmdbId, payload)
+    );
     setPrompt(null);
   }
 
@@ -168,23 +225,24 @@ export function ShowDetailClient({
   }
 
   function markSeason() {
-    setWatched((prev) => {
-      const copy = new Set(prev);
-      for (const e of seasonEpisodes)
-        if (hasAired(e)) copy.add(watchKey(e.seasonNumber, e.episodeNumber));
-      return copy;
-    });
-    startTransition(async () => {
-      await markSeasonWatched(show.tmdbId, season);
-    });
+    const added = seasonEpisodes
+      .filter(hasAired)
+      .map((e) => watchKey(e.seasonNumber, e.episodeNumber))
+      .filter((k) => !watched.has(k));
+    optimistic(
+      () => setKeys(added, true),
+      () => setKeys(added, false),
+      () => markSeasonWatched(show.tmdbId, season)
+    );
   }
 
   function toggleArchive() {
     const next = !isArchived;
-    setIsArchived(next);
-    startTransition(async () => {
-      await setArchived(show.tmdbId, next);
-    });
+    optimistic(
+      () => setIsArchived(next),
+      () => setIsArchived(!next),
+      () => setArchived(show.tmdbId, next)
+    );
   }
 
   const backdrop = imageUrl(show.backdropPath, 'w780');
@@ -248,7 +306,7 @@ export function ShowDetailClient({
                 onClick={toggleArchive}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition-colors ${
                   isArchived
-                    ? 'bg-ink text-cream'
+                    ? 'border border-hairline bg-ink/10 text-ink'
                     : 'border border-hairline bg-card text-muted hover:text-ink'
                 }`}
               >
@@ -261,35 +319,16 @@ export function ShowDetailClient({
         </div>
       </div>
 
-      {/* Where to watch */}
-      {providers.length > 0 ? (
-        <div className="mb-6">
-          <div className="mb-2 label-tag">Where to watch</div>
-          <div className="flex flex-wrap items-center gap-2">
-            {providers.map((p) => (
-              <span
-                key={p.name}
-                className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-card py-1 pr-2.5 pl-1 text-xs"
-              >
-                {p.logoUrl ? (
-                  <Image src={p.logoUrl} alt="" width={18} height={18} className="rounded-[4px]" />
-                ) : null}
-                {p.name}
-              </span>
-            ))}
-            {providerLink ? (
-              <a
-                href={providerLink}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-muted underline decoration-hairline underline-offset-2 hover:text-ink"
-              >
-                via JustWatch
-              </a>
-            ) : null}
-          </div>
-        </div>
+      {retry ? (
+        <p role="alert" className="-mt-3 mb-6 text-xs text-expense">
+          Couldn&apos;t save that change.{' '}
+          <button onClick={retry} className="font-semibold underline underline-offset-2">
+            Retry
+          </button>
+        </p>
       ) : null}
+
+      {whereToWatch}
 
       {isFollowed ? (
         <ListPicker tmdbId={show.tmdbId} allLists={allLists} initialListIds={listIds} />
@@ -303,7 +342,9 @@ export function ShowDetailClient({
               key={s}
               onClick={() => setSeason(s)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                s === season ? 'bg-ink text-cream' : 'text-muted hover:text-ink'
+                s === season
+                  ? 'border border-hairline bg-ink/10 text-ink'
+                  : 'border border-transparent text-muted hover:text-ink'
               }`}
             >
               {s === 0 ? 'Specials' : `Season ${s}`}
@@ -360,7 +401,7 @@ export function ShowDetailClient({
                 onClick={() => toggle(e)}
                 disabled={!aired && !isWatched}
                 aria-label={isWatched ? 'Mark unwatched' : 'Mark watched'}
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-30 ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-30 ${
                   isWatched
                     ? 'border-income bg-income text-cream'
                     : 'border-hairline bg-card text-muted hover:border-income hover:text-income'

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUpNext, getUpcoming } from '@/lib/tv/queries';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, dayHeading } from '@/lib/tv/format';
-import { UpNextCard } from '@/components/tv/UpNextCard';
+import { UpNextList } from '@/components/tv/UpNextList';
 import { SurpriseButton } from '@/components/tv/SurpriseButton';
 
 export const metadata = { title: 'Up Next' };
@@ -29,7 +29,7 @@ export default async function TvHomePage() {
         </p>
         <Link
           href="/search"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-income px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
         >
           <Search size={14} strokeWidth={2} /> Search shows
         </Link>
@@ -51,7 +51,7 @@ export default async function TvHomePage() {
                     {img ? (
                       <Image src={img} alt="" fill sizes="160px" className="object-cover" />
                     ) : null}
-                    <span className="absolute top-1.5 right-1.5 rounded-full bg-ink/85 px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-cream">
+                    <span className="absolute top-1.5 right-1.5 rounded-full bg-black/70 px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-white">
                       {episode.airDate === today ? 'Today' : dayHeading(episode.airDate ?? '')}
                     </span>
                   </div>
@@ -77,11 +77,7 @@ export default async function TvHomePage() {
           </div>
         </div>
         {behind.length > 0 ? (
-          <div className="rise space-y-3">
-            {behind.map((item) => (
-              <UpNextCard key={item.show.tmdbId} item={item} />
-            ))}
-          </div>
+          <UpNextList items={behind} />
         ) : (
           <p className="card border border-hairline p-6 text-sm text-muted">
             All caught up. Nothing aired that you haven&apos;t seen.

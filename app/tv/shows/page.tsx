@@ -16,7 +16,7 @@ export default async function ShowsPage() {
         <h1 className="font-display text-3xl font-semibold tracking-tightest-3">No shows yet</h1>
         <Link
           href="/search"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold uppercase tracking-wider text-cream transition-opacity hover:opacity-90"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-income px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
         >
           <Search size={14} strokeWidth={2} /> Search shows
         </Link>

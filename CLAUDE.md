@@ -38,7 +38,7 @@ app/
     layout.tsx          # redirects to /login if not authed
     page.tsx            # mounts <BudgetTracker />
   tv/                   # TV tracker (private)
-    layout.tsx          # auth gate + <TvNav> + PWA manifest/icon metadata
+    layout.tsx          # <TvNav> + PWA manifest/icon metadata (proxy.ts gates auth)
     page.tsx            # Up Next
     shows/page.tsx      # library grid (follows, archive, watchlist, lists)
     show/[tmdbId]/      # show detail — seasons, episodes, where to watch
@@ -121,8 +121,10 @@ the cron has already emailed about. The heavier reads go through Postgres
 functions — `tv_up_next()`, `tv_library()`, `tv_stats()`,
 `tv_pending_notifications()`.
 
-TMDB is never hit on page render: all app reads come from Postgres, and
-`lib/tv/tmdb.ts` runs only on follow, import, and the scheduled sync.
+Library reads come from Postgres; `lib/tv/tmdb.ts` writes metadata only on follow,
+import and the scheduled sync. Page renders call TMDB only for watch providers
+and for the preview of a show that isn't cached yet. Watch providers are cached
+for a day and stream in after the episode list.
 
 ## Local development
 

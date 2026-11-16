@@ -1,10 +1,12 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import { getShowDetail } from '@/lib/tv/queries';
-import { getShow, getWatchProviders, imageUrl } from '@/lib/tv/tmdb';
+import { getShow, imageUrl } from '@/lib/tv/tmdb';
 import { ShowDetailClient } from '@/components/tv/ShowDetailClient';
 import { FollowButton } from '@/components/tv/FollowButton';
+import { WatchProviders } from '@/components/tv/WatchProviders';
 
 export default async function ShowPage({ params }: { params: Promise<{ tmdbId: string }> }) {
   const { tmdbId: raw } = await params;
@@ -12,10 +14,7 @@ export default async function ShowPage({ params }: { params: Promise<{ tmdbId: s
   if (!Number.isInteger(tmdbId)) notFound();
 
   const db = await createClient();
-  const [detail, watch] = await Promise.all([
-    getShowDetail(db, tmdbId),
-    getWatchProviders(tmdbId).catch(() => ({ providers: [], link: null })),
-  ]);
+  const detail = await getShowDetail(db, tmdbId);
 
   if (!detail) {
     // Not in the library yet — show a live TMDB preview + a follow CTA.
@@ -50,8 +49,11 @@ export default async function ShowPage({ params }: { params: Promise<{ tmdbId: s
       isFollowed={detail.isFollowed}
       archived={detail.archived}
       watchlist={detail.watchlist}
-      providers={watch.providers}
-      providerLink={watch.link}
+      whereToWatch={
+        <Suspense fallback={null}>
+          <WatchProviders tmdbId={tmdbId} />
+        </Suspense>
+      }
       allLists={detail.allLists}
       listIds={detail.listIds}
     />

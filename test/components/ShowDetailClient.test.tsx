@@ -17,7 +17,7 @@ vi.mock('@/app/tv/actions', () => ({
 }));
 
 import { ShowDetailClient } from '@/components/tv/ShowDetailClient';
-import { markWatched, markWatchedMany } from '@/app/tv/actions';
+import { markWatched, markWatchedMany, setArchived } from '@/app/tv/actions';
 import { makeShow, makeEpisode } from '../factories';
 
 // 5 aired episodes across two seasons (all in the past).
@@ -116,5 +116,59 @@ describe('ShowDetailClient — mark previous prompt', () => {
     renderDetail(['1-1']);
     await userEvent.click(within(episodeRow('S01E03')).getByRole('button'));
     expect(screen.queryByText('Mark previous episodes?')).not.toBeInTheDocument();
+  });
+});
+
+describe('ShowDetailClient — failed saves', () => {
+  it('reverts a watched toggle when the action rejects, with a retry', async () => {
+    vi.mocked(markWatched).mockRejectedValueOnce(new Error('offline'));
+    renderDetail([]);
+    await userEvent.click(within(episodeRow('S01E01')).getByRole('button'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/couldn.t save/i);
+    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark watched');
+
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+    expect(markWatched).toHaveBeenCalledTimes(2);
+    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('reverts the archive toggle when the action rejects', async () => {
+    vi.mocked(setArchived).mockRejectedValueOnce(new Error('offline'));
+    renderDetail([]);
+    await userEvent.click(screen.getByRole('button', { name: /^archive$/i }));
+    await screen.findByRole('alert');
+    expect(screen.getByRole('button', { name: /^archive$/i })).toBeInTheDocument();
+  });
+});
+
+describe('ShowDetailClient — server refresh', () => {
+  it('adopts watched episodes from new props', () => {
+    const props = {
+      show: makeShow({ tmdbId: 500, name: 'The Walking Dead' }),
+      episodes,
+      isFollowed: true,
+      archived: false,
+      watchlist: false,
+    };
+    const { rerender } = render(<ShowDetailClient {...props} watchedKeys={[]} />);
+    rerender(<ShowDetailClient {...props} watchedKeys={['1-1']} />);
+    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+  });
+
+  it('keeps an episode tap that is still saving when older server data arrives', async () => {
+    vi.mocked(markWatched).mockReturnValueOnce(new Promise(() => {}));
+    const props = {
+      show: makeShow({ tmdbId: 500, name: 'The Walking Dead' }),
+      episodes,
+      isFollowed: true,
+      archived: false,
+      watchlist: false,
+    };
+    const { rerender } = render(<ShowDetailClient {...props} watchedKeys={[]} />);
+    await userEvent.click(within(episodeRow('S01E01')).getByRole('button'));
+    rerender(<ShowDetailClient {...props} watchedKeys={['1-3']} />);
+    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+    expect(within(episodeRow('S01E03')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
   });
 });

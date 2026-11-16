@@ -1,13 +1,10 @@
 export type Show = {
   tmdbId: number;
-  tvdbId: number | null;
   name: string;
   posterPath: string | null;
   backdropPath: string | null;
-  overview: string | null;
   status: string | null;
   firstAirDate: string | null;
-  lastSyncedAt: string | null;
 };
 
 export type Episode = {
@@ -16,10 +13,8 @@ export type Episode = {
   seasonNumber: number;
   episodeNumber: number;
   name: string | null;
-  overview: string | null;
   airDate: string | null;
   stillPath: string | null;
-  runtime: number | null;
 };
 
 // One followed show on the Up Next screen: its next aired-but-unwatched episode

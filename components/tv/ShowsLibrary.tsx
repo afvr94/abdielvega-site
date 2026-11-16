@@ -115,7 +115,9 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
             key={t.key}
             onClick={() => setFilter(t.key)}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-              filter === t.key ? 'bg-ink text-cream' : 'text-muted hover:text-ink'
+              filter === t.key
+                ? 'border border-hairline bg-ink/10 text-ink'
+                : 'border border-transparent text-muted hover:text-ink'
             }`}
           >
             {t.label}

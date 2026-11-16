@@ -35,6 +35,29 @@ describe('UpNextCard', () => {
     expect(markWatched).toHaveBeenCalledWith(3, 2, 5);
   });
 
+  it('brings the card back with a retry when marking fails', async () => {
+    vi.mocked(markWatched).mockRejectedValueOnce(new Error('offline'));
+    const item = makeUpNext({
+      show: makeShow({ tmdbId: 3, name: 'The Show' }),
+      next: makeEpisode({ seasonNumber: 2, episodeNumber: 5 }),
+    });
+    render(<UpNextCard item={item} />);
+    await userEvent.click(screen.getByRole('button', { name: /mark s02e05 watched/i }));
+    expect(await screen.findByText(/couldn.t mark it watched/i)).toBeInTheDocument();
+    expect(screen.getByText('The Show').closest('.card')).not.toHaveClass('opacity-0');
+
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+    expect(markWatched).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(/couldn.t mark it watched/i)).not.toBeInTheDocument();
+  });
+
+  it('reports a successful mark', async () => {
+    const onMarked = vi.fn();
+    render(<UpNextCard item={makeUpNext()} onMarked={onMarked} />);
+    await userEvent.click(screen.getByRole('button', { name: /watched/i }));
+    expect(onMarked).toHaveBeenCalledTimes(1);
+  });
+
   it('renders nothing when caught up (no next episode)', () => {
     const { container } = render(<UpNextCard item={makeUpNext({ next: null })} />);
     expect(container).toBeEmptyDOMElement();

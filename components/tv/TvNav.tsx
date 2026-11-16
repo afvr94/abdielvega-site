@@ -73,7 +73,7 @@ export function TvNav() {
   }
 
   return (
-    <header className="border-b border-hairline">
+    <header className="border-b border-hairline pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3">
         <Link href="/" className="shrink-0">
           <Image src="/cliffo/logo.svg" alt="cliffo" width={80} height={28} priority />

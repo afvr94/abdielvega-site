@@ -137,8 +137,8 @@ export async function markWatched(tmdbId: number, season: number, episode: numbe
       { onConflict: 'show_tmdb_id,season_number,episode_number', ignoreDuplicates: true }
     );
   if (error) throw error;
+  // The show page updates optimistically; re-rendering it per tap re-runs its whole query.
   revalidatePath('/tv');
-  revalidatePath(`/tv/show/${tmdbId}`);
 }
 
 export async function markUnwatched(
@@ -155,7 +155,6 @@ export async function markUnwatched(
     .eq('episode_number', episode);
   if (error) throw error;
   revalidatePath('/tv');
-  revalidatePath(`/tv/show/${tmdbId}`);
 }
 
 // Mark an explicit list of episodes watched in one batch. The caller already
