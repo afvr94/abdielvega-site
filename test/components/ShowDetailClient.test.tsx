@@ -141,3 +141,18 @@ describe('ShowDetailClient — failed saves', () => {
     expect(screen.getByRole('button', { name: /^archive$/i })).toBeInTheDocument();
   });
 });
+
+describe('ShowDetailClient — server refresh', () => {
+  it('adopts watched episodes from new props', () => {
+    const props = {
+      show: makeShow({ tmdbId: 500, name: 'The Walking Dead' }),
+      episodes,
+      isFollowed: true,
+      archived: false,
+      watchlist: false,
+    };
+    const { rerender } = render(<ShowDetailClient {...props} watchedKeys={[]} />);
+    rerender(<ShowDetailClient {...props} watchedKeys={['1-1']} />);
+    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+  });
+});

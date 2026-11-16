@@ -50,6 +50,19 @@ export function ShowDetailClient({
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
   const [retry, setRetry] = useState<(() => void) | null>(null);
 
+  // Local state seeds from props once, so adopt fresh server data after a refresh.
+  const [synced, setSynced] = useState({ watchedKeys, archived, watchlist });
+  if (
+    synced.watchedKeys !== watchedKeys ||
+    synced.archived !== archived ||
+    synced.watchlist !== watchlist
+  ) {
+    setSynced({ watchedKeys, archived, watchlist });
+    setWatched(new Set(watchedKeys));
+    setIsArchived(archived);
+    setIsWatchlist(watchlist);
+  }
+
   useEffect(() => {
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect
