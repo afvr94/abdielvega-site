@@ -49,10 +49,16 @@ export function TvNav() {
     placedHref.current = activeHref;
 
     if (typeof ResizeObserver === 'undefined') return;
-    let first = true;
+    // Only re-place on a real size change, so the observer's initial callback can't cut a slide short.
     const observer = new ResizeObserver(() => {
-      if (first) first = false;
-      else place(false);
+      const tab = nav.querySelector<HTMLElement>('[aria-current="page"]');
+      if (
+        tab &&
+        pill.style.width === `${tab.offsetWidth}px` &&
+        pill.style.transform === `translateX(${tab.offsetLeft}px)`
+      )
+        return;
+      place(false);
     });
     observer.observe(nav);
     // Tabs change width without the nav resizing when the web fonts swap in.

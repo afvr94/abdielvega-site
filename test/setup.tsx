@@ -5,20 +5,6 @@ import { afterEach, vi } from 'vitest';
 
 afterEach(() => cleanup());
 
-// jsdom has no matchMedia (ThemeToggle / theme detection)
-if (!window.matchMedia) {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  }));
-}
-
 // Lightweight stand-ins for Next primitives so components render in jsdom.
 vi.mock('next/image', () => ({
   default: ({ src, alt, fill, priority, sizes, ...rest }: Record<string, unknown>) =>
