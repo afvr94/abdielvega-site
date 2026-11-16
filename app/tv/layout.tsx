@@ -1,20 +1,21 @@
+import type { Metadata, Viewport } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { TvNav } from '@/components/tv/TvNav';
 import { cliffoTheme } from './fonts';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: {
     default: 'cliffo',
     template: '%s · cliffo',
   },
   description: 'Personal TV tracker — private.',
   manifest: '/api/tv/manifest',
-  appleWebApp: { capable: true, title: 'cliffo', statusBarStyle: 'black' as const },
+  appleWebApp: { capable: true, title: 'cliffo', statusBarStyle: 'black' },
   icons: { apple: '/cliffo/icon-180.png' },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: '#16121B',
 };
 
