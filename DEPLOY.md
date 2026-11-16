@@ -447,18 +447,17 @@ helpers, so the zone lives only in `tv_date()`. The app's `dateIso()` in
 `lib/tv/format.ts` uses the same zone.
 
 ```sql
+-- No `set search_path` here: it stops Postgres inlining these into the queries that call them per row.
 create or replace function public.tv_date(ts timestamptz)
 returns date
 language sql
 stable
-set search_path = ''
 as $$ select (ts at time zone 'America/New_York')::date $$;
 
 create or replace function public.tv_today()
 returns date
 language sql
 stable
-set search_path = ''
 as $$ select public.tv_date(now()) $$;
 ```
 
