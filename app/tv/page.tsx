@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUpNext, getUpcoming } from '@/lib/tv/queries';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, dayHeading } from '@/lib/tv/format';
-import { UpNextCard } from '@/components/tv/UpNextCard';
+import { UpNextList } from '@/components/tv/UpNextList';
 import { SurpriseButton } from '@/components/tv/SurpriseButton';
 
 export const metadata = { title: 'Up Next' };
@@ -77,11 +77,7 @@ export default async function TvHomePage() {
           </div>
         </div>
         {behind.length > 0 ? (
-          <div className="rise space-y-3">
-            {behind.map((item) => (
-              <UpNextCard key={item.show.tmdbId} item={item} />
-            ))}
-          </div>
+          <UpNextList items={behind} />
         ) : (
           <p className="card border border-hairline p-6 text-sm text-muted">
             All caught up. Nothing aired that you haven&apos;t seen.

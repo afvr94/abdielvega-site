@@ -9,10 +9,10 @@ import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import { markWatched } from '@/app/tv/actions';
 
-export function UpNextCard({ item }: { item: UpNextItem }) {
+export function UpNextCard({ item, onMarked }: { item: UpNextItem; onMarked?: () => void }) {
   const { show, next } = item;
   const [pending, startTransition] = useTransition();
-  const [done, setDone] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   if (!next) return null;
 
@@ -21,16 +21,21 @@ export function UpNextCard({ item }: { item: UpNextItem }) {
 
   function mark() {
     if (!next) return;
-    setDone(true);
+    setFailed(false);
     startTransition(async () => {
-      await markWatched(show.tmdbId, next.seasonNumber, next.episodeNumber);
+      try {
+        await markWatched(show.tmdbId, next.seasonNumber, next.episodeNumber);
+        onMarked?.();
+      } catch {
+        setFailed(true);
+      }
     });
   }
 
   return (
     <div
-      className={`card flex items-stretch gap-4 border border-hairline p-3 transition-all duration-300 ${
-        done ? 'scale-[0.98] opacity-0' : 'opacity-100'
+      className={`flex items-stretch gap-4 card border border-hairline p-3 transition-all duration-300 ${
+        pending ? 'scale-[0.98] opacity-0' : 'opacity-100'
       }`}
     >
       <Link
@@ -43,7 +48,7 @@ export function UpNextCard({ item }: { item: UpNextItem }) {
       <div className="flex min-w-0 flex-1 flex-col justify-center">
         <Link
           href={`/show/${show.tmdbId}`}
-          className="truncate font-display text-lg font-semibold leading-tight tracking-tightest-2 hover:underline"
+          className="truncate font-display text-lg leading-tight font-semibold tracking-tightest-2 hover:underline"
         >
           {show.name}
         </Link>
@@ -62,11 +67,19 @@ export function UpNextCard({ item }: { item: UpNextItem }) {
           </span>
           {next.airDate ? <span>· aired {formatAirDate(next.airDate)}</span> : null}
         </div>
+        {failed ? (
+          <p role="alert" className="mt-2 text-xs text-expense">
+            Couldn&apos;t mark it watched.{' '}
+            <button onClick={mark} className="font-semibold underline underline-offset-2">
+              Retry
+            </button>
+          </p>
+        ) : null}
       </div>
 
       <button
         onClick={mark}
-        disabled={pending || done}
+        disabled={pending}
         aria-label={`Mark ${episodeCode(next.seasonNumber, next.episodeNumber)} watched`}
         className="group flex w-14 shrink-0 items-center justify-center rounded-lg border border-hairline bg-card transition-colors hover:border-income hover:bg-income/5 disabled:opacity-60"
       >
