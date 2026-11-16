@@ -3,7 +3,7 @@
 Personal site of Abdiel Vega. One Next.js 15 app, two surfaces:
 
 - `abdielvega.com` — public portfolio (Home, About, Projects, Contact)
-- `budget.abdielvega.com` — private budget tracker (single-user, Supabase magic-link auth)
+- `budget.abdielvega.com` — private budget tracker (single-user, Google sign-in through Supabase)
 
 Stack: Next.js 15 · React 19 · TypeScript · Tailwind · Supabase · Vercel.
 

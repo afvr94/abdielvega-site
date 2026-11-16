@@ -4,9 +4,16 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
-  // Default to '/' — middleware resolves it to the right app per host
-  // (budget.* → /budget, tv.* → /tv).
-  const next = url.searchParams.get('next') ?? '/';
+  // Default to '/' — the proxy resolves it to the right app per host
+  // (budget.* → /budget, tv.* → /tv). Only same-site paths: "//x" or "/\x"
+  // would send a fresh session to another site.
+  const requested = url.searchParams.get('next') ?? '/';
+  const next = /^\/(?![/\\])/.test(requested) ? requested : '/';
+
+  // Google or Supabase refused the sign-in (e.g. an account that isn't allowed).
+  if (url.searchParams.has('error')) {
+    return NextResponse.redirect(new URL('/login?error=denied', url.origin));
+  }
 
   if (code) {
     const supabase = await createClient();
@@ -16,5 +23,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL('/login?error=invalid_link', url.origin));
+  return NextResponse.redirect(new URL('/login?error=failed', url.origin));
 }

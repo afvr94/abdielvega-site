@@ -1,67 +1,37 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
-import { Mail, Check, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setStatus('sending');
+  async function signIn() {
+    setPending(true);
     setError(null);
-    try {
-      const supabase = createClient();
-      const redirectTo =
-        typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined;
-      const { error: err } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { emailRedirectTo: redirectTo },
-      });
-      if (err) throw err;
-      setStatus('sent');
-    } catch (err) {
-      setStatus('error');
-      setError(err instanceof Error ? err.message : 'Could not send magic link');
+    const { error: err } = await createClient().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    // On success the browser is already on its way to Google.
+    if (err) {
+      setPending(false);
+      setError(err.message);
     }
   }
 
-  if (status === 'sent') {
-    return (
-      <div className="card border border-hairline p-10 text-center">
-        <Check size={28} className="mx-auto mb-4 text-income" strokeWidth={1.5} />
-        <div className="font-display text-2xl font-semibold">Check your inbox.</div>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
-          We sent a sign-in link to <span className="font-mono-tab text-ink">{email}</span>. Open it
-          on this device to continue.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="card border border-hairline p-6 sm:p-8">
-      <label className="mb-2 block label-tag">Email</label>
-      <input
-        type="email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@example.com"
-        autoFocus
-        className="w-full border-0 border-b border-ink/20 bg-transparent px-0 py-2 font-mono-tab text-[15px] focus:border-ink focus:outline-hidden"
-      />
+    <div className="card border border-hairline p-6 sm:p-8">
       <button
-        type="submit"
-        disabled={status === 'sending' || !email.trim()}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+        type="button"
+        onClick={signIn}
+        disabled={pending}
+        className="inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-full bg-ink px-5 py-3 text-sm font-semibold text-cream transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {status === 'sending' ? 'Sending…' : 'Send magic link'}
-        <Mail size={14} strokeWidth={2} />
+        <GoogleMark />
+        {pending ? 'Opening Google…' : 'Continue with Google'}
       </button>
       {error ? (
         <div className="mt-5 flex items-start gap-2 border-t border-hairline pt-4 text-xs text-expense">
@@ -69,6 +39,29 @@ export function LoginForm() {
           <span>{error}</span>
         </div>
       ) : null}
-    </form>
+    </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"
+      />
+    </svg>
   );
 }
