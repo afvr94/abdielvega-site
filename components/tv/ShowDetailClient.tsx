@@ -49,6 +49,9 @@ export function ShowDetailClient({
   const [neverAsk, setNeverAsk] = useState(false);
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
   const [retry, setRetry] = useState<(() => void) | null>(null);
+  // Episode taps still saving. markWatched doesn't refresh this page, so a refresh from another
+  // action could carry older data; these are re-applied on top of it until they settle.
+  const [pending, setPending] = useState<ReadonlyMap<string, boolean>>(() => new Map());
 
   // Local state seeds from props once, so adopt fresh server data after a refresh.
   const [synced, setSynced] = useState({ watchedKeys, archived, watchlist });
@@ -58,7 +61,12 @@ export function ShowDetailClient({
     synced.watchlist !== watchlist
   ) {
     setSynced({ watchedKeys, archived, watchlist });
-    setWatched(new Set(watchedKeys));
+    const fresh = new Set(watchedKeys);
+    for (const [key, isWatched] of pending) {
+      if (isWatched) fresh.add(key);
+      else fresh.delete(key);
+    }
+    setWatched(fresh);
     setIsArchived(archived);
     setIsWatchlist(watchlist);
   }
@@ -156,6 +164,7 @@ export function ShowDetailClient({
     optimistic(
       () => {
         setKeys([key], nowWatched);
+        setPending((p) => new Map(p).set(key, nowWatched));
         if (leavesWatchlist) setIsWatchlist(false);
       },
       () => {
@@ -163,9 +172,16 @@ export function ShowDetailClient({
         if (leavesWatchlist) setIsWatchlist(true);
       },
       () =>
-        nowWatched
+        (nowWatched
           ? markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber)
           : markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber)
+        ).finally(() =>
+          setPending((p) => {
+            const rest = new Map(p);
+            rest.delete(key);
+            return rest;
+          })
+        )
     );
     if (hasEarlierGap && !neverAsk) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
   }

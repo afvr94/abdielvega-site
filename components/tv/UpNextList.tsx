@@ -14,7 +14,7 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
   const [undoing, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!marked || undoing) return;
+    if (!marked || undoing || marked.failed) return;
     const timer = setTimeout(() => setMarked(null), 5000);
     return () => clearTimeout(timer);
   }, [marked, undoing]);

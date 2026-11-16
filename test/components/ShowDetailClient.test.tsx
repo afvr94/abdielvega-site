@@ -155,4 +155,20 @@ describe('ShowDetailClient — server refresh', () => {
     rerender(<ShowDetailClient {...props} watchedKeys={['1-1']} />);
     expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
   });
+
+  it('keeps an episode tap that is still saving when older server data arrives', async () => {
+    vi.mocked(markWatched).mockReturnValueOnce(new Promise(() => {}));
+    const props = {
+      show: makeShow({ tmdbId: 500, name: 'The Walking Dead' }),
+      episodes,
+      isFollowed: true,
+      archived: false,
+      watchlist: false,
+    };
+    const { rerender } = render(<ShowDetailClient {...props} watchedKeys={[]} />);
+    await userEvent.click(within(episodeRow('S01E01')).getByRole('button'));
+    rerender(<ShowDetailClient {...props} watchedKeys={['1-3']} />);
+    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+    expect(within(episodeRow('S01E03')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+  });
 });
