@@ -31,7 +31,7 @@ export function buildNotificationEmail(items: NotifyItem[]): {
     '',
     ...items.map((i) => `• ${line(i)}${i.airDate ? `  (${formatAirDate(i.airDate)})` : ''}`),
     '',
-    `Open The Marquee: ${APP_URL}`,
+    `Open cliffo: ${APP_URL}`,
   ].join('\n');
 
   const rows = items
@@ -54,7 +54,7 @@ export function buildNotificationEmail(items: NotifyItem[]): {
     <h2 style="font-weight:600;">New episodes to watch</h2>
     <table style="width:100%;border-collapse:collapse;">${rows}</table>
     <p style="margin-top:20px;">
-      <a href="${APP_URL}" style="color:#2e5266;">Open The Marquee →</a>
+      <a href="${APP_URL}" style="color:#2e5266;">Open cliffo →</a>
     </p>
   </div>`;
 

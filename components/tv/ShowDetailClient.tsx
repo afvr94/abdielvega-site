@@ -233,7 +233,7 @@ export function ShowDetailClient({
                 onClick={toggleWatchlist}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition-colors ${
                   isWatchlist
-                    ? 'bg-savings text-white'
+                    ? 'bg-savings text-cream'
                     : 'border border-hairline bg-card text-muted hover:text-ink'
                 }`}
               >
@@ -362,7 +362,7 @@ export function ShowDetailClient({
                 aria-label={isWatched ? 'Mark unwatched' : 'Mark watched'}
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-30 ${
                   isWatched
-                    ? 'border-income bg-income text-white'
+                    ? 'border-income bg-income text-cream'
                     : 'border-hairline bg-card text-muted hover:border-income hover:text-income'
                 }`}
               >

@@ -5,8 +5,6 @@
 @source '../components';
 @source '../lib';
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
   --color-cream: rgb(var(--cream));
   --color-ink: rgb(var(--ink));
@@ -132,8 +130,7 @@
 }
 
 @layer base {
-  /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working.
-     Dark mode flips these variables; components never hardcode the hex. */
+  /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working. */
   :root {
     --cream: 245 239 228; /* page background */
     --ink: 26 24 21; /* primary text */
@@ -147,22 +144,6 @@
     color-scheme: light;
   }
 
-  :root.dark {
-    --cream: 22 20 16; /* warm near-black background */
-    --ink: 237 231 220; /* warm off-white text */
-    --muted: 150 141 130;
-    --card: 34 31 26; /* raised warm dark surface */
-    --hairline: 237 231 220; /* light hairline at 13% alpha */
-    color-scheme: dark;
-  }
-
-  html {
-    color-scheme: light;
-  }
-  html.dark {
-    color-scheme: dark;
-  }
-
   body {
     background-color: rgb(var(--cream));
     color: rgb(var(--ink));
@@ -174,5 +155,87 @@
   ::selection {
     background: rgb(var(--ink));
     color: rgb(var(--cream));
+  }
+}
+
+/*
+  Unlayered so it beats the base palette and the transition utilities.
+  :root:has() lets the page background and portals follow.
+*/
+:root:has(.cliffo) {
+  --cream: 22 18 27;
+  --card: 33 27 40;
+  --ink: 246 240 247;
+  --muted: 169 156 179;
+  --hairline: 246 240 247;
+  --income: 255 181 71;
+  --warn: 255 181 71;
+  --savings: 182 156 255;
+  --expense: 255 122 107;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: dark;
+}
+
+.cliffo {
+  --font-fraunces: var(--font-outfit);
+  --font-instrument: var(--font-dm-sans);
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.cliffo :is(a, button) {
+  transition-property: color, background-color, border-color, opacity, box-shadow, scale;
+  transition-duration: 180ms;
+  transition-timing-function: var(--ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cliffo :is(a, button:not(:disabled)):active {
+    scale: 0.97;
+  }
+}
+
+.cliffo .tab-label {
+  transition-duration: 380ms;
+}
+
+@keyframes cliffo-rise {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+.cliffo .rise > * {
+  animation: cliffo-rise 380ms var(--ease) backwards;
+}
+.cliffo .rise > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.cliffo .rise > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.cliffo .rise > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.cliffo .rise > :nth-child(5) {
+  animation-delay: 160ms;
+}
+.cliffo .rise > :nth-child(n + 6) {
+  animation-delay: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cliffo *,
+  .cliffo *::before,
+  .cliffo *::after {
+    transition-duration: 0ms !important;
+  }
+  /* Spinners keep turning: a frozen loader reads as a stalled page. */
+  .cliffo *:not(.animate-spin),
+  .cliffo *::before,
+  .cliffo *::after {
+    animation: none !important;
   }
 }

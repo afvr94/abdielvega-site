@@ -1,20 +1,18 @@
-// PWA manifest for The Marquee (tv.abdielvega.com). Served under /api so it's
-// reachable past the auth gate; referenced only from the TV layout.
+// Under /api so it's reachable past the auth gate.
 export async function GET() {
   const manifest = {
-    name: 'The Marquee',
-    short_name: 'Marquee',
+    name: 'cliffo',
+    short_name: 'cliffo',
     description: 'Personal TV tracker',
     start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#F5EFE4',
-    theme_color: '#1A1815',
+    background_color: '#16121B',
+    theme_color: '#16121B',
     icons: [
-      { src: '/api/tv/icon/192', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/api/tv/icon/512', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/api/tv/icon/512', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/cliffo/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/cliffo/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
   };
   return Response.json(manifest, {

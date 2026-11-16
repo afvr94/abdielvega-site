@@ -55,7 +55,7 @@ export default async function HomePage() {
   const contents = [
     { name: 'HIIT timer', note: 'Interval timer · public', href: '/hiit' },
     { name: 'The Ledger', note: 'Zero-based budget tracker · private' },
-    { name: 'The Marquee', note: 'TV series tracker · private' },
+    { name: 'cliffo', note: 'TV series tracker · private' },
     {
       name: repos.length > 0 ? `${repos.length} repositories` : 'Repositories',
       note: 'Open source on GitHub',

@@ -12,23 +12,22 @@ import { TvNav } from '@/components/tv/TvNav';
 beforeEach(() => vi.clearAllMocks());
 
 describe('TvNav', () => {
-  it('renders the wordmark, nav links, theme toggle and sign-out', () => {
+  it('renders the cliffo logo, nav links and sign-out, with no theme toggle', () => {
     render(<TvNav />);
-    expect(screen.getByText('The Marquee')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'cliffo' })).toBeInTheDocument();
     for (const label of ['Up Next', 'Shows', 'Calendar', 'Stats', 'Search']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
     }
-    expect(
-      screen.getByRole('button', { name: /switch to (dark|light) mode/i })
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /switch to (dark|light) mode/i })).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 
-  it('marks the current route active (pathname "/")', () => {
-    render(<TvNav />);
-    // usePathname is mocked to "/", so Up Next is active (inverted colors)
-    expect(screen.getByRole('link', { name: 'Up Next' }).className).toContain('bg-ink');
-    expect(screen.getByRole('link', { name: 'Shows' }).className).not.toContain('bg-ink');
+  it('marks the current route and places the sliding pill on it (pathname "/")', () => {
+    const { container } = render(<TvNav />);
+    expect(screen.getByRole('link', { name: 'Up Next' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Shows' })).not.toHaveAttribute('aria-current');
+    const pill = container.querySelector<HTMLElement>('[data-nav-pill]');
+    expect(pill?.style.opacity).toBe('1');
   });
 
   it('signs out', async () => {

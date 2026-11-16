@@ -20,7 +20,7 @@ export default async function TvHomePage() {
   if (items.length === 0 && thisWeek.length === 0) {
     return (
       <div className="py-24 text-center">
-        <div className="label-tag mb-2">The Marquee</div>
+        <div className="mb-2 label-tag">cliffo</div>
         <h1 className="font-display text-4xl font-semibold tracking-tightest-3">
           Nothing followed yet
         </h1>
@@ -29,7 +29,7 @@ export default async function TvHomePage() {
         </p>
         <Link
           href="/search"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold uppercase tracking-wider text-cream transition-opacity hover:opacity-90"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
         >
           <Search size={14} strokeWidth={2} /> Search shows
         </Link>
@@ -41,8 +41,8 @@ export default async function TvHomePage() {
     <div className="space-y-10">
       {thisWeek.length > 0 ? (
         <section>
-          <div className="label-tag mb-3">Airing this week</div>
-          <div className="no-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
+          <div className="mb-3 label-tag">Airing this week</div>
+          <div className="-mx-5 no-scrollbar flex gap-3 overflow-x-auto px-5 pb-1">
             {thisWeek.map(({ show, episode }) => {
               const img = imageUrl(episode.stillPath, 'w300') ?? imageUrl(show.posterPath, 'w185');
               return (
@@ -51,11 +51,11 @@ export default async function TvHomePage() {
                     {img ? (
                       <Image src={img} alt="" fill sizes="160px" className="object-cover" />
                     ) : null}
-                    <span className="font-mono-tab absolute right-1.5 top-1.5 rounded-full bg-ink/85 px-1.5 py-0.5 text-[10px] font-semibold text-cream">
+                    <span className="absolute top-1.5 right-1.5 rounded-full bg-ink/85 px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-cream">
                       {episode.airDate === today ? 'Today' : dayHeading(episode.airDate ?? '')}
                     </span>
                   </div>
-                  <div className="mt-1.5 truncate text-xs font-medium leading-tight">
+                  <div className="mt-1.5 truncate text-xs leading-tight font-medium">
                     {show.name}
                   </div>
                   <div className="font-mono-tab text-[10px] text-muted">
@@ -73,11 +73,11 @@ export default async function TvHomePage() {
           <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Up Next</h1>
           <div className="flex items-center gap-2">
             <SurpriseButton showIds={behind.map((i) => i.show.tmdbId)} />
-            <span className="label-tag shrink-0">{behind.length} to watch</span>
+            <span className="shrink-0 label-tag">{behind.length} to watch</span>
           </div>
         </div>
         {behind.length > 0 ? (
-          <div className="space-y-3">
+          <div className="rise space-y-3">
             {behind.map((item) => (
               <UpNextCard key={item.show.tmdbId} item={item} />
             ))}
@@ -91,7 +91,7 @@ export default async function TvHomePage() {
 
       {caughtUp.length > 0 ? (
         <section>
-          <div className="label-tag mb-3">Caught up · {caughtUp.length}</div>
+          <div className="mb-3 label-tag">Caught up · {caughtUp.length}</div>
           <div className="flex flex-wrap gap-2">
             {caughtUp.map((item) => (
               <Link
