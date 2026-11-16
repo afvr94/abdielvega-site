@@ -21,14 +21,17 @@ describe('auth callback', () => {
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc');
   });
 
-  it.each(['//evil.example', '/\\evil.example', 'https://evil.example'])(
-    'ignores an off-site next (%s)',
-    async (next) => {
-      expect(await call(`code=abc&next=${encodeURIComponent(next)}`)).toBe(
-        'https://tv.abdielvega.com/'
-      );
-    }
-  );
+  it.each([
+    '//evil.example',
+    '/\\evil.example',
+    '/\t/evil.example',
+    'https://evil.example',
+    'http://',
+  ])('ignores an off-site next (%s)', async (next) => {
+    expect(await call(`code=abc&next=${encodeURIComponent(next)}`)).toBe(
+      'https://tv.abdielvega.com/'
+    );
+  });
 
   it('reports a refused sign-in', async () => {
     expect(await call('error=access_denied&error_description=Signups+not+allowed')).toBe(

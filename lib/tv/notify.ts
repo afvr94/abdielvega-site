@@ -10,32 +10,43 @@ export type NotifyItem = {
 export type Behind = { episodes: number; minutes: number };
 
 const APP_URL = 'https://tv.abdielvega.com';
-// Discord rejects messages over 2,000 characters; a long backlog gets a "+N more".
 const MAX_LINES = 25;
+// Discord rejects posts over 2,000 characters, and a rejected post is retried
+// with a bigger backlog every day. Room kept for a header and "+N more" lines.
+const MAX_CHARS = 2000;
+const RESERVE = 80;
 
 // Spoiler-safe: show name and episode code only, never the episode title.
 export function buildDiscordMessage(items: NotifyItem[], today: string, behind?: Behind): string {
   const tonight = items.filter((i) => i.airDate === today);
   const earlier = items.filter((i) => i.airDate !== today);
+  const footer =
+    behind && behind.episodes > 0
+      ? `-# Behind: ${behind.episodes.toLocaleString('en-US')} eps · ${humanizeMinutes(behind.minutes)} · [Open cliffo](${APP_URL})`
+      : `-# [Open cliffo](${APP_URL})`;
 
   const out: string[] = [];
+  let size = footer.length + RESERVE;
+  const push = (line: string) => {
+    out.push(line);
+    size += line.length + 1;
+  };
   const section = (title: string, list: NotifyItem[]) => {
     if (list.length === 0) return;
-    out.push(`**${title}**`);
+    push(`**${title}**`);
     const lines = byShow(list);
-    for (const line of lines.slice(0, MAX_LINES)) out.push(line);
-    if (lines.length > MAX_LINES) out.push(`+${lines.length - MAX_LINES} more shows`);
+    let shown = 0;
+    for (const line of lines.slice(0, MAX_LINES)) {
+      if (size + line.length >= MAX_CHARS) break;
+      push(line);
+      shown += 1;
+    }
+    if (shown < lines.length) push(`+${lines.length - shown} more shows`);
   };
   section('📺 Tonight', tonight);
   section('New since last time', earlier);
 
-  if (behind && behind.episodes > 0) {
-    out.push(
-      `-# Behind: ${behind.episodes.toLocaleString('en-US')} eps · ${humanizeMinutes(behind.minutes)} · [Open cliffo](${APP_URL})`
-    );
-  } else {
-    out.push(`-# [Open cliffo](${APP_URL})`);
-  }
+  out.push(footer);
   return out.join('\n');
 }
 

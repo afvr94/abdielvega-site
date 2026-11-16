@@ -63,6 +63,20 @@ describe('buildDiscordMessage', () => {
     expect(msg).toContain('+15 more shows');
     expect(msg.length).toBeLessThan(2000);
   });
+
+  it('stays under the limit when both sections are full of long names', () => {
+    const items = Array.from({ length: 60 }, (_, i) =>
+      ep({
+        showName: `A show with a really quite long title, part ${i}`,
+        episodeNumber: i % 2 ? 1 : 3,
+        airDate: i < 30 ? TODAY : '2026-11-01',
+      })
+    );
+    const msg = buildDiscordMessage(items, TODAY, { episodes: 99999, minutes: 999999 });
+    expect(msg.length).toBeLessThanOrEqual(2000);
+    expect(msg).toContain('more shows');
+    expect(msg).toMatch(/Open cliffo/);
+  });
 });
 
 describe('sendDiscord', () => {

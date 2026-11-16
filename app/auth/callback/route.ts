@@ -5,10 +5,11 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
   // Default to '/' — the proxy resolves it to the right app per host
-  // (budget.* → /budget, tv.* → /tv). Only same-site paths: "//x" or "/\x"
-  // would send a fresh session to another site.
-  const requested = url.searchParams.get('next') ?? '/';
-  const next = /^\/(?![/\\])/.test(requested) ? requested : '/';
+  // (budget.* → /budget, tv.* → /tv). Resolve first and compare origins: a
+  // prefix check misses "/\t/x", which URL parsing turns into "//x" (another site).
+  const raw = url.searchParams.get('next') ?? '/';
+  const requested = URL.canParse(raw, url.origin) ? new URL(raw, url.origin) : null;
+  const next = requested?.origin === url.origin ? requested : new URL('/', url.origin);
 
   // Google or Supabase refused the sign-in (e.g. an account that isn't allowed).
   if (url.searchParams.has('error')) {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin));
+      return NextResponse.redirect(next);
     }
   }
 
