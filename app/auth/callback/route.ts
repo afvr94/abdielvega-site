@@ -4,14 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
-  // Default to '/' — the proxy resolves it to the right app per host
-  // (budget.* → /budget, tv.* → /tv). Resolve first and compare origins: a
-  // prefix check misses "/\t/x", which URL parsing turns into "//x" (another site).
+  // Resolve first and compare origins: a prefix check misses "/\t/x", which URL parsing turns into "//x" (another site).
   const raw = url.searchParams.get('next') ?? '/';
   const requested = URL.canParse(raw, url.origin) ? new URL(raw, url.origin) : null;
   const next = requested?.origin === url.origin ? requested : new URL('/', url.origin);
 
-  // Google or Supabase refused the sign-in (e.g. an account that isn't allowed).
   if (url.searchParams.has('error')) {
     return NextResponse.redirect(new URL('/login?error=denied', url.origin));
   }

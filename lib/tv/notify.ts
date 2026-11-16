@@ -11,12 +11,10 @@ export type Behind = { episodes: number; minutes: number };
 
 const APP_URL = 'https://tv.abdielvega.com';
 const MAX_LINES = 25;
-// Discord rejects posts over 2,000 characters, and a rejected post is retried
-// with a bigger backlog every day. Room kept for a header and "+N more" lines.
-const MAX_CHARS = 2000;
-const RESERVE = 80;
+const DISCORD_MAX_CHARS = 2000;
+const SUPPRESS_EMBEDS = 1 << 2;
+const HEADERS_AND_MORE_LINES_RESERVE = 80;
 
-// Spoiler-safe: show name and episode code only, never the episode title.
 export function buildDiscordMessage(items: NotifyItem[], today: string, behind?: Behind): string {
   const tonight = items.filter((i) => i.airDate === today);
   const earlier = items.filter((i) => i.airDate !== today);
@@ -26,7 +24,7 @@ export function buildDiscordMessage(items: NotifyItem[], today: string, behind?:
       : `-# [Open cliffo](${APP_URL})`;
 
   const out: string[] = [];
-  let size = footer.length + RESERVE;
+  let size = footer.length + HEADERS_AND_MORE_LINES_RESERVE;
   const push = (line: string) => {
     out.push(line);
     size += line.length + 1;
@@ -34,10 +32,10 @@ export function buildDiscordMessage(items: NotifyItem[], today: string, behind?:
   const section = (title: string, list: NotifyItem[]) => {
     if (list.length === 0) return;
     push(`**${title}**`);
-    const lines = byShow(list);
+    const lines = collapsedLinePerShow(list);
     let shown = 0;
     for (const line of lines.slice(0, MAX_LINES)) {
-      if (size + line.length >= MAX_CHARS) break;
+      if (size + line.length >= DISCORD_MAX_CHARS) break;
       push(line);
       shown += 1;
     }
@@ -54,15 +52,12 @@ export async function sendDiscord(webhookUrl: string, content: string): Promise<
   const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    // A show named "@everyone" must not ping anyone.
-    // flags 4 = SUPPRESS_EMBEDS: no link preview card under the post.
-    body: JSON.stringify({ content, allowed_mentions: { parse: [] }, flags: 4 }),
+    body: JSON.stringify({ content, allowed_mentions: { parse: [] }, flags: SUPPRESS_EMBEDS }),
   });
   if (!res.ok) throw new Error(`discord ${res.status}: ${await res.text()}`);
 }
 
-// One line per show, with consecutive episodes collapsed: "Show `S01E03–E08`".
-function byShow(list: NotifyItem[]): string[] {
+function collapsedLinePerShow(list: NotifyItem[]): string[] {
   const shows = new Map<string, NotifyItem[]>();
   for (const i of list) shows.set(i.showName, [...(shows.get(i.showName) ?? []), i]);
 

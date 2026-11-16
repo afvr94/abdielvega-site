@@ -14,7 +14,6 @@ type PendingRow = {
   air_date: string | null;
 };
 
-// After syncing, post newly aired episodes (tonight's included) to Discord.
 async function notifyNewEpisodes(
   db: ReturnType<typeof createAdminClient>
 ): Promise<{ notified: number; error?: string }> {
@@ -46,7 +45,6 @@ async function notifyNewEpisodes(
     return { notified: 0, error: `send: ${e instanceof Error ? e.message : String(e)}` };
   }
 
-  // Only mark notified once the post actually went out.
   const { error: insErr } = await db.from('tv_notified').upsert(
     rows.map((r) => ({ episode_tmdb_id: r.episode_tmdb_id })),
     { onConflict: 'episode_tmdb_id', ignoreDuplicates: true }

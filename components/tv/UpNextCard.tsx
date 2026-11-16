@@ -20,8 +20,7 @@ export function UpNextCard({
   const { show, next } = item;
   const [pending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
-  // Spoiler protection: the next episode is unwatched by definition.
-  const [revealed, setRevealed] = useState(false);
+  const [spoilerRevealed, setSpoilerRevealed] = useState(false);
 
   if (!next) return null;
 
@@ -59,7 +58,7 @@ export function UpNextCard({
             alt=""
             fill
             sizes="160px"
-            className={`object-cover ${revealed ? '' : 'scale-110 blur-md'}`}
+            className={`object-cover ${spoilerRevealed ? '' : 'scale-110 blur-md'}`}
           />
         ) : null}
       </Link>
@@ -75,11 +74,11 @@ export function UpNextCard({
           <span className="font-mono-tab text-xs text-muted">
             {episodeCode(next.seasonNumber, next.episodeNumber)}
           </span>
-          {revealed ? (
+          {spoilerRevealed ? (
             <span className="truncate text-ink">{next.name ?? '—'}</span>
           ) : (
             <button
-              onClick={() => setRevealed(true)}
+              onClick={() => setSpoilerRevealed(true)}
               aria-label="hidden, show episode title"
               className="-my-2 truncate py-2 text-muted italic hover:text-ink"
             >

@@ -120,7 +120,7 @@ describe('getHome', () => {
     expect(upNext[0].next?.airDate).toBe('2026-06-01');
     expect(upNext[0].airedWatched).toBe(1);
     expect(upNext[0].airedTotal).toBe(10);
-    expect(upNext[2].next).toBeNull(); // caught up
+    expect(upNext[2].next).toBeNull();
   });
 
   it("maps this week's airings in the order the database returns them", async () => {
