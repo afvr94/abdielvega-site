@@ -6,7 +6,7 @@ import { Check, CheckCheck, Archive, Bookmark } from 'lucide-react';
 import type { Episode, Show, TvList } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
 import { ListPicker } from './ListPicker';
-import { imageUrl, type WatchProvider } from '@/lib/tv/tmdb';
+import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import {
   markWatched,
@@ -28,8 +28,7 @@ export function ShowDetailClient({
   isFollowed,
   archived,
   watchlist,
-  providers = [],
-  providerLink = null,
+  whereToWatch,
   allLists = [],
   listIds = [],
 }: {
@@ -39,8 +38,7 @@ export function ShowDetailClient({
   isFollowed: boolean;
   archived: boolean;
   watchlist: boolean;
-  providers?: WatchProvider[];
-  providerLink?: string | null;
+  whereToWatch?: React.ReactNode;
   allLists?: TvList[];
   listIds?: number[];
 }) {
@@ -302,35 +300,7 @@ export function ShowDetailClient({
         </p>
       ) : null}
 
-      {/* Where to watch */}
-      {providers.length > 0 ? (
-        <div className="mb-6">
-          <div className="mb-2 label-tag">Where to watch</div>
-          <div className="flex flex-wrap items-center gap-2">
-            {providers.map((p) => (
-              <span
-                key={p.name}
-                className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-card py-1 pr-2.5 pl-1 text-xs"
-              >
-                {p.logoUrl ? (
-                  <Image src={p.logoUrl} alt="" width={18} height={18} className="rounded-[4px]" />
-                ) : null}
-                {p.name}
-              </span>
-            ))}
-            {providerLink ? (
-              <a
-                href={providerLink}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-muted underline decoration-hairline underline-offset-2 hover:text-ink"
-              >
-                via JustWatch
-              </a>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      {whereToWatch}
 
       {isFollowed ? (
         <ListPicker tmdbId={show.tmdbId} allLists={allLists} initialListIds={listIds} />

@@ -121,8 +121,10 @@ the cron has already emailed about. The heavier reads go through Postgres
 functions — `tv_up_next()`, `tv_library()`, `tv_stats()`,
 `tv_pending_notifications()`.
 
-TMDB is never hit on page render: all app reads come from Postgres, and
-`lib/tv/tmdb.ts` runs only on follow, import, and the scheduled sync.
+Library reads come from Postgres; `lib/tv/tmdb.ts` writes metadata only on follow,
+import and the scheduled sync. Page renders call TMDB only for watch providers
+(cached a day, streamed in after the episode list) and the preview of a show that
+isn't cached yet.
 
 ## Local development
 
