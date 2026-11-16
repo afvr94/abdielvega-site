@@ -38,7 +38,7 @@ app/
     layout.tsx          # redirects to /login if not authed
     page.tsx            # mounts <BudgetTracker />
   tv/                   # TV tracker (private)
-    layout.tsx          # auth gate + <TvNav> + PWA manifest/icon metadata
+    layout.tsx          # <TvNav> + PWA manifest/icon metadata (proxy.ts gates auth)
     page.tsx            # Up Next
     shows/page.tsx      # library grid (follows, archive, watchlist, lists)
     show/[tmdbId]/      # show detail — seasons, episodes, where to watch

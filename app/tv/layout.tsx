@@ -1,6 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
 import { TvNav } from '@/components/tv/TvNav';
 import { cliffoTheme } from './fonts';
 
@@ -19,12 +17,8 @@ export const viewport: Viewport = {
   themeColor: '#16121B',
 };
 
-export default async function TvLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+// proxy.ts already gates TV routes and refreshes the session; RLS protects the data.
+export default function TvLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${cliffoTheme} min-h-screen bg-cream`}>
       <TvNav />
