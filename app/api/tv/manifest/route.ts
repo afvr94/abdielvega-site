@@ -1,5 +1,4 @@
-// PWA manifest for cliffo (tv.abdielvega.com). Served under /api so it's
-// reachable past the auth gate; referenced only from the TV layout.
+// Under /api so it's reachable past the auth gate.
 export async function GET() {
   const manifest = {
     name: 'cliffo',

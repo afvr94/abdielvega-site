@@ -27,7 +27,6 @@ export function TvNav() {
   const placedHref = useRef<string | null>(null);
   const activeHref = LINKS.find((l) => isActive(l.href, pathname))?.href ?? null;
 
-  // The pill slides only when the active tab changes; a resize or the first paint snaps it into place.
   useLayoutEffect(() => {
     const nav = navRef.current;
     const pill = pillRef.current;
@@ -45,7 +44,8 @@ export function TvNav() {
       pill.style.opacity = '1';
     };
 
-    place(placedHref.current !== null && placedHref.current !== activeHref);
+    const tabChanged = placedHref.current !== null && placedHref.current !== activeHref;
+    place(tabChanged);
     placedHref.current = activeHref;
 
     if (typeof ResizeObserver === 'undefined') return;

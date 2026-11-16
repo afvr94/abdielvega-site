@@ -130,8 +130,7 @@
 }
 
 @layer base {
-  /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working.
-     The cliffo block below re-declares them for tv; components never hardcode the hex. */
+  /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working. */
   :root {
     --cream: 245 239 228; /* page background */
     --ink: 26 24 21; /* primary text */
@@ -160,9 +159,8 @@
 }
 
 /*
-  tv.abdielvega.com wears the cliffo design: always dark, plum and amber, Outfit and DM Sans.
-  Unlayered so it beats the base palette and the transition utilities; scoped to .cliffo so the
-  portfolio and budget keep their own look. :root:has() lets the page background and portals follow.
+  Unlayered so it beats the base palette and the transition utilities.
+  :root:has() lets the page background and portals follow.
 */
 :root:has(.cliffo) {
   --cream: 22 18 27;
