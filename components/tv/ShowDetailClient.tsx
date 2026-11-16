@@ -127,7 +127,6 @@ export function ShowDetailClient({
     });
   }
 
-  // Apply a change now, save it in the background, and undo it if the save fails.
   function optimistic(apply: () => void, revert: () => void, save: () => Promise<void>) {
     apply();
     setRetry(null);

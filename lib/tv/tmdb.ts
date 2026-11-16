@@ -1,7 +1,4 @@
 // Thin wrapper over the TMDB v3 REST API using a v4 bearer token.
-// Library data comes from Postgres and is written here only on follow, import and
-// the scheduled sync. Page renders call TMDB only for watch providers (cached a day,
-// streamed after the episode list) and the preview of a show that isn't cached yet.
 
 const BASE = 'https://api.themoviedb.org/3';
 const IMG = 'https://image.tmdb.org/t/p';

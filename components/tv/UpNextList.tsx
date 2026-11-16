@@ -14,7 +14,6 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
   const [undoing, startTransition] = useTransition();
 
   useEffect(() => {
-    // Hold the bar open while an undo is in flight so its outcome stays visible.
     if (!marked || undoing) return;
     const timer = setTimeout(() => setMarked(null), 5000);
     return () => clearTimeout(timer);
