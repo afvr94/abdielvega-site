@@ -1,15 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getUpNext, getShowDetail, getLibrary, getStats, getLists } from '@/lib/tv/queries';
+import {
+  getUpNext,
+  getShowDetail,
+  getLibrary,
+  getStats,
+  getLists,
+  getUpcoming,
+} from '@/lib/tv/queries';
 
 // Minimal chainable stand-in for the Supabase query builder. Each method that
 // filters is honored so getShowDetail's per-show reads behave; everything
 // resolves to { data, error } and is awaitable via `then`.
-function makeBuilder(rows: Record<string, unknown>[]) {
+function makeBuilder(rows: Record<string, unknown>[], onSelect: (cols: string) => void) {
   let state = [...rows];
   const b: Record<string, unknown> = {};
   Object.assign(b, {
-    select: () => b,
+    select: (cols: string) => {
+      onSelect(cols);
+      return b;
+    },
     in: (col: string, vals: unknown[]) => {
       state = state.filter((r) => vals.includes(r[col]));
       return b;
@@ -19,11 +29,13 @@ function makeBuilder(rows: Record<string, unknown>[]) {
       return b;
     },
     gt: () => b,
+    gte: () => b,
     lte: () => b,
     not: () => b,
     or: () => b,
     order: () => b,
     range: () => b,
+    overrideTypes: () => b,
     maybeSingle: () => Promise.resolve({ data: state[0] ?? null, error: null }),
     then: (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
       Promise.resolve({ data: state, error: null }).then(res, rej),
@@ -31,13 +43,17 @@ function makeBuilder(rows: Record<string, unknown>[]) {
   return b;
 }
 
-function makeDb(config: {
-  rpc?: Record<string, unknown>;
-  tables?: Record<string, Record<string, unknown>[]>;
-}): SupabaseClient {
+function makeDb(
+  config: {
+    rpc?: Record<string, unknown>;
+    tables?: Record<string, Record<string, unknown>[]>;
+  },
+  selects: { table: string; cols: string }[] = []
+): SupabaseClient {
   return {
     rpc: (name: string) => Promise.resolve({ data: config.rpc?.[name] ?? [], error: null }),
-    from: (table: string) => makeBuilder(config.tables?.[table] ?? []),
+    from: (table: string) =>
+      makeBuilder(config.tables?.[table] ?? [], (cols) => selects.push({ table, cols })),
   } as unknown as SupabaseClient;
 }
 
@@ -287,5 +303,70 @@ describe('getLists', () => {
       { id: 7, name: 'Anime', count: 2 },
       { id: 8, name: 'Comfort', count: 1 },
     ]);
+  });
+});
+
+describe('getUpcoming', () => {
+  it('returns upcoming episodes with their show from one embedded select', async () => {
+    const selects: { table: string; cols: string }[] = [];
+    const db = makeDb(
+      {
+        tables: {
+          tv_follows: [{ show_tmdb_id: 1, archived: false, watchlist: false }],
+          tv_episodes: [
+            {
+              tmdb_id: 11,
+              show_tmdb_id: 1,
+              season_number: 1,
+              episode_number: 1,
+              name: 'e1',
+              air_date: '2026-01-01',
+              still_path: null,
+              show: show(1, 'A', { poster_path: '/p.jpg' }),
+            },
+          ],
+        },
+      },
+      selects
+    );
+    const out = await getUpcoming(db, 7);
+    expect(out).toHaveLength(1);
+    expect(out[0].show.name).toBe('A');
+    expect(out[0].show.posterPath).toBe('/p.jpg');
+    expect(out[0].episode.airDate).toBe('2026-01-01');
+    expect(selects.filter((s) => s.table === 'tv_shows')).toEqual([]);
+  });
+});
+
+describe('column lists', () => {
+  it('never selects every column, and leaves episode overviews out', async () => {
+    const selects: { table: string; cols: string }[] = [];
+    const db = makeDb(
+      {
+        rpc: {
+          tv_up_next: [
+            {
+              show_tmdb_id: 1,
+              episode_tmdb_id: 11,
+              season_number: 1,
+              episode_number: 1,
+              aired_total: 1,
+              aired_watched: 0,
+            },
+          ],
+          tv_library: [{ show_tmdb_id: 1, archived: false, aired_total: 1, aired_watched: 0 }],
+        },
+        tables: {
+          tv_shows: [show(1, 'A')],
+          tv_follows: [{ show_tmdb_id: 1, archived: false, watchlist: false }],
+        },
+      },
+      selects
+    );
+    await Promise.all([getUpNext(db), getShowDetail(db, 1), getLibrary(db), getUpcoming(db)]);
+    expect(selects.length).toBeGreaterThan(0);
+    for (const s of selects) expect(s.cols).not.toContain('*');
+    for (const s of selects.filter((s) => s.table === 'tv_episodes'))
+      expect(s.cols).not.toMatch(/(^|,)overview/);
   });
 });
