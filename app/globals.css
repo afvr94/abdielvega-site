@@ -182,12 +182,9 @@
   --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  /* Bottom space the phone tab bar covers; TvNav moves into the header at sm. */
   --tab-bar-space: calc(5rem + env(safe-area-inset-bottom));
-}
 
-@media (min-width: 40rem) {
-  .cliffo {
+  @variant sm {
     --tab-bar-space: env(safe-area-inset-bottom);
   }
 }

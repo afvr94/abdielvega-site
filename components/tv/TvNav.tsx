@@ -79,7 +79,6 @@ export function TvNav() {
           <Image src="/cliffo/logo.svg" alt="cliffo" width={80} height={28} priority />
         </Link>
 
-        {/* A floating tab bar within thumb reach on phones, inline in the header on sm+. */}
         <nav
           ref={navRef}
           className="fixed inset-x-2.5 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-stretch rounded-[22px] border border-hairline bg-card/95 p-1.5 backdrop-blur-md sm:relative sm:inset-auto sm:z-auto sm:flex-1 sm:items-center sm:gap-0.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
