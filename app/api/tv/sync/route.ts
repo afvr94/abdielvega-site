@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { cacheShow } from '@/lib/tv/cache';
-import { buildNotificationEmail, type NotifyItem } from '@/lib/tv/notify';
-import { sendMail } from '@/lib/mail';
+import { buildDiscordMessage, sendDiscord, type NotifyItem } from '@/lib/tv/notify';
+import { getHome } from '@/lib/tv/queries';
+import { todayIso } from '@/lib/tv/format';
 
 type PendingRow = {
   episode_tmdb_id: number;
   show_name: string;
   season_number: number;
   episode_number: number;
-  name: string | null;
   air_date: string | null;
 };
 
-// After syncing, email a digest of newly-aired episodes not yet notified.
+// After syncing, post newly aired episodes (tonight's included) to Discord.
 async function notifyNewEpisodes(
   db: ReturnType<typeof createAdminClient>
 ): Promise<{ notified: number; error?: string }> {
-  const to = process.env.TV_NOTIFY_EMAIL || process.env.CONTACT_INBOX || process.env.EMAIL;
-  if (!to) return { notified: 0 };
+  const webhook = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhook) return { notified: 0 };
 
   const { data, error } = await db.rpc('tv_pending_notifications');
   if (error) return { notified: 0, error: `pending: ${error.message}` };
@@ -29,17 +29,21 @@ async function notifyNewEpisodes(
     showName: r.show_name,
     seasonNumber: r.season_number,
     episodeNumber: r.episode_number,
-    name: r.name,
     airDate: r.air_date,
   }));
 
   try {
-    await sendMail({ to, ...buildNotificationEmail(items) });
+    const { upNext, behindMinutes } = await getHome(db);
+    const episodes = upNext.reduce((n, i) => n + (i.next ? i.airedTotal - i.airedWatched : 0), 0);
+    await sendDiscord(
+      webhook,
+      buildDiscordMessage(items, todayIso(), { episodes, minutes: behindMinutes })
+    );
   } catch (e) {
     return { notified: 0, error: `send: ${e instanceof Error ? e.message : String(e)}` };
   }
 
-  // Only mark notified once the email actually went out.
+  // Only mark notified once the post actually went out.
   const { error: insErr } = await db.from('tv_notified').upsert(
     rows.map((r) => ({ episode_tmdb_id: r.episode_tmdb_id })),
     { onConflict: 'episode_tmdb_id', ignoreDuplicates: true }
