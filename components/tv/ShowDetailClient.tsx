@@ -7,7 +7,7 @@ import type { Episode, Show, TvList } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
 import { ListPicker } from './ListPicker';
 import { imageUrl } from '@/lib/tv/tmdb';
-import { episodeCode, formatAirDate } from '@/lib/tv/format';
+import { episodeCode, formatAirDate, todayIso } from '@/lib/tv/format';
 import {
   markWatched,
   markUnwatched,
@@ -18,8 +18,7 @@ import {
 } from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
 
-const TODAY = new Date().toISOString().slice(0, 10);
-const hasAired = (e: Episode) => !!e.airDate && e.airDate <= TODAY;
+const hasAired = (e: Episode, today: string) => !!e.airDate && e.airDate <= today;
 
 export function ShowDetailClient({
   show,
@@ -42,6 +41,7 @@ export function ShowDetailClient({
   allLists?: TvList[];
   listIds?: number[];
 }) {
+  const today = todayIso();
   const [watched, setWatched] = useState<Set<string>>(() => new Set(watchedKeys));
   const [isArchived, setIsArchived] = useState(archived);
   const [isWatchlist, setIsWatchlist] = useState(watchlist);
@@ -89,8 +89,8 @@ export function ShowDetailClient({
 
   // Aired non-special progress.
   const airedRegular = useMemo(
-    () => episodes.filter((e) => e.seasonNumber > 0 && hasAired(e)),
-    [episodes]
+    () => episodes.filter((e) => e.seasonNumber > 0 && hasAired(e, today)),
+    [episodes, today]
   );
   const airedWatched = airedRegular.filter((e) =>
     watched.has(watchKey(e.seasonNumber, e.episodeNumber))
@@ -226,7 +226,7 @@ export function ShowDetailClient({
 
   function markSeason() {
     const added = seasonEpisodes
-      .filter(hasAired)
+      .filter((e) => hasAired(e, today))
       .map((e) => watchKey(e.seasonNumber, e.episodeNumber))
       .filter((k) => !watched.has(k));
     optimistic(
@@ -247,7 +247,7 @@ export function ShowDetailClient({
 
   const backdrop = imageUrl(show.backdropPath, 'w780');
   const seasonAllWatched = seasonEpisodes
-    .filter(hasAired)
+    .filter((e) => hasAired(e, today))
     .every((e) => watched.has(watchKey(e.seasonNumber, e.episodeNumber)));
 
   return (
@@ -351,7 +351,7 @@ export function ShowDetailClient({
             </button>
           ))}
         </div>
-        {!seasonAllWatched && seasonEpisodes.some(hasAired) ? (
+        {!seasonAllWatched && seasonEpisodes.some((e) => hasAired(e, today)) ? (
           <button
             onClick={markSeason}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-card px-3 py-1.5 text-[11px] font-semibold tracking-wider text-muted uppercase transition-colors hover:border-income hover:text-income"
@@ -366,7 +366,7 @@ export function ShowDetailClient({
         {seasonEpisodes.map((e) => {
           const key = watchKey(e.seasonNumber, e.episodeNumber);
           const isWatched = watched.has(key);
-          const aired = hasAired(e);
+          const aired = hasAired(e, today);
           const isNext = key === nextKey;
           const still = imageUrl(e.stillPath, 'w300');
           return (

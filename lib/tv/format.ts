@@ -33,3 +33,18 @@ export function daysFromMinutes(min: number): string {
   const days = Math.round(min / 1440);
   return `${days.toLocaleString('en-US')} day${days === 1 ? '' : 's'}`;
 }
+
+// Must match the zone in the database's tv_date() (DEPLOY.md), or app and database disagree on today.
+const easternDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
+
+export function dateIso(at: Date): string {
+  return easternDate.format(at);
+}
+
+export function todayIso(): string {
+  return dateIso(new Date());
+}
+
+export function addDaysIso(iso: string, days: number): string {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+}

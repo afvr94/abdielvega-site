@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cacheShow } from '@/lib/tv/cache';
 import { getFollowedTmdbIds } from '@/lib/tv/queries';
 import { searchTv, imageUrl } from '@/lib/tv/tmdb';
+import { todayIso } from '@/lib/tv/format';
 
 export type SearchHit = {
   tmdbId: number;
@@ -184,7 +185,7 @@ export async function markWatchedMany(
 // Mark every aired episode in a season watched (skips ones already logged).
 export async function markSeasonWatched(tmdbId: number, season: number): Promise<void> {
   const db = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   const { data, error } = await db
     .from('tv_episodes')
     .select('season_number,episode_number')

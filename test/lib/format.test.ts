@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
+  addDaysIso,
+  dateIso,
   episodeCode,
   formatAirDate,
   dayHeading,
@@ -66,5 +68,20 @@ describe('daysFromMinutes', () => {
     expect(daysFromMinutes(0)).toBe('0 days');
     expect(daysFromMinutes(1440)).toBe('1 day');
     expect(daysFromMinutes(2880)).toBe('2 days');
+  });
+});
+
+describe('dateIso', () => {
+  it('uses Eastern time, so a late-evening UTC rollover is still today', () => {
+    expect(dateIso(new Date('2026-11-17T03:00:00Z'))).toBe('2026-11-16'); // 10pm, winter
+    expect(dateIso(new Date('2026-07-01T03:30:00Z'))).toBe('2026-06-30'); // 11:30pm, summer
+    expect(dateIso(new Date('2026-11-16T05:30:00Z'))).toBe('2026-11-16');
+  });
+});
+
+describe('addDaysIso', () => {
+  it('adds calendar days to a YYYY-MM-DD date', () => {
+    expect(addDaysIso('2026-11-16', 90)).toBe('2027-02-14');
+    expect(addDaysIso('2026-03-07', 1)).toBe('2026-03-08');
   });
 });
