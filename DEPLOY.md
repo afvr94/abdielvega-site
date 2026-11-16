@@ -777,7 +777,7 @@ select tmdb_id from tv_episodes
 where season_number > 0 and air_date is not null and air_date <= public.tv_today()
 on conflict do nothing;
 
--- Episodes to notify: aired in the last 30 days, followed, not yet notified.
+-- Episodes to notify: aired in the last 30 days, followed, not yet notified, not watched.
 create or replace function tv_pending_notifications()
 returns table (
   episode_tmdb_id integer,
@@ -796,6 +796,13 @@ returns table (
     and e.air_date <= public.tv_today()
     and e.air_date >= public.tv_today() - interval '30 days'
     and not exists (select 1 from tv_notified n where n.episode_tmdb_id = e.tmdb_id)
+    -- Already watched (e.g. on another app before it synced): nothing to announce.
+    and not exists (
+      select 1 from tv_watches w
+      where w.show_tmdb_id  = e.show_tmdb_id
+        and w.season_number = e.season_number
+        and w.episode_number = e.episode_number
+    )
   order by e.air_date, s.name;
 $$;
 ```
