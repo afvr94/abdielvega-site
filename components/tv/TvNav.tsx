@@ -33,17 +33,17 @@ export function TvNav() {
     const pill = pillRef.current;
     if (!nav || !pill) return;
 
-    function place(slide: boolean) {
-      const tab = nav!.querySelector<HTMLElement>('[aria-current="page"]');
+    const place = (slide: boolean) => {
+      const tab = nav.querySelector<HTMLElement>('[aria-current="page"]');
       if (!tab) {
-        pill!.style.opacity = '0';
+        pill.style.opacity = '0';
         return;
       }
-      pill!.style.transition = slide ? '' : 'none';
-      pill!.style.transform = `translateX(${tab.offsetLeft}px)`;
-      pill!.style.width = `${tab.offsetWidth}px`;
-      pill!.style.opacity = '1';
-    }
+      pill.style.transition = slide ? '' : 'none';
+      pill.style.transform = `translateX(${tab.offsetLeft}px)`;
+      pill.style.width = `${tab.offsetWidth}px`;
+      pill.style.opacity = '1';
+    };
 
     place(placedHref.current !== null && placedHref.current !== activeHref);
     placedHref.current = activeHref;
