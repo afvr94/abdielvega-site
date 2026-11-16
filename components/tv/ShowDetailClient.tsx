@@ -50,6 +50,7 @@ export function ShowDetailClient({
   const [, startTransition] = useTransition();
   const [neverAsk, setNeverAsk] = useState(false);
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
+  const [retry, setRetry] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     try {
@@ -104,6 +105,31 @@ export function ShowDetailClient({
     return x.seasonNumber < season || (x.seasonNumber === season && x.episodeNumber < episode);
   }
 
+  function setKeys(keys: string[], watchedNow: boolean) {
+    setWatched((prev) => {
+      const copy = new Set(prev);
+      for (const k of keys) {
+        if (watchedNow) copy.add(k);
+        else copy.delete(k);
+      }
+      return copy;
+    });
+  }
+
+  // Apply a change now, save it in the background, and undo it if the save fails.
+  function optimistic(apply: () => void, revert: () => void, save: () => Promise<void>) {
+    apply();
+    setRetry(null);
+    startTransition(async () => {
+      try {
+        await save();
+      } catch {
+        revert();
+        setRetry(() => () => optimistic(apply, revert, save));
+      }
+    });
+  }
+
   function toggle(e: Episode) {
     const key = watchKey(e.seasonNumber, e.episodeNumber);
     const nowWatched = !watched.has(key);
@@ -115,27 +141,32 @@ export function ShowDetailClient({
           isBefore(x, e.seasonNumber, e.episodeNumber) &&
           !watched.has(watchKey(x.seasonNumber, x.episodeNumber))
       );
-    setWatched((prev) => {
-      const copy = new Set(prev);
-      if (nowWatched) copy.add(key);
-      else copy.delete(key);
-      return copy;
-    });
-    startTransition(async () => {
-      if (nowWatched) await markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
-      else await markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber);
-    });
     // Watching a show moves it off the watchlist (a DB trigger does this server-side).
-    if (nowWatched && isWatchlist) setIsWatchlist(false);
+    const leavesWatchlist = nowWatched && isWatchlist;
+    optimistic(
+      () => {
+        setKeys([key], nowWatched);
+        if (leavesWatchlist) setIsWatchlist(false);
+      },
+      () => {
+        setKeys([key], !nowWatched);
+        if (leavesWatchlist) setIsWatchlist(true);
+      },
+      () =>
+        nowWatched
+          ? markWatched(show.tmdbId, e.seasonNumber, e.episodeNumber)
+          : markUnwatched(show.tmdbId, e.seasonNumber, e.episodeNumber)
+    );
     if (hasEarlierGap && !neverAsk) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
   }
 
   function toggleWatchlist() {
     const next = !isWatchlist;
-    setIsWatchlist(next);
-    startTransition(async () => {
-      await setWatchlist(show.tmdbId, next);
-    });
+    optimistic(
+      () => setIsWatchlist(next),
+      () => setIsWatchlist(!next),
+      () => setWatchlist(show.tmdbId, next)
+    );
   }
 
   function confirmMarkPrevious() {
@@ -145,15 +176,15 @@ export function ShowDetailClient({
       (x) =>
         isBefore(x, season, episode) || (x.seasonNumber === season && x.episodeNumber === episode)
     );
-    setWatched((prev) => {
-      const copy = new Set(prev);
-      for (const x of toMark) copy.add(watchKey(x.seasonNumber, x.episodeNumber));
-      return copy;
-    });
+    const added = toMark
+      .map((x) => watchKey(x.seasonNumber, x.episodeNumber))
+      .filter((k) => !watched.has(k));
     const payload = toMark.map((x) => ({ season: x.seasonNumber, episode: x.episodeNumber }));
-    startTransition(async () => {
-      await markWatchedMany(show.tmdbId, payload);
-    });
+    optimistic(
+      () => setKeys(added, true),
+      () => setKeys(added, false),
+      () => markWatchedMany(show.tmdbId, payload)
+    );
     setPrompt(null);
   }
 
@@ -168,23 +199,24 @@ export function ShowDetailClient({
   }
 
   function markSeason() {
-    setWatched((prev) => {
-      const copy = new Set(prev);
-      for (const e of seasonEpisodes)
-        if (hasAired(e)) copy.add(watchKey(e.seasonNumber, e.episodeNumber));
-      return copy;
-    });
-    startTransition(async () => {
-      await markSeasonWatched(show.tmdbId, season);
-    });
+    const added = seasonEpisodes
+      .filter(hasAired)
+      .map((e) => watchKey(e.seasonNumber, e.episodeNumber))
+      .filter((k) => !watched.has(k));
+    optimistic(
+      () => setKeys(added, true),
+      () => setKeys(added, false),
+      () => markSeasonWatched(show.tmdbId, season)
+    );
   }
 
   function toggleArchive() {
     const next = !isArchived;
-    setIsArchived(next);
-    startTransition(async () => {
-      await setArchived(show.tmdbId, next);
-    });
+    optimistic(
+      () => setIsArchived(next),
+      () => setIsArchived(!next),
+      () => setArchived(show.tmdbId, next)
+    );
   }
 
   const backdrop = imageUrl(show.backdropPath, 'w780');
@@ -260,6 +292,15 @@ export function ShowDetailClient({
           <FollowButton tmdbId={show.tmdbId} initialFollowed={isFollowed} />
         </div>
       </div>
+
+      {retry ? (
+        <p role="alert" className="-mt-3 mb-6 text-xs text-expense">
+          Couldn&apos;t save that change.{' '}
+          <button onClick={retry} className="font-semibold underline underline-offset-2">
+            Retry
+          </button>
+        </p>
+      ) : null}
 
       {/* Where to watch */}
       {providers.length > 0 ? (
