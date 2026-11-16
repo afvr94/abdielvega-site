@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { ArrowRight } from 'lucide-react';
 import { crateFonts } from './(site)/fonts';
+import { cliffoTheme } from './tv/fonts';
 import './(site)/crate.css';
 import { PackersSeal } from '@/components/site/GroveScene';
 
@@ -11,7 +12,9 @@ const TRACKER_LABELS = new Set(['budget', 'tv']);
 
 export default async function NotFound() {
   const host = (await headers()).get('host') ?? '';
-  if (TRACKER_LABELS.has(host.split('.')[0] ?? '')) return <TrackerNotFound />;
+  const label = host.split('.')[0] ?? '';
+  if (TRACKER_LABELS.has(label))
+    return <TrackerNotFound theme={label === 'tv' ? cliffoTheme : ''} />;
 
   return (
     <div
@@ -49,9 +52,9 @@ export default async function NotFound() {
   );
 }
 
-function TrackerNotFound() {
+function TrackerNotFound({ theme }: { theme: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-5">
+    <div className={`${theme} flex min-h-screen items-center justify-center bg-cream px-5`}>
       <div className="max-w-md text-center">
         <div className="mb-4 font-mono-tab text-[11px] tracking-wider text-muted uppercase">
           § Missing from the archive
