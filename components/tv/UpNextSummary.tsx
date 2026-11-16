@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { UpcomingEpisode, UpNextItem } from '@/lib/tv/types';
 import { dayHeading, episodeCode, humanizeMinutes } from '@/lib/tv/format';
+import { ProgressRing } from './ProgressRing';
 
 const TONIGHT_SHOWN = 3;
 
@@ -64,18 +65,7 @@ export function UpNextSummary({
         href="#up-next"
         className="flex min-w-0 items-center gap-3 card border border-hairline p-3.5 transition-colors hover:border-ink/25"
       >
-        <div
-          role="img"
-          aria-label={`${pct}% watched`}
-          className="grid size-12 shrink-0 place-items-center rounded-full"
-          style={{
-            background: `conic-gradient(rgb(var(--savings)) ${pct}%, rgb(var(--hairline) / 0.13) 0)`,
-          }}
-        >
-          <span className="grid size-9 place-items-center rounded-full bg-card font-mono-tab text-[10px]">
-            {pct}%
-          </span>
-        </div>
+        <ProgressRing pct={pct}>{pct}%</ProgressRing>
         <div className="min-w-0">
           <div className="label-tag text-savings">Behind</div>
           <div className="font-display text-2xl leading-tight font-semibold">
