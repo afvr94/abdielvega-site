@@ -37,8 +37,12 @@ export function daysFromMinutes(min: number): string {
 // Days count in Eastern time; the database's tv_today() uses the same zone.
 const easternDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 
-export function todayIso(now: Date = new Date()): string {
-  return easternDate.format(now);
+export function dateIso(at: Date): string {
+  return easternDate.format(at);
+}
+
+export function todayIso(): string {
+  return dateIso(new Date());
 }
 
 export function addDaysIso(iso: string, days: number): string {

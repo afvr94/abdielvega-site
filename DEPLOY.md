@@ -442,16 +442,24 @@ create policy "owner only" on tv_watches
 ### Eastern-time days
 
 The tracker counts days in Eastern time, not UTC, so an episode airing tomorrow
-doesn't show as aired at 8pm. Every function below that needs "today" calls this
-helper; the app's `todayIso()` in `lib/tv/format.ts` uses the same zone:
+doesn't show as aired at 8pm. Every function below that needs a date calls these
+helpers, so the zone lives only in `tv_date()`; the app's `dateIso()` in
+`lib/tv/format.ts` uses the same zone:
 
 ```sql
+create or replace function public.tv_date(ts timestamptz)
+returns date
+language sql
+stable
+set search_path = ''
+as $$ select (ts at time zone 'America/New_York')::date $$;
+
 create or replace function public.tv_today()
 returns date
 language sql
 stable
 set search_path = ''
-as $$ select (now() at time zone 'America/New_York')::date $$;
+as $$ select public.tv_date(now()) $$;
 ```
 
 ### Up Next function
@@ -649,11 +657,11 @@ returns json language sql stable as $$
     'last_watch',  (select max(watched_at) from tv_watches),
     'by_year', (
       select coalesce(json_agg(row_to_json(t) order by t.year), '[]'::json) from (
-        select extract(year from watched_at at time zone 'America/New_York')::int as year, count(*)::int as count
+        select extract(year from public.tv_date(watched_at))::int as year, count(*)::int as count
         from tv_watches group by 1) t),
     'by_day', (
       select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
-        select (watched_at at time zone 'America/New_York')::date::text as date, count(*)::int as count
+        select public.tv_date(watched_at)::text as date, count(*)::int as count
         from tv_watches group by 1) t),
     'top_shows', (
       select coalesce(json_agg(row_to_json(t)), '[]'::json) from (

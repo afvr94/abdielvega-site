@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addDaysIso,
-  todayIso,
+  dateIso,
   episodeCode,
   formatAirDate,
   dayHeading,
@@ -71,11 +71,11 @@ describe('daysFromMinutes', () => {
   });
 });
 
-describe('todayIso', () => {
+describe('dateIso', () => {
   it('uses Eastern time, so a late-evening UTC rollover is still today', () => {
-    expect(todayIso(new Date('2026-11-17T03:00:00Z'))).toBe('2026-11-16'); // 10pm EST
-    expect(todayIso(new Date('2026-07-01T03:30:00Z'))).toBe('2026-06-30'); // 11:30pm EDT
-    expect(todayIso(new Date('2026-11-16T05:30:00Z'))).toBe('2026-11-16'); // 12:30am EST
+    expect(dateIso(new Date('2026-11-17T03:00:00Z'))).toBe('2026-11-16'); // 10pm EST
+    expect(dateIso(new Date('2026-07-01T03:30:00Z'))).toBe('2026-06-30'); // 11:30pm EDT
+    expect(dateIso(new Date('2026-11-16T05:30:00Z'))).toBe('2026-11-16'); // 12:30am EST
   });
 });
 

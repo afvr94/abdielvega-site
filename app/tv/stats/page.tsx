@@ -2,7 +2,13 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getStats } from '@/lib/tv/queries';
 import type { Stats } from '@/lib/tv/types';
-import { formatAirDate, humanizeMinutes, daysFromMinutes, todayIso } from '@/lib/tv/format';
+import {
+  formatAirDate,
+  humanizeMinutes,
+  daysFromMinutes,
+  dateIso,
+  todayIso,
+} from '@/lib/tv/format';
 import { buildHeatmap, heatLevel } from '@/lib/tv/heatmap';
 
 export const metadata = { title: 'Stats' };
@@ -50,8 +56,8 @@ export default async function StatsPage() {
         <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Stats</h1>
         {stats.firstWatch && stats.lastWatch ? (
           <span className="label-tag">
-            {formatAirDate(todayIso(new Date(stats.firstWatch)))} —{' '}
-            {formatAirDate(todayIso(new Date(stats.lastWatch)))}
+            {formatAirDate(dateIso(new Date(stats.firstWatch)))} —{' '}
+            {formatAirDate(dateIso(new Date(stats.lastWatch)))}
           </span>
         ) : null}
       </div>
