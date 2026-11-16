@@ -4,6 +4,7 @@ import { cacheShow } from '@/lib/tv/cache';
 import { buildDiscordMessage, sendDiscord, type NotifyItem } from '@/lib/tv/notify';
 import { getHome } from '@/lib/tv/queries';
 import { todayIso } from '@/lib/tv/format';
+import { episodesLeft } from '@/lib/tv/types';
 
 type PendingRow = {
   episode_tmdb_id: number;
@@ -34,10 +35,12 @@ async function notifyNewEpisodes(
 
   try {
     const { upNext, behindMinutes } = await getHome(db);
-    const episodes = upNext.reduce((n, i) => n + (i.next ? i.airedTotal - i.airedWatched : 0), 0);
     await sendDiscord(
       webhook,
-      buildDiscordMessage(items, todayIso(), { episodes, minutes: behindMinutes })
+      buildDiscordMessage(items, todayIso(), {
+        episodes: episodesLeft(upNext),
+        minutes: behindMinutes,
+      })
     );
   } catch (e) {
     return { notified: 0, error: `send: ${e instanceof Error ? e.message : String(e)}` };
