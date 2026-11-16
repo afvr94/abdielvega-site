@@ -34,7 +34,7 @@ export function daysFromMinutes(min: number): string {
   return `${days.toLocaleString('en-US')} day${days === 1 ? '' : 's'}`;
 }
 
-// Days count in Eastern time; the database's tv_today() uses the same zone.
+// Must match the zone in the database's tv_date() (DEPLOY.md), or app and database disagree on today.
 const easternDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 
 export function dateIso(at: Date): string {

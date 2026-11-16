@@ -443,8 +443,8 @@ create policy "owner only" on tv_watches
 
 The tracker counts days in Eastern time, not UTC, so an episode airing tomorrow
 doesn't show as aired at 8pm. Every function below that needs a date calls these
-helpers, so the zone lives only in `tv_date()`; the app's `dateIso()` in
-`lib/tv/format.ts` uses the same zone:
+helpers, so the zone lives only in `tv_date()`. The app's `dateIso()` in
+`lib/tv/format.ts` uses the same zone.
 
 ```sql
 create or replace function public.tv_date(ts timestamptz)
