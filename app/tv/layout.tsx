@@ -25,7 +25,7 @@ export default function TvLayout({ children }: { children: React.ReactNode }) {
     <div className={`${cliffoTheme} min-h-screen bg-cream`}>
       <ForegroundRefresh />
       <TvNav />
-      <main className="mx-auto max-w-4xl px-5 pt-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-[calc(2rem+env(safe-area-inset-bottom))]">
+      <main className="mx-auto max-w-4xl px-5 pt-8 pb-[calc(2rem+var(--tab-bar-space))]">
         {children}
       </main>
     </div>

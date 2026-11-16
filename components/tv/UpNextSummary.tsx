@@ -65,9 +65,7 @@ export function UpNextSummary({
         href="#up-next"
         className="flex min-w-0 items-center gap-3 card border border-hairline p-3.5 transition-colors hover:border-ink/25"
       >
-        <ProgressRing pct={pct} label={`${pct}% watched`}>
-          {pct}%
-        </ProgressRing>
+        <ProgressRing pct={pct}>{pct}%</ProgressRing>
         <div className="min-w-0">
           <div className="label-tag text-savings">Behind</div>
           <div className="font-display text-2xl leading-tight font-semibold">

@@ -86,7 +86,7 @@ export function UpNextCard({
           )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted">
-          <ProgressRing pct={pct} label={`${pct}% watched`} className="size-5 p-[3px]" />
+          <ProgressRing pct={pct} className="size-5 p-[3px]" />
           <span className="font-mono-tab">
             {item.airedWatched}/{item.airedTotal}
           </span>

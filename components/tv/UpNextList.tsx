@@ -46,7 +46,7 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
       {marked ? (
         <div
           role="status"
-          className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-5 sm:bottom-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          className="fixed inset-x-0 bottom-[calc(1.25rem+var(--tab-bar-space))] z-40 flex justify-center px-5"
         >
           <div className="flex max-w-full items-center gap-2 rounded-full border border-hairline bg-card py-1 pr-1 pl-4 text-sm">
             <span className="min-w-0 truncate">
