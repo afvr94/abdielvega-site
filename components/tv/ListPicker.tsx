@@ -112,7 +112,7 @@ export function ListPicker({
                   <button
                     type="submit"
                     disabled={!newName.trim()}
-                    className="rounded-full bg-ink px-2.5 py-1 text-xs font-semibold text-cream disabled:opacity-40"
+                    className="rounded-full border border-hairline bg-ink/10 px-2.5 py-1 text-xs font-semibold text-ink disabled:opacity-40"
                   >
                     Add
                   </button>

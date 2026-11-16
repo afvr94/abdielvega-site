@@ -29,7 +29,7 @@ export default async function TvHomePage() {
         </p>
         <Link
           href="/search"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-income px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
         >
           <Search size={14} strokeWidth={2} /> Search shows
         </Link>
@@ -51,7 +51,7 @@ export default async function TvHomePage() {
                     {img ? (
                       <Image src={img} alt="" fill sizes="160px" className="object-cover" />
                     ) : null}
-                    <span className="absolute top-1.5 right-1.5 rounded-full bg-ink/85 px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-cream">
+                    <span className="absolute top-1.5 right-1.5 rounded-full bg-black/70 px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-white">
                       {episode.airDate === today ? 'Today' : dayHeading(episode.airDate ?? '')}
                     </span>
                   </div>

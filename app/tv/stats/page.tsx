@@ -145,7 +145,7 @@ export default async function StatsPage() {
                   <div className="truncate font-display leading-tight font-semibold">{s.name}</div>
                   <span className="mt-1 block h-1 overflow-hidden rounded-full bg-hairline">
                     <span
-                      className="block h-full rounded-full bg-ink/50"
+                      className="block h-full rounded-full bg-income"
                       style={{ width: `${(s.count / maxTop) * 100}%` }}
                     />
                   </span>

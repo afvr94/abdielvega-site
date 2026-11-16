@@ -63,7 +63,7 @@ export function UpNextCard({ item, onMarked }: { item: UpNextItem; onMarked?: ()
             {item.airedWatched}/{item.airedTotal}
           </span>
           <span className="h-1 w-20 overflow-hidden rounded-full bg-hairline">
-            <span className="block h-full rounded-full bg-ink/60" style={{ width: `${pct}%` }} />
+            <span className="block h-full rounded-full bg-income" style={{ width: `${pct}%` }} />
           </span>
           {next.airDate ? <span>· aired {formatAirDate(next.airDate)}</span> : null}
         </div>

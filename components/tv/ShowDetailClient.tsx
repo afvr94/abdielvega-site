@@ -280,7 +280,7 @@ export function ShowDetailClient({
                 onClick={toggleArchive}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition-colors ${
                   isArchived
-                    ? 'bg-ink text-cream'
+                    ? 'border border-hairline bg-ink/10 text-ink'
                     : 'border border-hairline bg-card text-muted hover:text-ink'
                 }`}
               >
@@ -344,7 +344,9 @@ export function ShowDetailClient({
               key={s}
               onClick={() => setSeason(s)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                s === season ? 'bg-ink text-cream' : 'text-muted hover:text-ink'
+                s === season
+                  ? 'border border-hairline bg-ink/10 text-ink'
+                  : 'border border-transparent text-muted hover:text-ink'
               }`}
             >
               {s === 0 ? 'Specials' : `Season ${s}`}
