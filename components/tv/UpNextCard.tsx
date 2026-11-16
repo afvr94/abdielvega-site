@@ -49,6 +49,8 @@ export function UpNextCard({
     >
       <Link
         href={`/show/${show.tmdbId}`}
+        aria-hidden
+        tabIndex={-1}
         className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-cream sm:w-40"
       >
         {still ? (
@@ -78,7 +80,7 @@ export function UpNextCard({
           ) : (
             <button
               onClick={() => setRevealed(true)}
-              aria-label="Show episode title"
+              aria-label="hidden, show episode title"
               className="-my-2 truncate py-2 text-muted italic hover:text-ink"
             >
               hidden
@@ -110,7 +112,7 @@ export function UpNextCard({
       <button
         onClick={mark}
         disabled={pending}
-        aria-label={`Mark ${episodeCode(next.seasonNumber, next.episodeNumber)} watched`}
+        aria-label={`Mark ${show.name} ${episodeCode(next.seasonNumber, next.episodeNumber)} watched`}
         className="group flex w-14 shrink-0 items-center justify-center rounded-lg border border-hairline bg-card transition-colors hover:border-income hover:bg-income/5 disabled:opacity-60"
       >
         <Check

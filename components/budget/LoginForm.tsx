@@ -34,7 +34,10 @@ export function LoginForm() {
         {pending ? 'Opening Google…' : 'Continue with Google'}
       </button>
       {error ? (
-        <div className="mt-5 flex items-start gap-2 border-t border-hairline pt-4 text-xs text-expense">
+        <div
+          role="alert"
+          className="mt-5 flex items-start gap-2 border-t border-hairline pt-4 text-xs text-expense"
+        >
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
