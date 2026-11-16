@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  getUpNext,
+  getHome,
   getShowDetail,
   getLibrary,
   getStats,
@@ -70,76 +70,69 @@ const show = (tmdb_id: number, name: string, extra: Record<string, unknown> = {}
   ...extra,
 });
 
-describe('getUpNext', () => {
-  it('returns [] when the RPC has no rows', async () => {
-    const db = makeDb({ rpc: { tv_up_next: [] } });
-    expect(await getUpNext(db)).toEqual([]);
+const ep = (tmdb_id: number, show_tmdb_id: number, air_date: string) => ({
+  tmdb_id,
+  show_tmdb_id,
+  season_number: 1,
+  episode_number: tmdb_id % 100,
+  name: `e${tmdb_id}`,
+  air_date,
+  still_path: null,
+});
+
+describe('getHome', () => {
+  it('returns empty lists when nothing is followed', async () => {
+    const db = makeDb({ rpc: { tv_home: { up_next: [], this_week: [] } } });
+    expect(await getHome(db)).toEqual({ upNext: [], thisWeek: [] });
   });
 
   it('orders behind shows first (by most recent air), caught-up last', async () => {
     const db = makeDb({
       rpc: {
-        tv_up_next: [
-          {
-            show_tmdb_id: 1,
-            episode_tmdb_id: 101,
-            season_number: 1,
-            episode_number: 2,
-            aired_total: 10,
-            aired_watched: 1,
-          },
-          {
-            show_tmdb_id: 2,
-            episode_tmdb_id: null,
-            season_number: null,
-            episode_number: null,
-            aired_total: 5,
-            aired_watched: 5,
-          },
-          {
-            show_tmdb_id: 3,
-            episode_tmdb_id: 103,
-            season_number: 1,
-            episode_number: 3,
-            aired_total: 8,
-            aired_watched: 2,
-          },
-        ],
-      },
-      tables: {
-        tv_shows: [show(1, 'A'), show(2, 'B'), show(3, 'C')],
-        tv_episodes: [
-          {
-            tmdb_id: 101,
-            show_tmdb_id: 1,
-            season_number: 1,
-            episode_number: 2,
-            name: 'a',
-            overview: null,
-            air_date: '2026-06-01',
-            still_path: null,
-            runtime: null,
-          },
-          {
-            tmdb_id: 103,
-            show_tmdb_id: 3,
-            season_number: 1,
-            episode_number: 3,
-            name: 'c',
-            overview: null,
-            air_date: '2026-05-01',
-            still_path: null,
-            runtime: null,
-          },
-        ],
+        tv_home: {
+          up_next: [
+            {
+              show: show(1, 'A'),
+              next: ep(101, 1, '2026-06-01'),
+              aired_total: 10,
+              aired_watched: 1,
+            },
+            { show: show(2, 'B'), next: null, aired_total: 5, aired_watched: 5 },
+            {
+              show: show(3, 'C'),
+              next: ep(103, 3, '2026-05-01'),
+              aired_total: 8,
+              aired_watched: 2,
+            },
+          ],
+          this_week: [],
+        },
       },
     });
-    const items = await getUpNext(db);
-    expect(items.map((i) => i.show.name)).toEqual(['A', 'C', 'B']);
-    expect(items[0].next?.airDate).toBe('2026-06-01');
-    expect(items[0].airedWatched).toBe(1);
-    expect(items[0].airedTotal).toBe(10);
-    expect(items[2].next).toBeNull(); // caught up
+    const { upNext } = await getHome(db);
+    expect(upNext.map((i) => i.show.name)).toEqual(['A', 'C', 'B']);
+    expect(upNext[0].next?.airDate).toBe('2026-06-01');
+    expect(upNext[0].airedWatched).toBe(1);
+    expect(upNext[0].airedTotal).toBe(10);
+    expect(upNext[2].next).toBeNull(); // caught up
+  });
+
+  it("maps this week's airings in the order the database returns them", async () => {
+    const db = makeDb({
+      rpc: {
+        tv_home: {
+          up_next: [],
+          this_week: [
+            { show: show(1, 'A', { poster_path: '/p.jpg' }), episode: ep(11, 1, '2026-01-01') },
+            { show: show(2, 'B'), episode: ep(12, 2, '2026-01-03') },
+          ],
+        },
+      },
+    });
+    const { thisWeek } = await getHome(db);
+    expect(thisWeek.map((u) => u.episode.tmdbId)).toEqual([11, 12]);
+    expect(thisWeek[0].show.posterPath).toBe('/p.jpg');
+    expect(thisWeek[1].episode.airDate).toBe('2026-01-03');
   });
 });
 
@@ -344,16 +337,6 @@ describe('column lists', () => {
     const db = makeDb(
       {
         rpc: {
-          tv_up_next: [
-            {
-              show_tmdb_id: 1,
-              episode_tmdb_id: 11,
-              season_number: 1,
-              episode_number: 1,
-              aired_total: 1,
-              aired_watched: 0,
-            },
-          ],
           tv_library: [{ show_tmdb_id: 1, archived: false, aired_total: 1, aired_watched: 0 }],
         },
         tables: {
@@ -363,7 +346,7 @@ describe('column lists', () => {
       },
       selects
     );
-    await Promise.all([getUpNext(db), getShowDetail(db, 1), getLibrary(db), getUpcoming(db)]);
+    await Promise.all([getShowDetail(db, 1), getLibrary(db), getUpcoming(db)]);
     expect(selects.length).toBeGreaterThan(0);
     for (const s of selects) expect(s.cols).not.toContain('*');
     for (const s of selects.filter((s) => s.table === 'tv_episodes'))

@@ -76,58 +76,41 @@ async function fetchAll<T>(
   return out;
 }
 
-type UpNextRpcRow = {
-  show_tmdb_id: number;
-  episode_tmdb_id: number | null;
-  season_number: number | null;
-  episode_number: number | null;
-  aired_total: number;
-  aired_watched: number;
+type HomeJson = {
+  up_next: { show: ShowRow; next: EpisodeRow | null; aired_total: number; aired_watched: number }[];
+  this_week: { show: ShowRow; episode: EpisodeRow }[];
 };
 
-// Up Next feed: one entry per followed, non-archived show that has aired
-// episodes. Ordering + gap handling live in the tv_up_next() SQL function.
-export async function getUpNext(db: SupabaseClient): Promise<UpNextItem[]> {
-  const { data, error } = await db.rpc('tv_up_next');
+// The Up Next page in one round trip: the feed (one entry per active show with
+// aired episodes) and the next 7 days of airings. See tv_home() in DEPLOY.md.
+export async function getHome(
+  db: SupabaseClient
+): Promise<{ upNext: UpNextItem[]; thisWeek: UpcomingEpisode[] }> {
+  const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
-  const rows = (data ?? []) as UpNextRpcRow[];
-  if (rows.length === 0) return [];
+  const home = data as HomeJson;
 
-  const showIds = rows.map((r) => r.show_tmdb_id);
-  const episodeIds = rows.map((r) => r.episode_tmdb_id).filter((id): id is number => id !== null);
-
-  const [showRows, epRows] = await Promise.all([
-    db.from('tv_shows').select(SHOW_COLUMNS).in('tmdb_id', showIds),
-    episodeIds.length
-      ? db.from('tv_episodes').select(EPISODE_COLUMNS).in('tmdb_id', episodeIds)
-      : Promise.resolve({ data: [] as EpisodeRow[], error: null }),
-  ]);
-  if (showRows.error) throw showRows.error;
-  if (epRows.error) throw epRows.error;
-
-  const shows = new Map((showRows.data as ShowRow[]).map((r) => [r.tmdb_id, mapShow(r)]));
-  const eps = new Map((epRows.data as EpisodeRow[]).map((r) => [r.tmdb_id, mapEpisode(r)]));
-
-  const items: UpNextItem[] = [];
-  for (const r of rows) {
-    const show = shows.get(r.show_tmdb_id);
-    if (!show) continue;
-    items.push({
-      show,
-      next: r.episode_tmdb_id ? (eps.get(r.episode_tmdb_id) ?? null) : null,
-      airedTotal: Number(r.aired_total),
-      airedWatched: Number(r.aired_watched),
-    });
-  }
-
+  const upNext: UpNextItem[] = home.up_next.map((r) => ({
+    show: mapShow(r.show),
+    next: r.next ? mapEpisode(r.next) : null,
+    airedTotal: r.aired_total,
+    airedWatched: r.aired_watched,
+  }));
   // Behind shows (something to watch) first, most recently aired next episode on top.
-  items.sort((a, b) => {
+  upNext.sort((a, b) => {
     if (!!a.next !== !!b.next) return a.next ? -1 : 1;
     const ad = a.next?.airDate ?? '';
     const bd = b.next?.airDate ?? '';
     return bd.localeCompare(ad);
   });
-  return items;
+
+  return {
+    upNext,
+    thisWeek: home.this_week.map((r) => ({
+      show: mapShow(r.show),
+      episode: mapEpisode(r.episode),
+    })),
+  };
 }
 
 export async function getShowDetail(

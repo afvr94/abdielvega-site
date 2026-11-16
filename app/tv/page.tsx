@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import { getUpNext, getUpcoming } from '@/lib/tv/queries';
+import { getHome } from '@/lib/tv/queries';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, dayHeading, todayIso } from '@/lib/tv/format';
 import { UpNextList } from '@/components/tv/UpNextList';
@@ -12,7 +12,7 @@ export const metadata = { title: 'Up Next' };
 
 export default async function TvHomePage() {
   const db = await createClient();
-  const [items, thisWeek] = await Promise.all([getUpNext(db), getUpcoming(db, 7)]);
+  const { upNext: items, thisWeek } = await getHome(db);
   const behind = items.filter((i) => i.next);
   const caughtUp = items.filter((i) => !i.next);
   const today = todayIso();
