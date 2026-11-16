@@ -22,10 +22,9 @@ export function buildDiscordMessage(items: NotifyItem[], today: string, behind?:
   const section = (title: string, list: NotifyItem[]) => {
     if (list.length === 0) return;
     out.push(`**${title}**`);
-    for (const i of list.slice(0, MAX_LINES)) {
-      out.push(`${escapeMarkdown(i.showName)} \`${episodeCode(i.seasonNumber, i.episodeNumber)}\``);
-    }
-    if (list.length > MAX_LINES) out.push(`+${list.length - MAX_LINES} more`);
+    const lines = byShow(list);
+    for (const line of lines.slice(0, MAX_LINES)) out.push(line);
+    if (lines.length > MAX_LINES) out.push(`+${lines.length - MAX_LINES} more shows`);
   };
   section('📺 Tonight', tonight);
   section('New since last time', earlier);
@@ -45,9 +44,31 @@ export async function sendDiscord(webhookUrl: string, content: string): Promise<
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     // A show named "@everyone" must not ping anyone.
-    body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+    // flags 4 = SUPPRESS_EMBEDS: no link preview card under the post.
+    body: JSON.stringify({ content, allowed_mentions: { parse: [] }, flags: 4 }),
   });
   if (!res.ok) throw new Error(`discord ${res.status}: ${await res.text()}`);
+}
+
+// One line per show, with consecutive episodes collapsed: "Show `S01E03–E08`".
+function byShow(list: NotifyItem[]): string[] {
+  const shows = new Map<string, NotifyItem[]>();
+  for (const i of list) shows.set(i.showName, [...(shows.get(i.showName) ?? []), i]);
+
+  return [...shows].map(([name, eps]) => {
+    eps.sort((a, b) => a.seasonNumber - b.seasonNumber || a.episodeNumber - b.episodeNumber);
+    const runs: { season: number; from: number; to: number }[] = [];
+    for (const e of eps) {
+      const run = runs[runs.length - 1];
+      if (run && run.season === e.seasonNumber && run.to + 1 === e.episodeNumber) run.to += 1;
+      else runs.push({ season: e.seasonNumber, from: e.episodeNumber, to: e.episodeNumber });
+    }
+    const codes = runs.map(({ season, from, to }) => {
+      const first = episodeCode(season, from);
+      return from === to ? `\`${first}\`` : `\`${first}–E${String(to).padStart(2, '0')}\``;
+    });
+    return `${escapeMarkdown(name)} ${codes.join(' ')}`;
+  });
 }
 
 function escapeMarkdown(s: string) {

@@ -43,12 +43,24 @@ describe('buildDiscordMessage', () => {
     );
   });
 
+  it('groups a show onto one line and collapses consecutive episodes', () => {
+    const vq = (episodeNumber: number) =>
+      ep({ showName: 'VisionQuest', seasonNumber: 1, episodeNumber, airDate: '2026-11-15' });
+    const msg = buildDiscordMessage(
+      [vq(3), vq(4), vq(5), ep({ showName: 'Other', airDate: '2026-11-15' }), vq(8), vq(6)],
+      TODAY
+    );
+    expect(msg).toContain('VisionQuest `S01E03–E06` `S01E08`');
+    expect(msg).toContain('Other `S02E03`');
+    expect(msg.indexOf('VisionQuest')).toBeLessThan(msg.indexOf('Other'));
+  });
+
   it('caps a long backlog under Discord’s length limit', () => {
     const items = Array.from({ length: 40 }, (_, i) =>
       ep({ showName: `Show with a fairly long name ${i}`, airDate: '2026-11-01' })
     );
     const msg = buildDiscordMessage(items, TODAY, { episodes: 99999, minutes: 999999 });
-    expect(msg).toContain('+15 more');
+    expect(msg).toContain('+15 more shows');
     expect(msg.length).toBeLessThan(2000);
   });
 });
@@ -61,7 +73,11 @@ describe('sendDiscord', () => {
     vi.stubGlobal('fetch', fetchMock);
     await sendDiscord('https://discord.test/hook', 'hi');
     const [, init] = fetchMock.mock.calls[0];
-    expect(JSON.parse(init.body)).toEqual({ content: 'hi', allowed_mentions: { parse: [] } });
+    expect(JSON.parse(init.body)).toEqual({
+      content: 'hi',
+      allowed_mentions: { parse: [] },
+      flags: 4,
+    });
   });
 
   it('throws when Discord rejects the post', async () => {
