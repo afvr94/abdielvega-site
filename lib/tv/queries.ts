@@ -328,7 +328,7 @@ export async function getUpcoming(db: SupabaseClient, days = 90): Promise<Upcomi
   const today = new Date().toISOString().slice(0, 10);
   const end = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 
-  const epRows = await fetchAll<EpisodeRow & { show: ShowRow | null }>(db, (from, to) =>
+  const epRows = await fetchAll(db, (from, to) =>
     db
       .from('tv_episodes')
       .select(`${EPISODE_COLUMNS},show:tv_shows(${SHOW_COLUMNS})`)
