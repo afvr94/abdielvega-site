@@ -39,9 +39,7 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
           <UpNextCard
             key={`${item.show.tmdbId}-${item.next?.tmdbId}`}
             item={item}
-            onMarked={() =>
-              item.next && setMarked({ show: item.show, episode: item.next, failed: false })
-            }
+            onMarked={(episode) => setMarked({ show: item.show, episode, failed: false })}
           />
         ))}
       </div>

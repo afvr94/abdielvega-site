@@ -4,12 +4,18 @@ import { useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
-import type { UpNextItem } from '@/lib/tv/types';
+import type { Episode, UpNextItem } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import { markWatched } from '@/app/tv/actions';
 
-export function UpNextCard({ item, onMarked }: { item: UpNextItem; onMarked?: () => void }) {
+export function UpNextCard({
+  item,
+  onMarked,
+}: {
+  item: UpNextItem;
+  onMarked?: (episode: Episode) => void;
+}) {
   const { show, next } = item;
   const [pending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
@@ -25,7 +31,7 @@ export function UpNextCard({ item, onMarked }: { item: UpNextItem; onMarked?: ()
     startTransition(async () => {
       try {
         await markWatched(show.tmdbId, next.seasonNumber, next.episodeNumber);
-        onMarked?.();
+        onMarked?.(next);
       } catch {
         setFailed(true);
       }
