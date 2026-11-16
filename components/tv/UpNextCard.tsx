@@ -76,7 +76,10 @@ export function UpNextCard({
         {failed ? (
           <p role="alert" className="mt-2 text-xs text-expense">
             Couldn&apos;t mark it watched.{' '}
-            <button onClick={mark} className="font-semibold underline underline-offset-2">
+            <button
+              onClick={mark}
+              className="-my-2 px-1 py-2 font-semibold underline underline-offset-2"
+            >
               Retry
             </button>
           </p>

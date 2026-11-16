@@ -1,6 +1,11 @@
 export default function Loading() {
   return (
-    <div aria-busy="true" aria-label="Loading" className="space-y-3 motion-safe:animate-pulse">
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Loading"
+      className="space-y-3 motion-safe:animate-pulse"
+    >
       <div className="mb-4 h-9 w-40 rounded-lg bg-ink/5" />
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className="flex items-stretch gap-4 card border border-hairline p-3">

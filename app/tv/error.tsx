@@ -15,7 +15,7 @@ export default function TvError({ error, retry }: { error: unknown; retry: () =>
       <p className="mt-1.5 text-sm text-muted">Check your connection and try again.</p>
       <button
         onClick={() => retry()}
-        className="mt-4 inline-flex items-center rounded-full border border-hairline bg-ink/10 px-4 py-2 text-xs font-semibold tracking-wider text-ink uppercase transition-opacity hover:opacity-90"
+        className="mt-4 inline-flex items-center rounded-full bg-income px-5 py-3 text-xs font-semibold tracking-wider text-cream uppercase transition-opacity hover:opacity-90"
       >
         Try again
       </button>

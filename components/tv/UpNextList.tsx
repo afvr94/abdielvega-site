@@ -14,10 +14,11 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
   const [undoing, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!marked) return;
+    // Hold the bar open while an undo is in flight so its outcome stays visible.
+    if (!marked || undoing) return;
     const timer = setTimeout(() => setMarked(null), 5000);
     return () => clearTimeout(timer);
-  }, [marked]);
+  }, [marked, undoing]);
 
   function undo() {
     if (!marked) return;
@@ -48,8 +49,8 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
           role="status"
           className="fixed inset-x-0 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-5"
         >
-          <div className="flex items-center gap-4 rounded-full border border-hairline bg-card px-4 py-2.5 text-sm">
-            <span className="truncate">
+          <div className="flex max-w-full items-center gap-2 rounded-full border border-hairline bg-card py-1 pr-1 pl-4 text-sm">
+            <span className="min-w-0 truncate">
               {marked.failed ? (
                 <span className="text-expense">Couldn&apos;t undo.</span>
               ) : (
@@ -65,7 +66,7 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
             <button
               onClick={undo}
               disabled={undoing}
-              className="shrink-0 text-xs font-semibold tracking-wider text-income uppercase disabled:opacity-60"
+              className="min-h-11 shrink-0 rounded-full px-4 text-xs font-semibold tracking-wider text-income uppercase disabled:opacity-60"
             >
               {marked.failed ? 'Retry' : 'Undo'}
             </button>
