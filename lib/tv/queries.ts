@@ -82,6 +82,25 @@ type HomeJson = {
   behind_minutes: number;
 };
 
+// tv_home() is applied by hand from DEPLOY.md, so production can run an older
+// version. Check the envelope it returns; the rows inside come from the same
+// jsonb_build_object calls, so they change only when the envelope does.
+function parseHome(data: unknown): HomeJson {
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'up_next' in data &&
+    Array.isArray(data.up_next) &&
+    'this_week' in data &&
+    Array.isArray(data.this_week) &&
+    'behind_minutes' in data &&
+    typeof data.behind_minutes === 'number'
+  ) {
+    return data as HomeJson;
+  }
+  throw new Error('tv_home() returned an unexpected shape; re-apply it from DEPLOY.md');
+}
+
 // The Up Next page in one round trip: the feed (one entry per active show with
 // aired episodes), the next 7 days of airings, and the runtime left to catch up.
 // See tv_home() in DEPLOY.md.
@@ -90,7 +109,7 @@ export async function getHome(
 ): Promise<{ upNext: UpNextItem[]; thisWeek: UpcomingEpisode[]; behindMinutes: number }> {
   const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
-  const home = data as HomeJson;
+  const home = parseHome(data);
 
   const upNext: UpNextItem[] = home.up_next.map((r) => ({
     show: mapShow(r.show),
