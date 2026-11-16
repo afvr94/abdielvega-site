@@ -5,8 +5,6 @@
 @source '../components';
 @source '../lib';
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
   --color-cream: rgb(var(--cream));
   --color-ink: rgb(var(--ink));
@@ -133,7 +131,7 @@
 
 @layer base {
   /* Palette as raw RGB channels so Tailwind's /opacity modifiers keep working.
-     Dark mode flips these variables; components never hardcode the hex. */
+     The cliffo block below re-declares them for tv; components never hardcode the hex. */
   :root {
     --cream: 245 239 228; /* page background */
     --ink: 26 24 21; /* primary text */
@@ -145,22 +143,6 @@
     --savings: 46 82 102;
     --warn: 193 122 31;
     color-scheme: light;
-  }
-
-  :root.dark {
-    --cream: 22 20 16; /* warm near-black background */
-    --ink: 237 231 220; /* warm off-white text */
-    --muted: 150 141 130;
-    --card: 34 31 26; /* raised warm dark surface */
-    --hairline: 237 231 220; /* light hairline at 13% alpha */
-    color-scheme: dark;
-  }
-
-  html {
-    color-scheme: light;
-  }
-  html.dark {
-    color-scheme: dark;
   }
 
   body {
@@ -210,8 +192,10 @@
   transition-timing-function: var(--ease);
 }
 
-.cliffo :is(a, button:not(:disabled)):active {
-  scale: 0.97;
+@media (prefers-reduced-motion: no-preference) {
+  .cliffo :is(a, button:not(:disabled)):active {
+    scale: 0.97;
+  }
 }
 
 .cliffo .tab-label {
@@ -250,8 +234,5 @@
   .cliffo *::after {
     transition-duration: 0ms !important;
     animation: none !important;
-  }
-  .cliffo :is(a, button):active {
-    scale: none;
   }
 }

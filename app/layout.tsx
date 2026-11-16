@@ -23,17 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Applies a stored dark preference before first paint to avoid a flash. The TV
-// subdomain is always dark through its own cliffo theme, so it needs nothing here.
-const themeScript = `try{if(localStorage.getItem('theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${instrument.variable} ${jetbrains.variable}`}>
-      <body>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -52,7 +52,7 @@ app/
   api/contact/route.ts  # nodemailer POST
   api/tv/sync/route.ts  # daily cron — refresh TMDB metadata + email new episodes
   api/tv/manifest/route.ts   # PWA manifest for cliffo (icons are static, in public/cliffo/)
-  layout.tsx            # root html/body + fonts + pre-paint theme script
+  layout.tsx            # root html/body + fonts
   not-found.tsx
   fonts.ts
   globals.css
@@ -100,7 +100,7 @@ re-declares them as cliffo's plum and amber palette, and `.cliffo` swaps the fon
 Outfit and DM Sans (`app/tv/fonts.ts`). The `cliffo` class goes on the TV layout and on
 the login page when the host is `tv`. Press shrink, the sliding nav pill and the Up Next
 `rise` stagger all switch off under `prefers-reduced-motion`. The portfolio and budget
-tracker stay light; `:root.dark` remains only for a stored `theme=dark` preference.
+tracker stay light.
 
 ## Data model (Supabase)
 

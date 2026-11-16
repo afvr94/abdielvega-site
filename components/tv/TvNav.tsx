@@ -55,6 +55,8 @@ export function TvNav() {
       else place(false);
     });
     observer.observe(nav);
+    // Tabs change width without the nav resizing when the web fonts swap in.
+    nav.querySelectorAll('a').forEach((tab) => observer.observe(tab));
     return () => observer.disconnect();
   }, [activeHref]);
 
