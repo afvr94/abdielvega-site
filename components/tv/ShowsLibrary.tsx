@@ -103,7 +103,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
               }`}
             >
               {l.name}
-              <span className="ml-1.5 font-mono-tab opacity-60">{l.count}</span>
+              <span className="ml-1.5 font-mono-tab opacity-80">{l.count}</span>
             </button>
           ))}
         </div>
@@ -119,7 +119,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
             }`}
           >
             {t.label}
-            <span className="ml-1.5 font-mono-tab opacity-60">{counts[t.key]}</span>
+            <span className="ml-1.5 font-mono-tab opacity-80">{counts[t.key]}</span>
           </button>
         ))}
       </div>
