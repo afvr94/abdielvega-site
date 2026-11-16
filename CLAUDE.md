@@ -94,11 +94,11 @@ The **trackers** (budget, TV) share an editorial/newsprint aesthetic:
 Tailwind v4 is configured CSS-first in `app/globals.css` (`@theme`; there is no
 `tailwind.config.ts`) and exposes these as named values: `bg-cream`, `text-ink`, `text-muted`, `border-hairline`, `text-income/expense/savings/warn`, `font-display`, `font-mono-tab`.
 
-**The TV tracker wears the cliffo design**, always dark. Colors are RGB triples in
+**The TV tracker uses the cliffo design** and is always dark. Colors are RGB triples in
 CSS custom properties (`--ink`, …) in `app/globals.css`; `:root:has(.cliffo)`
 re-declares them as cliffo's plum and amber palette, and `.cliffo` swaps the fonts to
-Outfit and DM Sans (`app/tv/fonts.ts`). The `cliffo` class goes on the TV layout and on
-the login page when the host is `tv`. Press shrink, the sliding nav pill and the Up Next
+Outfit and DM Sans (`app/tv/fonts.ts`). The `cliffo` class goes on the TV layout, and on
+the login and 404 pages when the host is `tv`. The press shrink, the sliding nav pill and the Up Next
 `rise` stagger all switch off under `prefers-reduced-motion`. The portfolio and budget
 tracker stay light.
 
