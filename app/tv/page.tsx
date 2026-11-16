@@ -4,7 +4,7 @@ import { Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getUpNext, getUpcoming } from '@/lib/tv/queries';
 import { imageUrl } from '@/lib/tv/tmdb';
-import { episodeCode, dayHeading } from '@/lib/tv/format';
+import { episodeCode, dayHeading, todayIso } from '@/lib/tv/format';
 import { UpNextList } from '@/components/tv/UpNextList';
 import { SurpriseButton } from '@/components/tv/SurpriseButton';
 
@@ -15,7 +15,7 @@ export default async function TvHomePage() {
   const [items, thisWeek] = await Promise.all([getUpNext(db), getUpcoming(db, 7)]);
   const behind = items.filter((i) => i.next);
   const caughtUp = items.filter((i) => !i.next);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
 
   if (items.length === 0 && thisWeek.length === 0) {
     return (

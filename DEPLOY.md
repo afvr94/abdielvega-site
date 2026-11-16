@@ -439,6 +439,21 @@ create policy "owner only" on tv_watches
   with check ((select auth.uid()) = '<OWNER_USER_ID>'::uuid);
 ```
 
+### Eastern-time days
+
+The tracker counts days in Eastern time, not UTC, so an episode airing tomorrow
+doesn't show as aired at 8pm. Every function below that needs "today" calls this
+helper; the app's `todayIso()` in `lib/tv/format.ts` uses the same zone:
+
+```sql
+create or replace function public.tv_today()
+returns date
+language sql
+stable
+set search_path = ''
+as $$ select (now() at time zone 'America/New_York')::date $$;
+```
+
 ### Up Next function
 
 The home screen's "Up Next" (next aired-but-unwatched episode per followed show,
@@ -461,7 +476,7 @@ returns table (
     join tv_follows f on f.show_tmdb_id = e.show_tmdb_id and not f.archived and not f.watchlist
     where e.season_number > 0            -- specials (season 0) excluded
       and e.air_date is not null
-      and e.air_date <= current_date
+      and e.air_date <= public.tv_today()
   ),
   marked as (
     select a.*, w.id as watch_id
@@ -518,7 +533,7 @@ returns table (
   aired as (
     select show_tmdb_id, season_number, episode_number
     from tv_episodes
-    where season_number > 0 and air_date is not null and air_date <= current_date
+    where season_number > 0 and air_date is not null and air_date <= public.tv_today()
   ),
   counts as (
     select f.show_tmdb_id,
@@ -535,7 +550,7 @@ returns table (
   upcoming as (
     select show_tmdb_id, min(air_date) as next_air_date
     from tv_episodes
-    where season_number > 0 and air_date is not null and air_date > current_date
+    where season_number > 0 and air_date is not null and air_date > public.tv_today()
     group by show_tmdb_id
   ),
   lastw as (
@@ -638,7 +653,7 @@ returns json language sql stable as $$
         from tv_watches group by 1) t),
     'by_day', (
       select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
-        select watched_at::date::text as date, count(*)::int as count
+        select (watched_at at time zone 'America/New_York')::date::text as date, count(*)::int as count
         from tv_watches group by 1) t),
     'top_shows', (
       select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
@@ -682,7 +697,7 @@ alter table tv_notified enable row level security;
 -- Seed: everything already aired is considered "already notified".
 insert into tv_notified (episode_tmdb_id)
 select tmdb_id from tv_episodes
-where season_number > 0 and air_date is not null and air_date <= current_date
+where season_number > 0 and air_date is not null and air_date <= public.tv_today()
 on conflict do nothing;
 
 -- Episodes to notify: aired in the last 30 days, followed, not yet notified.
@@ -701,8 +716,8 @@ returns table (
   join tv_shows  s on s.tmdb_id = e.show_tmdb_id
   where e.season_number > 0
     and e.air_date is not null
-    and e.air_date <= current_date
-    and e.air_date >= current_date - interval '30 days'
+    and e.air_date <= public.tv_today()
+    and e.air_date >= public.tv_today() - interval '30 days'
     and not exists (select 1 from tv_notified n where n.episode_tmdb_id = e.tmdb_id)
   order by e.air_date, s.name;
 $$;

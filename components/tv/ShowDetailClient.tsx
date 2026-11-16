@@ -7,7 +7,7 @@ import type { Episode, Show, TvList } from '@/lib/tv/types';
 import { watchKey } from '@/lib/tv/types';
 import { ListPicker } from './ListPicker';
 import { imageUrl } from '@/lib/tv/tmdb';
-import { episodeCode, formatAirDate } from '@/lib/tv/format';
+import { episodeCode, formatAirDate, todayIso } from '@/lib/tv/format';
 import {
   markWatched,
   markUnwatched,
@@ -17,9 +17,6 @@ import {
   setWatchlist,
 } from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
-
-const TODAY = new Date().toISOString().slice(0, 10);
-const hasAired = (e: Episode) => !!e.airDate && e.airDate <= TODAY;
 
 export function ShowDetailClient({
   show,
@@ -42,6 +39,8 @@ export function ShowDetailClient({
   allLists?: TvList[];
   listIds?: number[];
 }) {
+  const today = todayIso();
+  const hasAired = (e: Episode) => !!e.airDate && e.airDate <= today;
   const [watched, setWatched] = useState<Set<string>>(() => new Set(watchedKeys));
   const [isArchived, setIsArchived] = useState(archived);
   const [isWatchlist, setIsWatchlist] = useState(watchlist);
@@ -89,8 +88,8 @@ export function ShowDetailClient({
 
   // Aired non-special progress.
   const airedRegular = useMemo(
-    () => episodes.filter((e) => e.seasonNumber > 0 && hasAired(e)),
-    [episodes]
+    () => episodes.filter((e) => e.seasonNumber > 0 && !!e.airDate && e.airDate <= today),
+    [episodes, today]
   );
   const airedWatched = airedRegular.filter((e) =>
     watched.has(watchKey(e.seasonNumber, e.episodeNumber))

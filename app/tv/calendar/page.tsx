@@ -4,14 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 import { getUpcoming } from '@/lib/tv/queries';
 import type { UpcomingEpisode } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
-import { dayHeading, episodeCode } from '@/lib/tv/format';
+import { dayHeading, episodeCode, todayIso } from '@/lib/tv/format';
 
 export const metadata = { title: 'Calendar' };
 
 export default async function CalendarPage() {
   const db = await createClient();
   const upcoming = await getUpcoming(db);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
 
   // Group consecutive (already sorted) episodes by air date.
   const groups: { date: string; items: UpcomingEpisode[] }[] = [];
@@ -47,7 +47,7 @@ export default async function CalendarPage() {
                     <Link
                       key={episode.tmdbId}
                       href={`/show/${show.tmdbId}`}
-                      className="card flex items-center gap-3 border border-hairline p-2.5 transition-colors hover:border-ink/25"
+                      className="flex items-center gap-3 card border border-hairline p-2.5 transition-colors hover:border-ink/25"
                     >
                       <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-md bg-cream">
                         {poster ? (
@@ -55,7 +55,7 @@ export default async function CalendarPage() {
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-display font-semibold leading-tight">
+                        <div className="truncate font-display leading-tight font-semibold">
                           {show.name}
                         </div>
                         <div className="flex items-baseline gap-2 text-sm">

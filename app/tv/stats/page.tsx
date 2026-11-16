@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getStats } from '@/lib/tv/queries';
 import type { Stats } from '@/lib/tv/types';
-import { formatAirDate, humanizeMinutes, daysFromMinutes } from '@/lib/tv/format';
+import { formatAirDate, humanizeMinutes, daysFromMinutes, todayIso } from '@/lib/tv/format';
 import { buildHeatmap, heatLevel } from '@/lib/tv/heatmap';
 
 export const metadata = { title: 'Stats' };
@@ -41,7 +41,7 @@ export default async function StatsPage() {
 
   const maxYear = Math.max(1, ...stats.byYear.map((y) => y.count));
   const maxTop = Math.max(1, ...stats.topShows.map((s) => s.count));
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   const heat = buildHeatmap(stats.byDay, today, 53);
 
   return (

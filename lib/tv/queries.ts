@@ -11,6 +11,7 @@ import type {
   UpNextItem,
 } from './types';
 import { watchKey } from './types';
+import { addDaysIso, todayIso } from './format';
 
 const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date';
 const EPISODE_COLUMNS =
@@ -325,8 +326,8 @@ export async function getUpcoming(db: SupabaseClient, days = 90): Promise<Upcomi
   const ids = await getActiveFollowIds(db);
   if (ids.length === 0) return [];
 
-  const today = new Date().toISOString().slice(0, 10);
-  const end = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  const today = todayIso();
+  const end = addDaysIso(today, days);
 
   const epRows = await fetchAll(db, (from, to) =>
     db
