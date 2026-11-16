@@ -338,8 +338,8 @@ export async function getUpcoming(db: SupabaseClient, days = 90): Promise<Upcomi
       .lte('air_date', end)
       .order('air_date')
       .range(from, to)
-      // Untyped client: the select parser assumes embeds are arrays, but a
-      // many-to-one embed comes back as one object.
+      // The client has no schema types, so the select parser assumes embeds are
+      // arrays. A many-to-one embed comes back as one object.
       .overrideTypes<(EpisodeRow & { show: ShowRow | null })[], { merge: false }>()
   );
 

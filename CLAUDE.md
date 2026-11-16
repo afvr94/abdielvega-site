@@ -123,8 +123,8 @@ functions — `tv_up_next()`, `tv_library()`, `tv_stats()`,
 
 Library reads come from Postgres; `lib/tv/tmdb.ts` writes metadata only on follow,
 import and the scheduled sync. Page renders call TMDB only for watch providers
-(cached a day, streamed in after the episode list) and the preview of a show that
-isn't cached yet.
+and for the preview of a show that isn't cached yet. Watch providers are cached
+for a day and stream in after the episode list.
 
 ## Local development
 
