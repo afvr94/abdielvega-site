@@ -8,6 +8,7 @@ import type { Episode, UpNextItem } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import { markWatched } from '@/app/tv/actions';
+import { ProgressRing } from './ProgressRing';
 
 export function UpNextCard({
   item,
@@ -84,14 +85,14 @@ export function UpNextCard({
             </button>
           )}
         </div>
-        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted">
+          <ProgressRing pct={pct} label={`${pct}% watched`} className="size-5 p-[3px]" />
           <span className="font-mono-tab">
             {item.airedWatched}/{item.airedTotal}
           </span>
-          <span className="h-1 w-20 overflow-hidden rounded-full bg-hairline">
-            <span className="block h-full rounded-full bg-income" style={{ width: `${pct}%` }} />
-          </span>
-          {next.airDate ? <span>· aired {formatAirDate(next.airDate)}</span> : null}
+          {next.airDate ? (
+            <span className="whitespace-nowrap">aired {formatAirDate(next.airDate)}</span>
+          ) : null}
         </div>
         {failed ? (
           <p role="alert" className="mt-2 text-xs text-expense">

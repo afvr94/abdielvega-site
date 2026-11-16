@@ -4,15 +4,15 @@ import { useLayoutEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { BarChart3, CalendarDays, LayoutGrid, LogOut, PlayCircle, Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 const LINKS = [
-  { href: '/', label: 'Up Next' },
-  { href: '/shows', label: 'Shows' },
-  { href: '/calendar', label: 'Calendar' },
-  { href: '/stats', label: 'Stats' },
-  { href: '/search', label: 'Search' },
+  { href: '/', label: 'Up Next', Icon: PlayCircle },
+  { href: '/shows', label: 'Shows', Icon: LayoutGrid },
+  { href: '/calendar', label: 'Calendar', Icon: CalendarDays },
+  { href: '/stats', label: 'Stats', Icon: BarChart3 },
+  { href: '/search', label: 'Search', Icon: Search },
 ];
 
 function isActive(href: string, pathname: string) {
@@ -74,22 +74,22 @@ export function TvNav() {
 
   return (
     <header className="border-b border-hairline pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3">
+      <div className="mx-auto flex max-w-4xl items-center gap-4 px-5 py-3">
         <Link href="/" className="shrink-0">
           <Image src="/cliffo/logo.svg" alt="cliffo" width={80} height={28} priority />
         </Link>
 
-        {/* Full-width scrollable row on mobile, inline on sm+ */}
+        {/* A floating tab bar within thumb reach on phones, inline in the header on sm+. */}
         <nav
           ref={navRef}
-          className="relative order-3 -mx-5 no-scrollbar flex w-full items-center gap-0.5 overflow-x-auto px-5 sm:order-0 sm:mx-0 sm:w-auto sm:flex-1 sm:px-0"
+          className="fixed inset-x-2.5 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-stretch rounded-[22px] border border-hairline bg-card/95 p-1.5 backdrop-blur-md sm:static sm:z-auto sm:flex-1 sm:items-center sm:gap-0.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
         >
           <span
             ref={pillRef}
             data-nav-pill
             aria-hidden
             style={{ opacity: 0 }}
-            className="pointer-events-none absolute inset-y-0 left-0 rounded-full border border-hairline bg-ink/10 transition-[transform,width] duration-[380ms] ease-[var(--ease)]"
+            className="pointer-events-none absolute inset-y-1.5 left-0 rounded-2xl bg-income transition-[transform,width] duration-[380ms] ease-[var(--ease)] sm:inset-y-0 sm:rounded-full sm:border sm:border-hairline sm:bg-ink/10"
           />
           {LINKS.map((l) => {
             const active = l.href === activeHref;
@@ -98,10 +98,11 @@ export function TvNav() {
                 key={l.href}
                 href={l.href}
                 aria-current={active ? 'page' : undefined}
-                className={`tab-label relative rounded-full px-3 py-1.5 text-xs font-semibold tracking-wider whitespace-nowrap uppercase ${
-                  active ? 'text-ink' : 'text-muted hover:text-ink'
+                className={`tab-label relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl text-[10px] font-medium whitespace-nowrap sm:min-h-0 sm:flex-none sm:rounded-full sm:px-3 sm:py-1.5 sm:text-xs sm:font-semibold sm:tracking-wider sm:uppercase ${
+                  active ? 'text-cream sm:text-ink' : 'text-muted hover:text-ink'
                 }`}
               >
+                <l.Icon size={20} strokeWidth={2} aria-hidden className="sm:hidden" />
                 {l.label}
               </Link>
             );
@@ -112,7 +113,7 @@ export function TvNav() {
           <button
             onClick={signOut}
             aria-label="Sign out"
-            className="rounded-full p-1.5 text-muted hover:text-ink"
+            className="grid size-11 place-items-center rounded-full text-muted hover:text-ink"
           >
             <LogOut size={15} strokeWidth={2} />
           </button>
