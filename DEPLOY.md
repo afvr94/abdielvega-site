@@ -341,6 +341,7 @@ Only after production is confirmed working on Vercel:
 | `TMDB_ACCESS_TOKEN`             | themoviedb.org → API       | v4 read access token (Bearer). TV tracker metadata source        |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Settings → API  | **Server-only.** Import script + cron sync. Never ship to client |
 | `CRON_SECRET`                   | You                        | Random string guarding the TV cron sync route                    |
+| `DISCORD_WEBHOOK_URL`           | Discord channel → Webhooks | **Server-only.** Daily TV post; none is sent without it          |
 
 ### Apple / iCloud SMTP setup
 
@@ -747,7 +748,8 @@ $$;
 
 ### Scheduled sync (Vercel Cron)
 
-`vercel.json` registers a daily `GET /api/tv/sync`. Vercel automatically sends
+`vercel.json` registers a daily `GET /api/tv/sync` at 21:00 UTC (4 pm Eastern
+in winter, 5 pm in summer; Vercel may fire it any time within that hour). Vercel automatically sends
 `Authorization: Bearer $CRON_SECRET` with cron invocations, so set **`CRON_SECRET`**
 (and `SUPABASE_SERVICE_ROLE_KEY`) in the Vercel project's environment variables.
 The route re-fetches followed, still-airing shows from TMDB and upserts new
@@ -755,7 +757,9 @@ episodes / corrected air dates; ended & archived shows are skipped.
 
 ### New-episode notifications
 
-The same cron emails a digest when followed shows drop a newly-aired episode.
+The same cron posts to Discord when followed shows have a newly aired episode,
+tonight's included. The post lists show names and episode codes only, never
+episode titles, plus how far behind you are; nothing is posted on a quiet day.
 Run this once — the seed marks all currently-aired episodes as already-notified
 so you don't get a retroactive backlog; only episodes that air afterward notify:
 
@@ -796,10 +800,9 @@ returns table (
 $$;
 ```
 
-The email uses the existing SMTP config, so `EMAIL`, `EMAIL_PASSWORD`, and the
-`SMTP_*` vars must be set in Vercel (they already are, for the contact form).
-Optionally set **`TV_NOTIFY_EMAIL`** to override where the digest is sent
-(defaults to `CONTACT_INBOX` → `EMAIL`).
+Set **`DISCORD_WEBHOOK_URL`** in Vercel to the channel's webhook (Discord →
+channel settings → Integrations → Webhooks → New Webhook → Copy URL). An
+episode is marked in `tv_notified` only after the post succeeds.
 
 ### Auth redirect URL
 
