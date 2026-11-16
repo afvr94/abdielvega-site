@@ -86,7 +86,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
             onClick={() => setListId(null)}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
               listId == null
-                ? 'border-savings bg-savings text-white'
+                ? 'border-savings bg-savings text-cream'
                 : 'border-hairline text-muted hover:text-ink'
             }`}
           >
@@ -98,7 +98,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
               onClick={() => setListId(l.id)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
                 listId === l.id
-                  ? 'border-savings bg-savings text-white'
+                  ? 'border-savings bg-savings text-cream'
                   : 'border-hairline text-muted hover:text-ink'
               }`}
             >
@@ -153,7 +153,7 @@ export function ShowsLibrary({ items, lists }: { items: LibraryItem[]; lists: Tv
                     </div>
                   )}
                   {behind > 0 && !i.archived ? (
-                    <span className="absolute top-1.5 right-1.5 rounded-full bg-expense px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-white">
+                    <span className="absolute top-1.5 right-1.5 rounded-full bg-expense px-1.5 py-0.5 font-mono-tab text-[10px] font-semibold text-cream">
                       {behind}
                     </span>
                   ) : null}

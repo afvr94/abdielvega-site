@@ -176,3 +176,82 @@
     color: rgb(var(--cream));
   }
 }
+
+/*
+  tv.abdielvega.com wears the cliffo design: always dark, plum and amber, Outfit and DM Sans.
+  Unlayered so it beats the base palette and the transition utilities; scoped to .cliffo so the
+  portfolio and budget keep their own look. :root:has() lets the page background and portals follow.
+*/
+:root:has(.cliffo) {
+  --cream: 22 18 27;
+  --card: 33 27 40;
+  --ink: 246 240 247;
+  --muted: 169 156 179;
+  --hairline: 246 240 247;
+  --income: 255 181 71;
+  --warn: 255 181 71;
+  --savings: 182 156 255;
+  --expense: 255 122 107;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: dark;
+}
+
+.cliffo {
+  --font-fraunces: var(--font-outfit);
+  --font-instrument: var(--font-dm-sans);
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.cliffo :is(a, button) {
+  transition-property: color, background-color, border-color, opacity, box-shadow, scale;
+  transition-duration: 180ms;
+  transition-timing-function: var(--ease);
+}
+
+.cliffo :is(a, button:not(:disabled)):active {
+  scale: 0.97;
+}
+
+.cliffo .tab-label {
+  transition-duration: 380ms;
+}
+
+@keyframes cliffo-rise {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+.cliffo .rise > * {
+  animation: cliffo-rise 380ms var(--ease) backwards;
+}
+.cliffo .rise > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.cliffo .rise > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.cliffo .rise > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.cliffo .rise > :nth-child(5) {
+  animation-delay: 160ms;
+}
+.cliffo .rise > :nth-child(n + 6) {
+  animation-delay: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cliffo *,
+  .cliffo *::before,
+  .cliffo *::after {
+    transition-duration: 0ms !important;
+    animation: none !important;
+  }
+  .cliffo :is(a, button):active {
+    scale: none;
+  }
+}

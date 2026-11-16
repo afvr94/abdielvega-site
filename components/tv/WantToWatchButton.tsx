@@ -25,7 +25,7 @@ export function WantToWatchButton({ tmdbId }: { tmdbId: number }) {
       title="Watch later"
       className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-70 ${
         saved
-          ? 'border-savings bg-savings text-white'
+          ? 'border-savings bg-savings text-cream'
           : 'border-hairline bg-card text-muted hover:border-savings hover:text-savings'
       }`}
     >

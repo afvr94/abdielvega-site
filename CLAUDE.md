@@ -8,7 +8,7 @@ Personal site + two private trackers, a single Next.js 15 App Router app deploye
 | ----------------------- | ------------------------------------------------- | ------------------------------ |
 | `abdielvega.com`        | Public portfolio (Home, About, Projects, Contact) | No                             |
 | `budget.abdielvega.com` | Private budget tracker — "The Ledger"             | Yes — Supabase magic-link auth |
-| `tv.abdielvega.com`     | Private TV series tracker — "The Marquee"         | Yes — Supabase magic-link auth |
+| `tv.abdielvega.com`     | Private TV series tracker — "cliffo"              | Yes — Supabase magic-link auth |
 
 Plus `/hiit` — a standalone, public interval timer on the apex host (linked from
 `lib/portfolio/content.ts`). No auth, no database; workouts live in the URL and
@@ -51,8 +51,7 @@ app/
   auth/callback/route.ts
   api/contact/route.ts  # nodemailer POST
   api/tv/sync/route.ts  # daily cron — refresh TMDB metadata + email new episodes
-  api/tv/manifest/route.ts   # PWA manifest for The Marquee
-  api/tv/icon/[size]/route.tsx  # generated PWA / apple-touch icons
+  api/tv/manifest/route.ts   # PWA manifest for cliffo (icons are static, in public/cliffo/)
   layout.tsx            # root html/body + fonts + pre-paint theme script
   not-found.tsx
   fonts.ts
@@ -62,7 +61,7 @@ components/
   budget/               # budget-tracker UI (BudgetTracker, Dashboard, LogView, PlanView, SetupView, LoginForm)
   tv/                   # TvNav, ShowsLibrary, ShowDetailClient, UpNextCard,
                         # FollowButton, WantToWatchButton, ListPicker,
-                        # SurpriseButton, SearchClient, ThemeToggle
+                        # SurpriseButton, SearchClient
 lib/
   portfolio/            # content.ts, github.ts, spam.ts (contact-form filtering)
   budget/               # types, utils, theme, queries
@@ -95,12 +94,13 @@ The **trackers** (budget, TV) share an editorial/newsprint aesthetic:
 Tailwind v4 is configured CSS-first in `app/globals.css` (`@theme`; there is no
 `tailwind.config.ts`) and exposes these as named values: `bg-cream`, `text-ink`, `text-muted`, `border-hairline`, `text-income/expense/savings/warn`, `font-display`, `font-mono-tab`.
 
-**Dark mode** is TV-only. Colors are RGB triples in CSS custom properties
-(`--ink`, …) in `app/globals.css`, re-declared under `:root.dark`. An inline
-script in `app/layout.tsx` applies the saved theme before first paint — it only
-opts into the system preference when the host's first label is `tv`, so the
-portfolio and budget tracker stay light. `components/tv/ThemeToggle.tsx` flips
-the class and persists to `localStorage`.
+**The TV tracker wears the cliffo design**, always dark. Colors are RGB triples in
+CSS custom properties (`--ink`, …) in `app/globals.css`; `:root:has(.cliffo)`
+re-declares them as cliffo's plum and amber palette, and `.cliffo` swaps the fonts to
+Outfit and DM Sans (`app/tv/fonts.ts`). The `cliffo` class goes on the TV layout and on
+the login page when the host is `tv`. Press shrink, the sliding nav pill and the Up Next
+`rise` stagger all switch off under `prefers-reduced-motion`. The portfolio and budget
+tracker stay light; `:root.dark` remains only for a stored `theme=dark` preference.
 
 ## Data model (Supabase)
 

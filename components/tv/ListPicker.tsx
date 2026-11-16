@@ -57,7 +57,7 @@ export function ListPicker({
         {memberLists.map((l) => (
           <span
             key={l.id}
-            className="inline-flex items-center gap-1.5 rounded-full bg-savings px-2.5 py-1 text-xs font-medium text-white"
+            className="inline-flex items-center gap-1.5 rounded-full bg-savings px-2.5 py-1 text-xs font-medium text-cream"
           >
             <Tag size={11} strokeWidth={2.4} />
             {l.name}

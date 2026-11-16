@@ -23,10 +23,9 @@ export const metadata: Metadata = {
   },
 };
 
-// Applies the saved theme before first paint to avoid a flash. Dark mode is
-// scoped to the TV subdomain: elsewhere (portfolio, budget) it stays light
-// unless a preference was explicitly stored for that origin.
-const themeScript = `try{var t=localStorage.getItem('theme');var isTv=location.hostname.split('.')[0]==='tv';if(t==='dark'||(!t&&isTv&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`;
+// Applies a stored dark preference before first paint to avoid a flash. The TV
+// subdomain is always dark through its own cliffo theme, so it needs nothing here.
+const themeScript = `try{if(localStorage.getItem('theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
