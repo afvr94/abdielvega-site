@@ -15,7 +15,7 @@ export function LoginForm() {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    // On success the browser is already on its way to Google.
+    // On success the browser is already redirecting to Google.
     if (err) {
       setPending(false);
       setError(err.message);

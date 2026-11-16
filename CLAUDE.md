@@ -4,11 +4,11 @@ Personal site + two private trackers, a single Next.js 15 App Router app deploye
 
 ## Three surfaces, one app
 
-| Host                    | Content                                           | Gated                           |
-| ----------------------- | ------------------------------------------------- | ------------------------------- |
-| `abdielvega.com`        | Public portfolio (Home, About, Projects, Contact) | No                              |
-| `budget.abdielvega.com` | Private budget tracker — "The Ledger"             | Yes — Google sign-in (Supabase) |
-| `tv.abdielvega.com`     | Private TV series tracker — "cliffo"              | Yes — Google sign-in (Supabase) |
+| Host                    | Content                                           | Gated                          |
+| ----------------------- | ------------------------------------------------- | ------------------------------ |
+| `abdielvega.com`        | Public portfolio (Home, About, Projects, Contact) | No                             |
+| `budget.abdielvega.com` | Private budget tracker — "The Ledger"             | Yes, Google sign-in (Supabase) |
+| `tv.abdielvega.com`     | Private TV series tracker — "cliffo"              | Yes, Google sign-in (Supabase) |
 
 Plus `/hiit` — a standalone, public interval timer on the apex host (linked from
 `lib/portfolio/content.ts`). No auth, no database; workouts live in the URL and
@@ -50,7 +50,7 @@ app/
   login/page.tsx        # Continue with Google; brand switches on the host
   auth/callback/route.ts
   api/contact/route.ts  # nodemailer POST
-  api/tv/sync/route.ts  # daily cron — refresh TMDB metadata + post new episodes to Discord
+  api/tv/sync/route.ts  # daily cron: refresh TMDB metadata, post new episodes to Discord
   api/tv/manifest/route.ts   # PWA manifest for cliffo (icons are static, in public/cliffo/)
   layout.tsx            # root html/body + fonts
   not-found.tsx

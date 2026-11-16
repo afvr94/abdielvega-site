@@ -301,7 +301,7 @@ Back in Supabase, **Authentication → URL Configuration**:
 
 **Create your account:** visit `https://budget.abdielvega.com/login` and continue with Google. You now have a user, and the `on_auth_user_created` trigger has seeded your default categories.
 
-**Switch to invite-only:** Authentication → Sign In / Providers → **disable** "Allow new users to sign up". The tracker is multi-user at the database layer, but signups are gated: any other Google account is refused, and `/login` says "That Google account can't sign in here." To add someone, invite them from Authentication → Users → **Invite user** with their Google address; the same trigger seeds their categories on first login.
+**Switch to invite-only:** Authentication → Sign In / Providers → **disable** "Allow new users to sign up". The tracker is multi-user at the database layer, but with signups off Supabase refuses any other Google account, and `/login` says "That Google account can't sign in here." To add someone, invite them from Authentication → Users → **Invite user** with their Google address; the same trigger seeds their categories on first login.
 
 **Google sign-in** (the only way in; magic links are off):
 
@@ -349,7 +349,7 @@ Only after production is confirmed working on Vercel:
 | `TMDB_ACCESS_TOKEN`             | themoviedb.org → API       | v4 read access token (Bearer). TV tracker metadata source        |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Settings → API  | **Server-only.** Import script + cron sync. Never ship to client |
 | `CRON_SECRET`                   | You                        | Random string guarding the TV cron sync route                    |
-| `DISCORD_WEBHOOK_URL`           | Discord channel → Webhooks | **Server-only.** Daily TV post; none is sent without it          |
+| `DISCORD_WEBHOOK_URL`           | Discord channel → Webhooks | **Server-only.** Daily TV post; skipped without it               |
 
 ### Apple / iCloud SMTP setup
 
@@ -766,8 +766,8 @@ episodes / corrected air dates; ended & archived shows are skipped.
 ### New-episode notifications
 
 The same cron posts to Discord when followed shows have a newly aired episode,
-tonight's included. The post lists show names and episode codes only, never
-episode titles, plus how far behind you are; nothing is posted on a quiet day.
+tonight's included. The post lists show names, episode codes and how far behind
+you are, never episode titles. On a quiet day it posts nothing.
 Run this once — the seed marks all currently-aired episodes as already-notified
 so you don't get a retroactive backlog; only episodes that air afterward notify:
 
@@ -814,8 +814,8 @@ $$;
 ```
 
 Set **`DISCORD_WEBHOOK_URL`** in Vercel to the channel's webhook (Discord →
-channel settings → Integrations → Webhooks → New Webhook → Copy URL). An
-episode is marked in `tv_notified` only after the post succeeds.
+channel settings → Integrations → Webhooks → New Webhook → Copy URL). The
+route marks an episode in `tv_notified` only after the post succeeds.
 
 ### Auth redirect URL
 
