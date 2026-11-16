@@ -19,6 +19,8 @@ export function UpNextCard({
   const { show, next } = item;
   const [pending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
+  // Spoiler protection: the next episode is unwatched by definition.
+  const [revealed, setRevealed] = useState(false);
 
   if (!next) return null;
 
@@ -48,7 +50,15 @@ export function UpNextCard({
         href={`/show/${show.tmdbId}`}
         className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-cream sm:w-40"
       >
-        {still ? <Image src={still} alt="" fill sizes="160px" className="object-cover" /> : null}
+        {still ? (
+          <Image
+            src={still}
+            alt=""
+            fill
+            sizes="160px"
+            className={`object-cover ${revealed ? '' : 'scale-110 blur-md'}`}
+          />
+        ) : null}
       </Link>
 
       <div className="flex min-w-0 flex-1 flex-col justify-center">
@@ -62,7 +72,17 @@ export function UpNextCard({
           <span className="font-mono-tab text-xs text-muted">
             {episodeCode(next.seasonNumber, next.episodeNumber)}
           </span>
-          <span className="truncate text-ink">{next.name ?? '—'}</span>
+          {revealed ? (
+            <span className="truncate text-ink">{next.name ?? '—'}</span>
+          ) : (
+            <button
+              onClick={() => setRevealed(true)}
+              aria-label="Show episode title"
+              className="-my-2 truncate py-2 text-muted italic hover:text-ink"
+            >
+              hidden
+            </button>
+          )}
         </div>
         <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
           <span className="font-mono-tab">
