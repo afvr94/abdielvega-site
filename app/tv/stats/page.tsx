@@ -50,8 +50,8 @@ export default async function StatsPage() {
         <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Stats</h1>
         {stats.firstWatch && stats.lastWatch ? (
           <span className="label-tag">
-            {formatAirDate(stats.firstWatch.slice(0, 10))} —{' '}
-            {formatAirDate(stats.lastWatch.slice(0, 10))}
+            {formatAirDate(todayIso(new Date(stats.firstWatch)))} —{' '}
+            {formatAirDate(todayIso(new Date(stats.lastWatch)))}
           </span>
         ) : null}
       </div>

@@ -649,7 +649,7 @@ returns json language sql stable as $$
     'last_watch',  (select max(watched_at) from tv_watches),
     'by_year', (
       select coalesce(json_agg(row_to_json(t) order by t.year), '[]'::json) from (
-        select extract(year from watched_at)::int as year, count(*)::int as count
+        select extract(year from watched_at at time zone 'America/New_York')::int as year, count(*)::int as count
         from tv_watches group by 1) t),
     'by_day', (
       select coalesce(json_agg(row_to_json(t)), '[]'::json) from (
