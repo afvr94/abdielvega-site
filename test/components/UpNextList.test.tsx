@@ -45,6 +45,8 @@ describe('UpNextList', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await user.click(screen.getByRole('button', { name: /mark s02e05 watched/i }));
     expect(screen.getByRole('button', { name: /undo/i })).toBeInTheDocument();
+    // The dismiss timer starts in an effect; flush it first or the clock jumps before it exists.
+    await act(async () => {});
     act(() => vi.advanceTimersByTime(5000));
     expect(screen.queryByRole('button', { name: /undo/i })).not.toBeInTheDocument();
   });
