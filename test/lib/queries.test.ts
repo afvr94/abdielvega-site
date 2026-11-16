@@ -82,8 +82,8 @@ const ep = (tmdb_id: number, show_tmdb_id: number, air_date: string) => ({
 
 describe('getHome', () => {
   it('returns empty lists when nothing is followed', async () => {
-    const db = makeDb({ rpc: { tv_home: { up_next: [], this_week: [] } } });
-    expect(await getHome(db)).toEqual({ upNext: [], thisWeek: [] });
+    const db = makeDb({ rpc: { tv_home: { up_next: [], this_week: [], behind_minutes: 0 } } });
+    expect(await getHome(db)).toEqual({ upNext: [], thisWeek: [], behindMinutes: 0 });
   });
 
   it('orders behind shows first (by most recent air), caught-up last', async () => {

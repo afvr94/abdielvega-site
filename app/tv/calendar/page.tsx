@@ -58,11 +58,8 @@ export default async function CalendarPage() {
                         <div className="truncate font-display leading-tight font-semibold">
                           {show.name}
                         </div>
-                        <div className="flex items-baseline gap-2 text-sm">
-                          <span className="font-mono-tab text-[11px] text-muted">
-                            {episodeCode(episode.seasonNumber, episode.episodeNumber)}
-                          </span>
-                          <span className="truncate text-ink">{episode.name ?? '—'}</span>
+                        <div className="font-mono-tab text-[11px] text-muted">
+                          {episodeCode(episode.seasonNumber, episode.episodeNumber)}
                         </div>
                       </div>
                     </Link>

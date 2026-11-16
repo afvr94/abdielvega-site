@@ -11,7 +11,7 @@ import { makeUpNext, makeShow, makeEpisode } from '../factories';
 beforeEach(() => vi.clearAllMocks());
 
 describe('UpNextCard', () => {
-  it('renders show name, episode code + title, and progress', () => {
+  it('renders show name, episode code and progress, with the title hidden', () => {
     const item = makeUpNext({
       show: makeShow({ tmdbId: 3, name: 'The Show' }),
       next: makeEpisode({ seasonNumber: 2, episodeNumber: 5, name: 'The Episode' }),
@@ -21,8 +21,15 @@ describe('UpNextCard', () => {
     render(<UpNextCard item={item} />);
     expect(screen.getByText('The Show')).toBeInTheDocument();
     expect(screen.getByText('S02E05')).toBeInTheDocument();
-    expect(screen.getByText('The Episode')).toBeInTheDocument();
     expect(screen.getByText('4/10')).toBeInTheDocument();
+    expect(screen.queryByText('The Episode')).not.toBeInTheDocument();
+  });
+
+  it('reveals the episode title on tap', async () => {
+    const item = makeUpNext({ next: makeEpisode({ name: 'The Episode' }) });
+    render(<UpNextCard item={item} />);
+    await userEvent.click(screen.getByRole('button', { name: /show episode title/i }));
+    expect(screen.getByText('The Episode')).toBeInTheDocument();
   });
 
   it('marks the next episode watched', async () => {

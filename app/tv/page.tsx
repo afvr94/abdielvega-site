@@ -7,12 +7,13 @@ import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, dayHeading, todayIso } from '@/lib/tv/format';
 import { UpNextList } from '@/components/tv/UpNextList';
 import { SurpriseButton } from '@/components/tv/SurpriseButton';
+import { UpNextSummary } from '@/components/tv/UpNextSummary';
 
 export const metadata = { title: 'Up Next' };
 
 export default async function TvHomePage() {
   const db = await createClient();
-  const { upNext: items, thisWeek } = await getHome(db);
+  const { upNext: items, thisWeek, behindMinutes } = await getHome(db);
   const behind = items.filter((i) => i.next);
   const caughtUp = items.filter((i) => !i.next);
   const today = todayIso();
@@ -39,12 +40,19 @@ export default async function TvHomePage() {
 
   return (
     <div className="space-y-10">
+      <UpNextSummary
+        behind={behind}
+        thisWeek={thisWeek}
+        behindMinutes={behindMinutes}
+        today={today}
+      />
+
       {thisWeek.length > 0 ? (
         <section>
           <div className="mb-3 label-tag">Airing this week</div>
           <div className="-mx-5 no-scrollbar flex gap-3 overflow-x-auto px-5 pb-1">
             {thisWeek.map(({ show, episode }) => {
-              const img = imageUrl(episode.stillPath, 'w300') ?? imageUrl(show.posterPath, 'w185');
+              const img = imageUrl(show.backdropPath, 'w300') ?? imageUrl(show.posterPath, 'w185');
               return (
                 <Link key={episode.tmdbId} href={`/show/${show.tmdbId}`} className="w-40 shrink-0">
                   <div className="relative aspect-video overflow-hidden rounded-lg bg-cream">
@@ -68,7 +76,7 @@ export default async function TvHomePage() {
         </section>
       ) : null}
 
-      <section>
+      <section id="up-next" className="scroll-mt-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Up Next</h1>
           <div className="flex items-center gap-2">

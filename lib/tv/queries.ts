@@ -79,13 +79,15 @@ async function fetchAll<T>(
 type HomeJson = {
   up_next: { show: ShowRow; next: EpisodeRow | null; aired_total: number; aired_watched: number }[];
   this_week: { show: ShowRow; episode: EpisodeRow }[];
+  behind_minutes: number;
 };
 
 // The Up Next page in one round trip: the feed (one entry per active show with
-// aired episodes) and the next 7 days of airings. See tv_home() in DEPLOY.md.
+// aired episodes), the next 7 days of airings, and the runtime left to catch up.
+// See tv_home() in DEPLOY.md.
 export async function getHome(
   db: SupabaseClient
-): Promise<{ upNext: UpNextItem[]; thisWeek: UpcomingEpisode[] }> {
+): Promise<{ upNext: UpNextItem[]; thisWeek: UpcomingEpisode[]; behindMinutes: number }> {
   const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
   const home = data as HomeJson;
@@ -110,6 +112,7 @@ export async function getHome(
       show: mapShow(r.show),
       episode: mapEpisode(r.episode),
     })),
+    behindMinutes: home.behind_minutes,
   };
 }
 

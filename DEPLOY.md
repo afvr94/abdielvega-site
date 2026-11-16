@@ -519,8 +519,9 @@ $$;
 The Up Next page reads everything it shows in one call, because each Supabase
 round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
 `tv_home()` wraps `tv_up_next()` with the show and episode columns the page
-needs, plus the next 7 days of airings, as one JSON value. Run once, after the
-Up Next and Watchlist sections:
+needs, the next 7 days of airings, and the runtime of every aired episode you
+haven't watched (the summary's "hours left"), as one JSON value. Run once, after
+the Up Next and Watchlist sections:
 
 ```sql
 create or replace function tv_home()
@@ -561,7 +562,20 @@ returns jsonb language sql stable as $$
       join tv_shows s on s.tmdb_id = e.show_tmdb_id
       where e.season_number > 0
         and e.air_date between public.tv_today() and public.tv_today() + 7
-    ), '[]'::jsonb)
+    ), '[]'::jsonb),
+    'behind_minutes', (
+      select coalesce(sum(e.runtime), 0)
+      from tv_episodes e
+      join active a on a.show_tmdb_id = e.show_tmdb_id
+      where e.season_number > 0
+        and e.air_date <= public.tv_today()
+        and not exists (
+          select 1 from tv_watches w
+          where w.show_tmdb_id  = e.show_tmdb_id
+            and w.season_number = e.season_number
+            and w.episode_number = e.episode_number
+        )
+    )
   );
 $$;
 ```
