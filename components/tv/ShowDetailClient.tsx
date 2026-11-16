@@ -373,7 +373,7 @@ export function ShowDetailClient({
                 onClick={() => toggle(e)}
                 disabled={!aired && !isWatched}
                 aria-label={isWatched ? 'Mark unwatched' : 'Mark watched'}
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-30 ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-30 ${
                   isWatched
                     ? 'border-income bg-income text-cream'
                     : 'border-hairline bg-card text-muted hover:border-income hover:text-income'
