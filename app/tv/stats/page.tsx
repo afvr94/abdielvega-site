@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { getStats } from '@/lib/tv/queries';
-import type { Stats } from '@/lib/tv/types';
+import { getStats, getYear } from '@/lib/tv/queries';
+import type { Stats, YearInReview } from '@/lib/tv/types';
+import { YearBestEpisodes } from '@/components/tv/YearBestEpisodes';
 import {
   formatAirDate,
   humanizeMinutes,
@@ -27,7 +29,109 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
-export default async function StatsPage() {
+function YearSection({
+  year,
+  review,
+  years,
+}: {
+  year: number;
+  review: YearInReview;
+  years: number[];
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-2xl font-semibold tracking-tightest-2">Your {year}</h2>
+        {years.length > 1 ? (
+          <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
+            {years.map((y) => (
+              <Link
+                key={y}
+                href={`/stats?year=${y}`}
+                aria-current={y === year ? 'page' : undefined}
+                className={`shrink-0 rounded-full px-3 py-1.5 font-mono-tab text-xs font-semibold ${
+                  y === year
+                    ? 'border border-hairline bg-ink/10 text-ink'
+                    : 'border border-transparent text-muted hover:text-ink'
+                }`}
+              >
+                {y}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      {review.episodes === 0 ? (
+        <p className="card border border-hairline p-6 text-sm text-muted">
+          Nothing watched in {year} yet.
+        </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard label="Episodes" value={review.episodes.toLocaleString('en-US')} />
+            <StatCard label="Time watched" value={humanizeMinutes(review.runtimeMin)} />
+            <StatCard label="Shows" value={String(review.shows)} sub={`${review.newShows} new`} />
+            {review.bingeDay ? (
+              <StatCard
+                label="Biggest day"
+                value={`${review.bingeDay.count} eps`}
+                sub={formatAirDate(review.bingeDay.date)}
+              />
+            ) : null}
+            {review.longestStreak ? (
+              <StatCard
+                label="Longest streak"
+                value={`${review.longestStreak.days} ${review.longestStreak.days === 1 ? 'day' : 'days'}`}
+                sub={`from ${formatAirDate(review.longestStreak.start)}`}
+              />
+            ) : null}
+          </div>
+
+          <div>
+            <div className="mb-2 label-tag">Top shows</div>
+            <div className="space-y-1.5">
+              {review.topShows.map((s, i) => (
+                <Link
+                  key={s.showTmdbId}
+                  href={`/show/${s.showTmdbId}`}
+                  className="flex items-center gap-3 card border border-hairline p-2.5 transition-colors hover:border-ink/25"
+                >
+                  <span className="w-5 shrink-0 font-mono-tab text-xs text-muted">{i + 1}</span>
+                  <div className="min-w-0 flex-1 truncate font-display leading-tight font-semibold">
+                    {s.name}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="font-mono-tab text-sm">{s.count} eps</div>
+                    <div className="text-[11px] text-muted">{humanizeMinutes(s.runtimeMin)}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <Suspense fallback={null}>
+            <YearBestEpisodes year={review} />
+          </Suspense>
+        </>
+      )}
+
+      {review.bulk.map((b) => (
+        <p key={b.date} className="text-xs text-muted">
+          Leaves out {b.count.toLocaleString('en-US')} episodes marked on {formatAirDate(b.date)}, a
+          bulk import.
+        </p>
+      ))}
+    </section>
+  );
+}
+
+export default async function StatsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string | string[] }>;
+}) {
+  const { year: yearParam } = await searchParams;
   const db = await createClient();
   let stats: Stats;
   try {
@@ -45,6 +149,13 @@ export default async function StatsPage() {
     );
   }
 
+  const thisYear = Number(todayIso().slice(0, 4));
+  const years = [...new Set([thisYear, ...stats.byYear.map((y) => y.year)])].sort((a, b) => b - a);
+  const asked = Number(yearParam);
+  const year = years.includes(asked) ? asked : thisYear;
+  // The year section is optional; without tv_year() applied the rest of Stats still renders.
+  const review = await getYear(db, year).catch(() => null);
+
   const maxYear = Math.max(1, ...stats.byYear.map((y) => y.count));
   const maxTop = Math.max(1, ...stats.topShows.map((s) => s.count));
   const today = todayIso();
@@ -61,6 +172,8 @@ export default async function StatsPage() {
           </span>
         ) : null}
       </div>
+
+      {review ? <YearSection year={year} review={review} years={years} /> : null}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="Episodes watched" value={stats.totalWatches.toLocaleString('en-US')} />

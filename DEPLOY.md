@@ -826,6 +826,80 @@ returns json language sql stable as $$
 $$;
 ```
 
+### Year in review
+
+Backs the year section on `/stats`: totals, top shows, the biggest day, the
+longest daily streak and new shows for one calendar year (Eastern time). A day
+with 100 or more watches is a bulk import (the TV Time import stamped undated
+history with its import day), so it's left out and listed under `bulk`. Run once:
+
+```sql
+create or replace function tv_year(y int)
+returns json language sql stable as $$
+  with all_w as (
+    select show_tmdb_id, season_number, episode_number, public.tv_date(watched_at) as day
+    from tv_watches
+    where extract(year from public.tv_date(watched_at)) = y
+  ),
+  bulk as (
+    select day, count(*)::int as count from all_w group by day having count(*) >= 100
+  ),
+  w as (
+    select a.*, e.runtime
+    from all_w a
+    left join tv_episodes e
+      on  e.show_tmdb_id  = a.show_tmdb_id
+      and e.season_number = a.season_number
+      and e.episode_number = a.episode_number
+    where a.day not in (select day from bulk)
+  ),
+  days as (select day, count(*)::int as count from w group by day),
+  streaks as (
+    select count(*)::int as len, min(day) as start_day
+    from (select day, day - (row_number() over (order by day))::int as grp from days) t
+    group by grp
+  ),
+  top as (
+    select show_tmdb_id, count(*)::int as count, coalesce(sum(runtime), 0)::int as runtime_min
+    from w group by show_tmdb_id
+    order by runtime_min desc, count desc
+    limit 5
+  )
+  select json_build_object(
+    'episodes', (select count(*) from w),
+    'runtime_min', (select coalesce(sum(runtime), 0) from w),
+    'shows', (select count(distinct show_tmdb_id) from w),
+    'new_shows', (
+      select count(*) from (
+        select show_tmdb_id, min(public.tv_date(watched_at)) as first_day
+        from tv_watches group by show_tmdb_id) f
+      where extract(year from f.first_day) = y
+        and f.first_day not in (select day from bulk)),
+    'top_shows', (
+      select coalesce(json_agg(json_build_object(
+        'show_tmdb_id', t.show_tmdb_id, 'name', s.name, 'poster_path', s.poster_path,
+        'count', t.count, 'runtime_min', t.runtime_min)
+        order by t.runtime_min desc, t.count desc), '[]'::json)
+      from top t join tv_shows s on s.tmdb_id = t.show_tmdb_id),
+    'binge_day', (
+      select json_build_object('date', day::text, 'count', count)
+      from days order by count desc, day limit 1),
+    'longest_streak', (
+      select json_build_object('days', len, 'start', start_day::text)
+      from streaks order by len desc, start_day limit 1),
+    'bulk', (
+      select coalesce(json_agg(json_build_object('date', day::text, 'count', count) order by day),
+                      '[]'::json)
+      from bulk),
+    'top_watched', (
+      select coalesce(json_agg(json_build_array(show_tmdb_id, season_number, episode_number)),
+                      '[]'::json)
+      from (select distinct show_tmdb_id, season_number, episode_number from w
+            where season_number > 0 and show_tmdb_id in (select show_tmdb_id from top)) x)
+  );
+$$;
+```
+
 ### Scheduled sync (Vercel Cron)
 
 `vercel.json` registers a daily `GET /api/tv/sync` at 21:00 UTC (4 pm Eastern

@@ -71,6 +71,8 @@ export type TmdbEpisode = {
   air_date: string | null;
   still_path: string | null;
   runtime: number | null;
+  vote_average?: number;
+  vote_count?: number;
 };
 
 export type TmdbSeason = {
@@ -93,8 +95,12 @@ export function getShow(seriesId: number): Promise<TmdbShow> {
   return tmdb(`/tv/${seriesId}`);
 }
 
-export function getSeason(seriesId: number, seasonNumber: number): Promise<TmdbSeason> {
-  return tmdb(`/tv/${seriesId}/season/${seasonNumber}`);
+export function getSeason(
+  seriesId: number,
+  seasonNumber: number,
+  revalidate?: number
+): Promise<TmdbSeason> {
+  return tmdb(`/tv/${seriesId}/season/${seasonNumber}`, {}, revalidate);
 }
 
 export function getExternalIds(seriesId: number): Promise<TmdbExternalIds> {
