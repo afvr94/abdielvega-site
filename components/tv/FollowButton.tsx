@@ -33,11 +33,11 @@ export function FollowButton({
   const base = size === 'lg' ? 'px-5 py-2.5 text-xs' : 'px-3 py-1.5 text-[11px]';
 
   return (
-    <span className="inline-flex flex-col items-start gap-1">
+    <span className="inline-flex shrink-0 flex-col items-start gap-1">
       <button
         onClick={toggle}
         disabled={pending}
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full font-semibold tracking-wider uppercase transition-colors disabled:opacity-70 ${base} ${
+        className={`inline-flex items-center gap-1.5 rounded-full font-semibold tracking-wider uppercase transition-colors disabled:opacity-70 ${base} ${
           followed
             ? 'border border-hairline bg-card text-muted hover:text-ink'
             : 'border border-income bg-income text-cream hover:opacity-90'
