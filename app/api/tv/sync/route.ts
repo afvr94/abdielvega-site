@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { cacheShow } from '@/lib/tv/cache';
+import { cacheProviders, cacheShow } from '@/lib/tv/cache';
 import { buildDiscordMessage, sendDiscord, type NotifyItem } from '@/lib/tv/notify';
 import { getHome } from '@/lib/tv/queries';
 import { todayIso } from '@/lib/tv/format';
@@ -84,22 +84,28 @@ export async function GET(req: NextRequest) {
     .filter((s: { status: string | null }) => s.status === null || !DONE_STATUSES.has(s.status))
     .map((s: { tmdb_id: number }) => s.tmdb_id);
 
-  let synced = 0;
   const failures: { tmdbId: number; error: string }[] = [];
 
-  for (let i = 0; i < targets.length; i += CONCURRENCY) {
-    const batch = targets.slice(i, i + CONCURRENCY);
-    await Promise.all(
-      batch.map(async (tmdbId) => {
-        try {
-          await cacheShow(db, tmdbId);
-          synced += 1;
-        } catch (e) {
-          failures.push({ tmdbId, error: e instanceof Error ? e.message : String(e) });
-        }
-      })
-    );
+  async function eachInBatches(ids: number[], work: (tmdbId: number) => Promise<void>) {
+    let done = 0;
+    for (let i = 0; i < ids.length; i += CONCURRENCY) {
+      await Promise.all(
+        ids.slice(i, i + CONCURRENCY).map(async (tmdbId) => {
+          try {
+            await work(tmdbId);
+            done += 1;
+          } catch (e) {
+            failures.push({ tmdbId, error: e instanceof Error ? e.message : String(e) });
+          }
+        })
+      );
+    }
+    return done;
   }
+
+  const synced = await eachInBatches(targets, (id) => cacheShow(db, id));
+  // Every follow, ended shows included: they keep streaming after their last episode.
+  const providersSynced = await eachInBatches(followedIds, (id) => cacheProviders(db, id));
 
   const notify = await notifyNewEpisodes(db);
   if (notify.error) failures.push({ tmdbId: -1, error: notify.error });
@@ -108,6 +114,7 @@ export async function GET(req: NextRequest) {
     ok: true,
     candidates: targets.length,
     synced,
+    providersSynced,
     notified: notify.notified,
     failures,
   });

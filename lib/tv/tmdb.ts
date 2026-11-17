@@ -1,5 +1,7 @@
 // Thin wrapper over the TMDB v3 REST API using a v4 bearer token.
 
+import type { Provider } from './types';
+
 const BASE = 'https://api.themoviedb.org/3';
 const DAY = 86_400;
 const IMG = 'https://image.tmdb.org/t/p';
@@ -127,27 +129,39 @@ export type WatchProvider = { name: string; logoUrl: string | null };
 
 // Streaming ("where it's available") providers for a region — subscription,
 // free, and ad-supported, deduped and ordered by TMDB display priority.
+export function streamingProviders(data: TmdbWatchProviders, region = 'US'): Provider[] {
+  const r = data.results?.[region];
+  if (!r) return [];
+  const seen = new Set<number>();
+  return [...(r.flatrate ?? []), ...(r.free ?? []), ...(r.ads ?? [])]
+    .sort((a, b) => a.display_priority - b.display_priority)
+    .filter((p) => (seen.has(p.provider_id) ? false : (seen.add(p.provider_id), true)))
+    .map((p) => ({ id: p.provider_id, name: p.provider_name, logoPath: p.logo_path }));
+}
+
 export function pickStreamingProviders(
   data: TmdbWatchProviders,
   region = 'US'
 ): { providers: WatchProvider[]; link: string | null } {
-  const r = data.results?.[region];
-  if (!r) return { providers: [], link: null };
-  const seen = new Set<number>();
-  const providers = [...(r.flatrate ?? []), ...(r.free ?? []), ...(r.ads ?? [])]
-    .sort((a, b) => a.display_priority - b.display_priority)
-    .filter((p) => (seen.has(p.provider_id) ? false : (seen.add(p.provider_id), true)))
-    .map((p) => ({ name: p.provider_name, logoUrl: imageUrl(p.logo_path, 'w92') }));
-  return { providers, link: r.link ?? null };
+  return {
+    providers: streamingProviders(data, region).map((p) => ({
+      name: p.name,
+      logoUrl: imageUrl(p.logoPath, 'w92'),
+    })),
+    link: data.results?.[region]?.link ?? null,
+  };
+}
+
+// Cached for a day — availability changes slowly.
+export function fetchWatchProviders(seriesId: number): Promise<TmdbWatchProviders> {
+  return tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, DAY);
 }
 
 export async function getWatchProviders(
   seriesId: number,
   region = 'US'
 ): Promise<{ providers: WatchProvider[]; link: string | null }> {
-  // Cached for a day — availability changes slowly and this runs on page view.
-  const data = await tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, DAY);
-  return pickStreamingProviders(data, region);
+  return pickStreamingProviders(await fetchWatchProviders(seriesId), region);
 }
 
 export type Score = { voteAverage: number; voteCount: number };

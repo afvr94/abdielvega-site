@@ -1,16 +1,17 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { getUpcoming } from '@/lib/tv/queries';
-import type { UpcomingEpisode } from '@/lib/tv/types';
+import { getServices, getUpcoming } from '@/lib/tv/queries';
+import { myService, type UpcomingEpisode } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { dayHeading, episodeCode, todayIso } from '@/lib/tv/format';
+import { ServiceBadge } from '@/components/tv/ServiceBadge';
 
 export const metadata = { title: 'Calendar' };
 
 export default async function CalendarPage() {
   const db = await createClient();
-  const upcoming = await getUpcoming(db);
+  const [upcoming, services] = await Promise.all([getUpcoming(db), getServices(db)]);
   const today = todayIso();
 
   // Group consecutive (already sorted) episodes by air date.
@@ -43,6 +44,7 @@ export default async function CalendarPage() {
               <div className="space-y-1.5">
                 {g.items.map(({ show, episode }) => {
                   const poster = imageUrl(show.posterPath, 'w185');
+                  const service = myService(show.providers, services);
                   return (
                     <Link
                       key={episode.tmdbId}
@@ -58,8 +60,11 @@ export default async function CalendarPage() {
                         <div className="truncate font-display leading-tight font-semibold">
                           {show.name}
                         </div>
-                        <div className="font-mono-tab text-[11px] text-muted">
-                          {episodeCode(episode.seasonNumber, episode.episodeNumber)}
+                        <div className="flex items-center gap-2 text-[11px] text-muted">
+                          <span className="font-mono-tab">
+                            {episodeCode(episode.seasonNumber, episode.episodeNumber)}
+                          </span>
+                          {service ? <ServiceBadge provider={service} /> : null}
                         </div>
                       </div>
                     </Link>

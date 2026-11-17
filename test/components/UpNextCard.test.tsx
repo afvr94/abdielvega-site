@@ -11,6 +11,22 @@ import { makeUpNext, makeShow, makeEpisode } from '../factories';
 beforeEach(() => vi.clearAllMocks());
 
 describe('UpNextCard', () => {
+  it('badges the first of your services that carries the show', () => {
+    const item = makeUpNext({
+      show: makeShow({
+        providers: [
+          { id: 1, name: 'Netflix', logoPath: null },
+          { id: 2, name: 'Hulu', logoPath: null },
+        ],
+      }),
+    });
+    const { rerender } = render(<UpNextCard item={item} services={[2]} />);
+    expect(screen.getByText('Hulu')).toBeInTheDocument();
+    expect(screen.queryByText('Netflix')).not.toBeInTheDocument();
+    rerender(<UpNextCard item={item} services={[]} />);
+    expect(screen.queryByText('Hulu')).not.toBeInTheDocument();
+  });
+
   it('renders show name, episode code and progress, with the title hidden', () => {
     const item = makeUpNext({
       show: makeShow({ tmdbId: 3, name: 'The Show' }),

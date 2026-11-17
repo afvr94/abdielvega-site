@@ -255,6 +255,21 @@ export type Database = {
           },
         ];
       };
+      tv_settings: {
+        Row: {
+          id: boolean;
+          services: number[];
+        };
+        Insert: {
+          id?: boolean;
+          services?: number[];
+        };
+        Update: {
+          id?: boolean;
+          services?: number[];
+        };
+        Relationships: [];
+      };
       tv_shows: {
         Row: {
           backdrop_path: string | null;
@@ -263,6 +278,7 @@ export type Database = {
           name: string;
           overview: string | null;
           poster_path: string | null;
+          providers: Json | null;
           status: string | null;
           tmdb_id: number;
           tvdb_id: number | null;
@@ -274,6 +290,7 @@ export type Database = {
           name: string;
           overview?: string | null;
           poster_path?: string | null;
+          providers?: Json | null;
           status?: string | null;
           tmdb_id: number;
           tvdb_id?: number | null;
@@ -285,6 +302,7 @@ export type Database = {
           name?: string;
           overview?: string | null;
           poster_path?: string | null;
+          providers?: Json | null;
           status?: string | null;
           tmdb_id?: number;
           tvdb_id?: number | null;

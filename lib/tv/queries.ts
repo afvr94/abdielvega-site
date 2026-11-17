@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Tables } from '@/lib/supabase/database.types';
+import type { Database, Json, Tables } from '@/lib/supabase/database.types';
 import type {
   Episode,
   LibraryItem,
+  Provider,
   Show,
   ShowDetail,
   Stats,
@@ -15,13 +16,13 @@ import { addDaysIso, todayIso } from './format';
 
 type Db = SupabaseClient<Database>;
 
-const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date';
+const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date,providers';
 const EPISODE_COLUMNS =
   'tmdb_id,show_tmdb_id,season_number,episode_number,name,air_date,still_path';
 
 type ShowRow = Pick<
   Tables<'tv_shows'>,
-  'tmdb_id' | 'name' | 'poster_path' | 'backdrop_path' | 'status' | 'first_air_date'
+  'tmdb_id' | 'name' | 'poster_path' | 'backdrop_path' | 'status' | 'first_air_date' | 'providers'
 >;
 
 type EpisodeRow = Pick<
@@ -35,6 +36,20 @@ type EpisodeRow = Pick<
   | 'still_path'
 >;
 
+// tv_shows.providers is jsonb [{id, name, logo_path}], null until the sync first fills it.
+function parseProviders(j: Json | null | undefined): Provider[] {
+  if (!Array.isArray(j)) return [];
+  return j.flatMap((p) =>
+    p &&
+    typeof p === 'object' &&
+    !Array.isArray(p) &&
+    typeof p.id === 'number' &&
+    typeof p.name === 'string'
+      ? [{ id: p.id, name: p.name, logoPath: typeof p.logo_path === 'string' ? p.logo_path : null }]
+      : []
+  );
+}
+
 function mapShow(r: ShowRow): Show {
   return {
     tmdbId: r.tmdb_id,
@@ -43,6 +58,7 @@ function mapShow(r: ShowRow): Show {
     backdropPath: r.backdrop_path,
     status: r.status,
     firstAirDate: r.first_air_date,
+    providers: parseProviders(r.providers),
   };
 }
 
@@ -79,6 +95,7 @@ type HomeJson = {
   this_week: { show: ShowRow; episode: EpisodeRow }[];
   behind_minutes: number;
   dormant_count: number;
+  services: number[];
 };
 
 function parseHome(data: unknown): HomeJson {
@@ -92,7 +109,9 @@ function parseHome(data: unknown): HomeJson {
     'behind_minutes' in data &&
     typeof data.behind_minutes === 'number' &&
     'dormant_count' in data &&
-    typeof data.dormant_count === 'number'
+    typeof data.dormant_count === 'number' &&
+    'services' in data &&
+    Array.isArray(data.services)
   ) {
     return data as HomeJson;
   }
@@ -104,6 +123,7 @@ export async function getHome(db: Db): Promise<{
   thisWeek: UpcomingEpisode[];
   behindMinutes: number;
   dormantCount: number;
+  services: number[];
 }> {
   const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
@@ -131,6 +151,7 @@ export async function getHome(db: Db): Promise<{
     })),
     behindMinutes: home.behind_minutes,
     dormantCount: home.dormant_count,
+    services: home.services,
   };
 }
 
@@ -236,6 +257,31 @@ export async function getActiveFollowIds(db: Db): Promise<number[]> {
     .eq('watchlist', false);
   if (error) throw error;
   return (data ?? []).map((r) => r.show_tmdb_id);
+}
+
+export async function getServices(db: Db): Promise<number[]> {
+  const { data, error } = await db.from('tv_settings').select('services').maybeSingle();
+  if (error) throw error;
+  return data?.services ?? [];
+}
+
+// Every service carrying an active follow, most-carried first, with how many follows it carries.
+export async function getServiceOptions(db: Db): Promise<{ provider: Provider; shows: number }[]> {
+  const ids = await getActiveFollowIds(db);
+  if (ids.length === 0) return [];
+  const { data, error } = await db.from('tv_shows').select('providers').in('tmdb_id', ids);
+  if (error) throw error;
+  const byId = new Map<number, { provider: Provider; shows: number }>();
+  for (const row of data ?? []) {
+    for (const p of parseProviders(row.providers)) {
+      const hit = byId.get(p.id);
+      if (hit) hit.shows += 1;
+      else byId.set(p.id, { provider: p, shows: 1 });
+    }
+  }
+  return [...byId.values()].sort(
+    (a, b) => b.shows - a.shows || a.provider.name.localeCompare(b.provider.name)
+  );
 }
 
 // All custom lists with their member counts.

@@ -8,7 +8,7 @@ import { UpNextCard } from './UpNextCard';
 
 type Marked = { show: Show; episode: Episode; failed: boolean };
 
-export function UpNextList({ items }: { items: UpNextItem[] }) {
+export function UpNextList({ items, services }: { items: UpNextItem[]; services?: number[] }) {
   // Lives above the cards so the undo survives the marked card being replaced.
   const [marked, setMarked] = useState<Marked | null>(null);
   const [undoing, startTransition] = useTransition();
@@ -39,6 +39,7 @@ export function UpNextList({ items }: { items: UpNextItem[] }) {
           <UpNextCard
             key={`${item.show.tmdbId}-${item.next?.tmdbId}`}
             item={item}
+            services={services}
             onMarked={(episode) => setMarked({ show: item.show, episode, failed: false })}
           />
         ))}

@@ -5,16 +5,25 @@ import { createClient } from '@/lib/supabase/server';
 import { getHome } from '@/lib/tv/queries';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, dayHeading, todayIso } from '@/lib/tv/format';
+import { myService } from '@/lib/tv/types';
 import { UpNextList } from '@/components/tv/UpNextList';
 import { SurpriseButton } from '@/components/tv/SurpriseButton';
 import { UpNextSummary } from '@/components/tv/UpNextSummary';
 
 export const metadata = { title: 'Up Next' };
 
-export default async function TvHomePage() {
+export default async function TvHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ watch?: string | string[] }>;
+}) {
+  const { watch } = await searchParams;
   const db = await createClient();
-  const { upNext: items, thisWeek, behindMinutes, dormantCount } = await getHome(db);
+  const { upNext: items, thisWeek, behindMinutes, dormantCount, services } = await getHome(db);
   const behind = items.filter((i) => i.next);
+  const watchable = behind.filter((i) => myService(i.show.providers, services));
+  const canWatchNow = watch === 'now' && services.length > 0;
+  const shown = canWatchNow ? watchable : behind;
   const caughtUp = items.filter((i) => !i.next);
   const today = todayIso();
 
@@ -94,15 +103,45 @@ export default async function TvHomePage() {
         <div className="mb-4 flex items-center justify-between gap-3">
           <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Up Next</h1>
           <div className="flex items-center gap-2">
-            <SurpriseButton showIds={behind.map((i) => i.show.tmdbId)} />
-            <span className="shrink-0 label-tag">{behind.length} to watch</span>
+            <SurpriseButton showIds={shown.map((i) => i.show.tmdbId)} />
+            <span className="shrink-0 label-tag">{shown.length} to watch</span>
           </div>
         </div>
-        {behind.length > 0 ? (
-          <UpNextList items={behind} />
+        <div className="mb-4 flex items-center gap-2 text-xs">
+          {services.length === 0 ? (
+            <Link
+              href="/services"
+              className="rounded-full border border-hairline bg-card px-3 py-1.5 font-semibold text-muted transition-colors hover:text-ink"
+            >
+              Pick your streaming services
+            </Link>
+          ) : (
+            <>
+              <Link
+                href={canWatchNow ? '/#up-next' : '/?watch=now#up-next'}
+                aria-current={canWatchNow ? 'true' : undefined}
+                className={`rounded-full border px-3 py-1.5 font-semibold transition-colors ${
+                  canWatchNow
+                    ? 'border-income bg-income text-cream'
+                    : 'border-hairline bg-card text-muted hover:text-ink'
+                }`}
+              >
+                Can watch now
+                <span className="ml-1.5 font-mono-tab opacity-80">{watchable.length}</span>
+              </Link>
+              <Link href="/services" className="px-1 py-1.5 text-muted hover:text-ink">
+                Services
+              </Link>
+            </>
+          )}
+        </div>
+        {shown.length > 0 ? (
+          <UpNextList items={shown} services={services} />
         ) : (
           <p className="card border border-hairline p-6 text-sm text-muted">
-            All caught up. Nothing aired that you haven&apos;t seen.
+            {canWatchNow
+              ? 'Nothing you’re behind on is on your services.'
+              : 'All caught up. Nothing aired that you haven’t seen.'}
           </p>
         )}
       </section>
