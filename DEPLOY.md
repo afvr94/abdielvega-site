@@ -526,8 +526,8 @@ $$;
 ### Dormant shows
 
 A dormant show is an active follow (not archived, not on the watchlist) with an
-aired episode left to watch and no watch in 6 months. A show that was never
-watched turns dormant 30 days after it was followed. Dormant shows stay out of
+episode left to watch that aired over 30 days ago, and no watch in 6 months. A
+show that was never watched turns dormant 30 days after it was followed. Dormant shows stay out of
 Up Next, its Behind totals and the Discord footer until you archive them or
 watch an episode. Run after the Watchlist section, before the Home and Library
 functions:
@@ -547,7 +547,8 @@ returns table (show_tmdb_id integer) language sql stable as $$
       select 1 from tv_episodes e
       where e.show_tmdb_id = f.show_tmdb_id
         and e.season_number > 0
-        and e.air_date <= public.tv_today()
+        -- A 30-day grace, so a show returning from a long break isn't dormant on premiere day.
+        and e.air_date <= public.tv_today() - 30
         and not exists (
           select 1 from tv_watches w
           where w.show_tmdb_id  = e.show_tmdb_id
