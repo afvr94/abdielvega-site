@@ -13,8 +13,8 @@ export default async function ServicesPage() {
     <div>
       <h1 className="font-display text-3xl font-semibold tracking-tightest-3">Your services</h1>
       <p className="mt-2 mb-5 text-sm leading-snug text-muted">
-        Pick the streaming services you pay for. Up Next and Calendar show which one has each show,
-        and Up Next can narrow to what you can watch now.
+        Pick the streaming services you pay for. Up Next and Calendar tag each show with yours, and
+        Up Next can filter to what you can watch now.
       </p>
       {options.length === 0 ? (
         <p className="card border border-hairline p-6 text-sm text-muted">

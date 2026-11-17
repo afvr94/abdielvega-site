@@ -562,12 +562,13 @@ $$;
 
 The Up Next page reads everything it shows in one call, because each Supabase
 round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
-`tv_home()` wraps `tv_up_next()` with the show and episode columns the page
-needs, the next 7 days of airings, the runtime of every aired episode you
-haven't watched (the summary's "hours left"), the number of dormant shows and your
-streaming services,
-as one JSON value. Dormant shows still appear in the next 7 days of airings, so a returning season shows up, but are left out of Up Next and the hours left.
-Run once, after the Up Next, Watchlist, Dormant and Streaming services sections:
+`tv_home()` wraps `tv_up_next()` and returns one JSON value with the show and
+episode columns the page needs, the next 7 days of airings, the runtime of
+every aired episode you haven't watched (the summary's "hours left"), the
+number of dormant shows and your streaming services. Dormant shows still appear
+in the next 7 days of airings, so a returning season shows up, but Up Next and
+the hours left skip them. Run once, after the Up Next, Watchlist, Dormant and
+Streaming services sections:
 
 ```sql
 create or replace function tv_home()
@@ -758,11 +759,12 @@ Optionally seed an "Anime" list from TMDB genres: `npx tsx scripts/seed-anime-li
 
 ### Streaming services
 
-The streaming services each show is on (US subscription, free and ad-supported,
-from JustWatch via TMDB) live on `tv_shows.providers`, filled on follow and by
-the daily sync. The services you pay for live in a one-row `tv_settings`. Up Next
-and Calendar badge a show with the first of your services that carries it, and
-Up Next can narrow to shows you can watch now. Run before the Home function:
+`tv_shows.providers` holds the US streaming services each show is on
+(subscription, free and ad-supported, from JustWatch via TMDB). Following a show
+fills it, and the daily sync refreshes it. A one-row `tv_settings` holds the
+services you pay for. Up Next and Calendar badge a show with the first of your
+services that carries it, and Up Next can filter to shows you can watch now. Run
+before the Home function:
 
 ```sql
 alter table tv_shows add column if not exists providers jsonb; -- [{id, name, logo_path}]

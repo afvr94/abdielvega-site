@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
   }
 
   const synced = await eachInBatches(targets, (id) => cacheShow(db, id));
-  // Every follow, ended shows included: they keep streaming after their last episode.
+  // Every follow, ended shows too, since those keep streaming after their last episode.
   const providersSynced = await eachInBatches(followedIds, (id) => cacheProviders(db, id));
 
   const notify = await notifyNewEpisodes(db);

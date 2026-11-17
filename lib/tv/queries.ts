@@ -266,7 +266,7 @@ export async function getServices(db: Db): Promise<number[]> {
   return data?.services ?? [];
 }
 
-// A picked service whose last show went stays listed, so it can still be unpicked.
+// Keep a picked service listed after its last followed show goes, so it can be unpicked.
 export async function getServiceOptions(
   db: Db,
   picked: number[]

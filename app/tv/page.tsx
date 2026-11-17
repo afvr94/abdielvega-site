@@ -140,7 +140,7 @@ export default async function TvHomePage({
         ) : (
           <p className="card border border-hairline p-6 text-sm text-muted">
             {canWatchNow
-              ? 'Nothing you’re behind on is on your services.'
+              ? 'None of your services has a show you’re behind on.'
               : 'All caught up. Nothing aired that you haven’t seen.'}
           </p>
         )}
