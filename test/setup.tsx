@@ -5,6 +5,9 @@ import { afterEach, vi } from 'vitest';
 
 afterEach(() => cleanup());
 
+// jsdom has no layout, so it leaves scrollIntoView out.
+if (typeof window !== 'undefined') Element.prototype.scrollIntoView = () => {};
+
 // Lightweight stand-ins for Next primitives so components render in jsdom.
 vi.mock('next/image', () => ({
   default: ({ src, alt, fill, priority, sizes, ...rest }: Record<string, unknown>) =>

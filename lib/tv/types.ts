@@ -38,6 +38,7 @@ export type LibraryItem = {
   airedWatched: number;
   nextAirDate: string | null; // earliest future episode, for "returns" hints
   lastWatchedAt: string | null; // most recent watch, for recency ordering
+  dormant: boolean;
   listIds: number[]; // custom lists this show belongs to
 };
 

@@ -13,12 +13,12 @@ export const metadata = { title: 'Up Next' };
 
 export default async function TvHomePage() {
   const db = await createClient();
-  const { upNext: items, thisWeek, behindMinutes } = await getHome(db);
+  const { upNext: items, thisWeek, behindMinutes, dormantCount } = await getHome(db);
   const behind = items.filter((i) => i.next);
   const caughtUp = items.filter((i) => !i.next);
   const today = todayIso();
 
-  if (items.length === 0 && thisWeek.length === 0) {
+  if (items.length === 0 && thisWeek.length === 0 && dormantCount === 0) {
     return (
       <div className="py-24 text-center">
         <div className="mb-2 label-tag">cliffo</div>
@@ -40,12 +40,26 @@ export default async function TvHomePage() {
 
   return (
     <div className="space-y-10">
-      <UpNextSummary
-        behind={behind}
-        thisWeek={thisWeek}
-        behindMinutes={behindMinutes}
-        today={today}
-      />
+      <div className="space-y-4">
+        <UpNextSummary
+          behind={behind}
+          thisWeek={thisWeek}
+          behindMinutes={behindMinutes}
+          today={today}
+        />
+
+        {dormantCount > 0 ? (
+          <Link
+            href="/shows?filter=dormant"
+            className="flex items-center justify-between gap-3 rounded-full border border-hairline bg-card px-4 py-2.5 text-xs text-muted transition-colors hover:text-ink"
+          >
+            <span>
+              {dormantCount} dormant {dormantCount === 1 ? 'show' : 'shows'}
+            </span>
+            <span className="font-semibold text-ink">Review</span>
+          </Link>
+        ) : null}
+      </div>
 
       {thisWeek.length > 0 ? (
         <section>

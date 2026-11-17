@@ -523,20 +523,62 @@ returns table (
 $$;
 ```
 
+### Dormant shows
+
+A dormant show is a follow that is neither archived nor on the watchlist, has an
+unwatched episode that aired more than 30 days ago, and has no watch in the last
+6 months. A show you never watched turns dormant 30 days after you followed it.
+Dormant shows stay out of Up Next, the Behind totals and the Discord footer
+until you archive them or watch an episode. Run this after the Watchlist section
+and before the Home and Library functions:
+
+```sql
+create or replace function tv_dormant()
+returns table (show_tmdb_id integer) language sql stable as $$
+  select f.show_tmdb_id
+  from tv_follows f
+  where not f.archived and not f.watchlist
+    -- max() is null for a never-watched show, which falls through to followed_at.
+    and coalesce(
+      (select max(w.watched_at) from tv_watches w where w.show_tmdb_id = f.show_tmdb_id)
+        < now() - interval '6 months',
+      f.followed_at < now() - interval '30 days')
+    and exists (
+      select 1 from tv_episodes e
+      where e.show_tmdb_id = f.show_tmdb_id
+        and e.season_number > 0
+        and e.air_date <= public.tv_today() - 30
+        and not exists (
+          select 1 from tv_watches w
+          where w.show_tmdb_id  = e.show_tmdb_id
+            and w.season_number = e.season_number
+            and w.episode_number = e.episode_number
+        )
+    );
+$$;
+```
+
 ### Home function
 
 The Up Next page reads everything it shows in one call, because each Supabase
 round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
 `tv_home()` wraps `tv_up_next()` with the show and episode columns the page
-needs, the next 7 days of airings, and the runtime of every aired episode you
-haven't watched (the summary's "hours left"), as one JSON value. Run once, after
-the Up Next and Watchlist sections:
+needs, the next 7 days of airings, the runtime of every aired episode you
+haven't watched (the summary's "hours left") and the number of dormant shows,
+as one JSON value. Dormant shows still appear in the next 7 days of airings, so a returning season shows up, but are left out of Up Next and the hours left.
+Run once, after the Up Next, Watchlist and Dormant sections:
 
 ```sql
 create or replace function tv_home()
 returns jsonb language sql stable as $$
-  with active as (
+  with dormant as materialized (
+    select show_tmdb_id from tv_dormant()
+  ), followed as (
     select show_tmdb_id from tv_follows where not archived and not watchlist
+  ), active as (
+    select show_tmdb_id from followed
+    except
+    select show_tmdb_id from dormant
   )
   select jsonb_build_object(
     'up_next', coalesce((
@@ -552,6 +594,7 @@ returns jsonb language sql stable as $$
         'aired_total', u.aired_total,
         'aired_watched', u.aired_watched))
       from tv_up_next() u
+      join active a on a.show_tmdb_id = u.show_tmdb_id
       join tv_shows s on s.tmdb_id = u.show_tmdb_id
       left join tv_episodes e on e.tmdb_id = u.episode_tmdb_id
     ), '[]'::jsonb),
@@ -567,7 +610,7 @@ returns jsonb language sql stable as $$
           'name', e.name, 'air_date', e.air_date, 'still_path', e.still_path))
         order by e.air_date, s.name, e.season_number, e.episode_number)
       from tv_episodes e
-      join active a on a.show_tmdb_id = e.show_tmdb_id
+      join followed a on a.show_tmdb_id = e.show_tmdb_id
       join tv_shows s on s.tmdb_id = e.show_tmdb_id
       where e.season_number > 0
         and e.air_date between public.tv_today() and public.tv_today() + 7
@@ -584,7 +627,8 @@ returns jsonb language sql stable as $$
             and w.season_number = e.season_number
             and w.episode_number = e.episode_number
         )
-    )
+    ),
+    'dormant_count', (select count(*) from dormant)
   );
 $$;
 ```
@@ -607,7 +651,8 @@ returns table (
   aired_total      bigint,
   aired_watched    bigint,
   next_air_date    date,
-  last_watched_at  timestamptz
+  last_watched_at  timestamptz,
+  dormant          boolean
 ) language sql stable as $$
   with foll as (
     select show_tmdb_id, archived, watchlist from tv_follows
@@ -642,7 +687,8 @@ returns table (
   )
   select f.show_tmdb_id, f.archived, f.watchlist,
     coalesce(c.aired_total, 0), coalesce(c.aired_watched, 0),
-    u.next_air_date, l.last_watched_at
+    u.next_air_date, l.last_watched_at,
+    f.show_tmdb_id in (select show_tmdb_id from tv_dormant())
   from foll f
   left join counts c   on c.show_tmdb_id = f.show_tmdb_id
   left join upcoming u on u.show_tmdb_id = f.show_tmdb_id

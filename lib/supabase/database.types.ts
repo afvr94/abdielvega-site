@@ -329,6 +329,12 @@ export type Database = {
     };
     Functions: {
       tv_date: { Args: { ts: string }; Returns: string };
+      tv_dormant: {
+        Args: never;
+        Returns: {
+          show_tmdb_id: number;
+        }[];
+      };
       tv_home: { Args: never; Returns: Json };
       tv_library: {
         Args: never;
@@ -336,6 +342,7 @@ export type Database = {
           aired_total: number;
           aired_watched: number;
           archived: boolean;
+          dormant: boolean;
           last_watched_at: string;
           next_air_date: string;
           show_tmdb_id: number;

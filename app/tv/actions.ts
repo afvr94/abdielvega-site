@@ -58,6 +58,20 @@ export async function setArchived(tmdbId: number, archived: boolean): Promise<vo
   revalidatePath(`/tv/show/${tmdbId}`);
 }
 
+export async function archiveShows(tmdbIds: number[]): Promise<void> {
+  if (!tmdbIds.every((id) => Number.isInteger(id) && id > 0)) throw new Error('Invalid show ids');
+  if (tmdbIds.length === 0) return;
+  const db = await createClient();
+  const { error } = await db
+    .from('tv_follows')
+    .update({ archived: true })
+    .in('show_tmdb_id', tmdbIds);
+  if (error) throw error;
+  revalidatePath('/tv');
+  revalidatePath('/tv/shows');
+  revalidatePath('/tv/show/[tmdbId]', 'page');
+}
+
 // Toggle a followed show's watchlist flag (kept out of Up Next while true).
 export async function setWatchlist(tmdbId: number, watchlist: boolean): Promise<void> {
   const db = await createClient();
