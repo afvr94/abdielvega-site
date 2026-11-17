@@ -35,4 +35,23 @@ describe('ServicesPicker', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/couldn.t save/i);
     expect(screen.getByRole('button', { name: /hulu/i })).toHaveAttribute('aria-pressed', 'false');
   });
+
+  it('keeps a later toggle when an earlier save fails', async () => {
+    let rejectFirst!: (e: Error) => void;
+    setServices
+      .mockImplementationOnce(() => new Promise((_, reject) => (rejectFirst = reject)))
+      .mockResolvedValueOnce(undefined);
+    render(<ServicesPicker options={options} initial={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: /hulu/i }));
+    await userEvent.click(screen.getByRole('button', { name: /netflix/i }));
+    rejectFirst(new Error('down'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(setServices).toHaveBeenLastCalledWith([15, 8]);
+    expect(screen.getByRole('button', { name: /hulu/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /netflix/i })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

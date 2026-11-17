@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { Check } from 'lucide-react';
 import type { Provider } from '@/lib/tv/types';
@@ -17,17 +17,22 @@ export function ServicesPicker({
   const [selected, setSelected] = useState(initial);
   const [failed, setFailed] = useState(false);
   const [, startSave] = useTransition();
+  const saved = useRef(initial);
+  const latest = useRef(0);
 
   function toggle(id: number) {
-    const before = selected;
-    const next = before.includes(id) ? before.filter((s) => s !== id) : [...before, id];
+    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
+    const seq = ++latest.current;
     setSelected(next);
     setFailed(false);
     startSave(async () => {
       try {
         await setServices(next);
+        saved.current = next;
       } catch {
-        setSelected(before);
+        // A newer toggle already sends the full list, so only the last save may roll back.
+        if (seq !== latest.current) return;
+        setSelected(saved.current);
         setFailed(true);
       }
     });
