@@ -6,14 +6,6 @@ import { getHome } from '@/lib/tv/queries';
 import { todayIso } from '@/lib/tv/format';
 import { episodesLeft } from '@/lib/tv/types';
 
-type PendingRow = {
-  episode_tmdb_id: number;
-  show_name: string;
-  season_number: number;
-  episode_number: number;
-  air_date: string | null;
-};
-
 async function notifyNewEpisodes(
   db: ReturnType<typeof createAdminClient>
 ): Promise<{ notified: number; error?: string }> {
@@ -22,7 +14,7 @@ async function notifyNewEpisodes(
 
   const { data, error } = await db.rpc('tv_pending_notifications');
   if (error) return { notified: 0, error: `pending: ${error.message}` };
-  const rows = (data ?? []) as PendingRow[];
+  const rows = data ?? [];
   if (rows.length === 0) return { notified: 0 };
 
   const items: NotifyItem[] = rows.map((r) => ({

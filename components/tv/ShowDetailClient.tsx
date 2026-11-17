@@ -380,7 +380,7 @@ export function ShowDetailClient({
               key={e.tmdbId}
               className={`flex items-center gap-3 card border p-2.5 transition-colors ${
                 isNext ? 'border-income/50 bg-income/5' : 'border-hairline'
-              } ${isWatched ? 'opacity-60' : ''}`}
+              }`}
             >
               <button
                 type="button"
@@ -390,7 +390,9 @@ export function ShowDetailClient({
                 }
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
-                <span className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-md bg-cream">
+                <span
+                  className={`relative aspect-video w-24 shrink-0 overflow-hidden rounded-md bg-cream ${isWatched ? 'opacity-60' : ''}`}
+                >
                   {still ? (
                     <Image
                       src={still}

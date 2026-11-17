@@ -76,7 +76,7 @@ export async function createList(name: string): Promise<number | null> {
   const { data, error } = await db.from('tv_lists').insert({ name: trimmed }).select('id').single();
   if (error) throw error;
   revalidatePath('/tv/shows');
-  return (data as { id: number }).id;
+  return data.id;
 }
 
 export async function deleteList(listId: number): Promise<void> {
@@ -162,11 +162,11 @@ export async function getEpisodeSheet(
   ]);
   if (ep.error) throw ep.error;
   if (watch.error) throw watch.error;
-  const row = ep.data as { overview: string | null; runtime: number | null } | null;
+  const row = ep.data;
   return {
     overview: row?.overview ?? null,
     runtime: row?.runtime ?? null,
-    watchedAt: (watch.data as { watched_at: string } | null)?.watched_at ?? null,
+    watchedAt: watch.data?.watched_at ?? null,
     score,
   };
 }
