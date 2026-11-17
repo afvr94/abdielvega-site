@@ -6,7 +6,12 @@ import { ShowsLibrary } from '@/components/tv/ShowsLibrary';
 
 export const metadata = { title: 'Shows' };
 
-export default async function ShowsPage() {
+export default async function ShowsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
+  const { filter } = await searchParams;
   const db = await createClient();
   const [items, lists] = await Promise.all([getLibrary(db), getLists(db)]);
 
@@ -24,5 +29,11 @@ export default async function ShowsPage() {
     );
   }
 
-  return <ShowsLibrary items={items} lists={lists} />;
+  return (
+    <ShowsLibrary
+      items={items}
+      lists={lists}
+      initialFilter={filter === 'dormant' ? 'dormant' : undefined}
+    />
+  );
 }

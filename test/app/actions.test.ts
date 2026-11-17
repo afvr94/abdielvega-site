@@ -18,7 +18,7 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/lib/tv/cache', () => ({ cacheShow: vi.fn() }));
 
 import { revalidatePath } from 'next/cache';
-import { markWatched, markUnwatched, setArchived } from '@/app/tv/actions';
+import { archiveShows, markWatched, markUnwatched, setArchived } from '@/app/tv/actions';
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -35,5 +35,18 @@ describe('episode watch actions', () => {
   it('show-level actions still revalidate the show page', async () => {
     await setArchived(7, true);
     expect(revalidatePath).toHaveBeenCalledWith('/tv/show/7');
+  });
+});
+
+describe('archiveShows', () => {
+  it('rejects ids that are not positive integers', async () => {
+    await expect(archiveShows([1, -2])).rejects.toThrow(/invalid show ids/i);
+    await expect(archiveShows([1.5])).rejects.toThrow(/invalid show ids/i);
+  });
+
+  it('revalidates Up Next and the library', async () => {
+    await archiveShows([1, 2]);
+    expect(revalidatePath).toHaveBeenCalledWith('/tv');
+    expect(revalidatePath).toHaveBeenCalledWith('/tv/shows');
   });
 });

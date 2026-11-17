@@ -78,6 +78,7 @@ type HomeJson = {
   up_next: { show: ShowRow; next: EpisodeRow | null; aired_total: number; aired_watched: number }[];
   this_week: { show: ShowRow; episode: EpisodeRow }[];
   behind_minutes: number;
+  dormant_count: number;
 };
 
 function parseHome(data: unknown): HomeJson {
@@ -89,16 +90,21 @@ function parseHome(data: unknown): HomeJson {
     'this_week' in data &&
     Array.isArray(data.this_week) &&
     'behind_minutes' in data &&
-    typeof data.behind_minutes === 'number'
+    typeof data.behind_minutes === 'number' &&
+    'dormant_count' in data &&
+    typeof data.dormant_count === 'number'
   ) {
     return data as HomeJson;
   }
   throw new Error('tv_home() returned an unexpected shape; re-apply it from DEPLOY.md');
 }
 
-export async function getHome(
-  db: Db
-): Promise<{ upNext: UpNextItem[]; thisWeek: UpcomingEpisode[]; behindMinutes: number }> {
+export async function getHome(db: Db): Promise<{
+  upNext: UpNextItem[];
+  thisWeek: UpcomingEpisode[];
+  behindMinutes: number;
+  dormantCount: number;
+}> {
   const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
   const home = parseHome(data);
@@ -124,6 +130,7 @@ export async function getHome(
       episode: mapEpisode(r.episode),
     })),
     behindMinutes: home.behind_minutes,
+    dormantCount: home.dormant_count,
   };
 }
 
@@ -299,6 +306,7 @@ export async function getLibrary(db: Db): Promise<LibraryItem[]> {
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,
       lastWatchedAt: r.last_watched_at,
+      dormant: r.dormant,
       listIds: listMap.get(r.show_tmdb_id) ?? [],
     });
   }

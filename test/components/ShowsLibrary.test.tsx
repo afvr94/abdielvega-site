@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+const { archiveShows } = vi.hoisted(() => ({ archiveShows: vi.fn() }));
+vi.mock('@/app/tv/actions', () => ({ archiveShows }));
+
 import { ShowsLibrary } from '@/components/tv/ShowsLibrary';
 import { makeLibraryItem, makeShow } from '../factories';
 
@@ -37,6 +40,18 @@ const items = [
     airedTotal: 5,
     airedWatched: 0,
   }), // watchlist
+  makeLibraryItem({
+    show: makeShow({ tmdbId: 7, name: 'Golf' }),
+    dormant: true,
+    airedTotal: 9,
+    airedWatched: 2,
+  }), // dormant
+  makeLibraryItem({
+    show: makeShow({ tmdbId: 8, name: 'Hotel' }),
+    dormant: true,
+    airedTotal: 4,
+    airedWatched: 0,
+  }), // dormant, never started
 ];
 
 function tab(name: RegExp) {
@@ -44,6 +59,8 @@ function tab(name: RegExp) {
 }
 
 describe('ShowsLibrary', () => {
+  beforeEach(() => archiveShows.mockReset());
+
   it('defaults to the Behind filter', () => {
     render(<ShowsLibrary items={items} lists={LISTS} />);
     expect(screen.getByText('Bravo')).toBeInTheDocument();
@@ -54,7 +71,7 @@ describe('ShowsLibrary', () => {
 
   it('shows per-filter counts in the tabs', () => {
     render(<ShowsLibrary items={items} lists={LISTS} />);
-    expect(tab(/^All\d/)).toHaveTextContent('4'); // non-archived
+    expect(tab(/^All\d/)).toHaveTextContent('6'); // active: not archived, not watchlist
     expect(tab(/not started/i)).toHaveTextContent('1');
     expect(tab(/^Behind/)).toHaveTextContent('1');
     expect(tab(/caught up/i)).toHaveTextContent('2'); // Charlie + Delta
@@ -111,5 +128,37 @@ describe('ShowsLibrary', () => {
     // Bravo is 3/10 → 7 remaining
     const link = screen.getByText('Bravo').closest('a')!;
     expect(within(link).getByText('7')).toBeInTheDocument();
+  });
+});
+
+describe('ShowsLibrary dormant lane', () => {
+  beforeEach(() => archiveShows.mockReset());
+
+  it('keeps dormant shows out of Behind and Not started', async () => {
+    render(<ShowsLibrary items={items} lists={LISTS} />);
+    expect(tab(/^Dormant/)).toHaveTextContent('2');
+    expect(screen.queryByText('Golf')).not.toBeInTheDocument();
+    await userEvent.click(tab(/not started/i));
+    expect(screen.queryByText('Hotel')).not.toBeInTheDocument();
+  });
+
+  it('opens on the Dormant filter when asked to', () => {
+    render(<ShowsLibrary items={items} lists={LISTS} initialFilter="dormant" />);
+    expect(screen.getByText('Golf')).toBeInTheDocument();
+    expect(screen.getByText('Hotel')).toBeInTheDocument();
+    expect(screen.queryByText('Bravo')).not.toBeInTheDocument();
+  });
+
+  it('archives one show, or every dormant show at once', async () => {
+    render(<ShowsLibrary items={items} lists={LISTS} initialFilter="dormant" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Archive Golf' }));
+    expect(archiveShows).toHaveBeenLastCalledWith([7]);
+    await userEvent.click(screen.getByRole('button', { name: /archive all 2/i }));
+    expect(archiveShows).toHaveBeenLastCalledWith([7, 8]);
+  });
+
+  it('shows no archive controls outside the Dormant filter', () => {
+    render(<ShowsLibrary items={items} lists={LISTS} />);
+    expect(screen.queryByRole('button', { name: /^archive( |$)/i })).not.toBeInTheDocument();
   });
 });

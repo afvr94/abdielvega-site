@@ -83,8 +83,27 @@ const ep = (tmdb_id: number, show_tmdb_id: number, air_date: string) => ({
 
 describe('getHome', () => {
   it('returns empty lists when nothing is followed', async () => {
+    const db = makeDb({
+      rpc: { tv_home: { up_next: [], this_week: [], behind_minutes: 0, dormant_count: 0 } },
+    });
+    expect(await getHome(db)).toEqual({
+      upNext: [],
+      thisWeek: [],
+      behindMinutes: 0,
+      dormantCount: 0,
+    });
+  });
+
+  it('passes the dormant count through', async () => {
+    const db = makeDb({
+      rpc: { tv_home: { up_next: [], this_week: [], behind_minutes: 0, dormant_count: 90 } },
+    });
+    expect((await getHome(db)).dormantCount).toBe(90);
+  });
+
+  it('throws when tv_home() is an older version without dormant_count', async () => {
     const db = makeDb({ rpc: { tv_home: { up_next: [], this_week: [], behind_minutes: 0 } } });
-    expect(await getHome(db)).toEqual({ upNext: [], thisWeek: [], behindMinutes: 0 });
+    await expect(getHome(db)).rejects.toThrow(/tv_home\(\) returned an unexpected shape/);
   });
 
   it('throws when tv_home() is an older version without behind_minutes', async () => {
@@ -113,6 +132,7 @@ describe('getHome', () => {
           ],
           this_week: [],
           behind_minutes: 0,
+          dormant_count: 0,
         },
       },
     });
@@ -134,6 +154,7 @@ describe('getHome', () => {
             { show: show(2, 'B'), episode: ep(12, 2, '2026-01-03') },
           ],
           behind_minutes: 0,
+          dormant_count: 0,
         },
       },
     });
@@ -156,6 +177,7 @@ describe('getLibrary', () => {
             aired_watched: 5,
             next_air_date: null,
             last_watched_at: '2026-07-01T00:00:00Z',
+            dormant: true,
           },
           {
             show_tmdb_id: 2,
@@ -190,6 +212,7 @@ describe('getLibrary', () => {
     const items = await getLibrary(db);
     expect(items.map((i) => i.show.name)).toEqual(['Beta', 'Zeta', 'Alpha', 'Xray']);
     expect(items[0].lastWatchedAt).toBe('2026-07-05T00:00:00Z');
+    expect(items.find((i) => i.show.name === 'Zeta')?.dormant).toBe(true);
   });
 });
 
