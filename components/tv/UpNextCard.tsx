@@ -13,11 +13,11 @@ import { ServiceBadge } from './ServiceBadge';
 
 export function UpNextCard({
   item,
-  services = [],
+  services,
   onMarked,
 }: {
   item: UpNextItem;
-  services?: number[];
+  services: number[];
   onMarked?: (episode: Episode) => void;
 }) {
   const { show, next } = item;

@@ -34,7 +34,7 @@ describe('UpNextCard', () => {
       airedTotal: 10,
       airedWatched: 4,
     });
-    render(<UpNextCard item={item} />);
+    render(<UpNextCard item={item} services={[]} />);
     expect(screen.getByText('The Show')).toBeInTheDocument();
     expect(screen.getByText('S02E05')).toBeInTheDocument();
     expect(screen.getByText('4/10')).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('UpNextCard', () => {
 
   it('reveals the episode title on tap', async () => {
     const item = makeUpNext({ next: makeEpisode({ name: 'The Episode' }) });
-    render(<UpNextCard item={item} />);
+    render(<UpNextCard item={item} services={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /show episode title/i }));
     expect(screen.getByText('The Episode')).toBeInTheDocument();
   });
@@ -53,7 +53,7 @@ describe('UpNextCard', () => {
       show: makeShow({ tmdbId: 3 }),
       next: makeEpisode({ seasonNumber: 2, episodeNumber: 5 }),
     });
-    render(<UpNextCard item={item} />);
+    render(<UpNextCard item={item} services={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /mark show s02e05 watched/i }));
     expect(markWatched).toHaveBeenCalledWith(3, 2, 5);
   });
@@ -64,7 +64,7 @@ describe('UpNextCard', () => {
       show: makeShow({ tmdbId: 3, name: 'The Show' }),
       next: makeEpisode({ seasonNumber: 2, episodeNumber: 5 }),
     });
-    render(<UpNextCard item={item} />);
+    render(<UpNextCard item={item} services={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /mark the show s02e05 watched/i }));
     expect(await screen.findByText(/couldn.t mark it watched/i)).toBeInTheDocument();
     expect(screen.getByText('The Show').closest('.card')).not.toHaveClass('opacity-0');
@@ -76,13 +76,13 @@ describe('UpNextCard', () => {
 
   it('reports a successful mark', async () => {
     const onMarked = vi.fn();
-    render(<UpNextCard item={makeUpNext()} onMarked={onMarked} />);
+    render(<UpNextCard item={makeUpNext()} services={[]} onMarked={onMarked} />);
     await userEvent.click(screen.getByRole('button', { name: /watched/i }));
     expect(onMarked).toHaveBeenCalledTimes(1);
   });
 
   it('renders nothing when caught up (no next episode)', () => {
-    const { container } = render(<UpNextCard item={makeUpNext({ next: null })} />);
+    const { container } = render(<UpNextCard item={makeUpNext({ next: null })} services={[]} />);
     expect(container).toBeEmptyDOMElement();
   });
 });

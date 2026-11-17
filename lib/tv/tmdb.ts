@@ -125,8 +125,6 @@ type TmdbRegionProviders = {
 };
 export type TmdbWatchProviders = { results: Record<string, TmdbRegionProviders> };
 
-export type WatchProvider = { name: string; logoUrl: string | null };
-
 // Streaming ("where it's available") providers for a region — subscription,
 // free, and ad-supported, deduped and ordered by TMDB display priority.
 export function streamingProviders(data: TmdbWatchProviders, region = 'US'): Provider[] {
@@ -139,19 +137,6 @@ export function streamingProviders(data: TmdbWatchProviders, region = 'US'): Pro
     .map((p) => ({ id: p.provider_id, name: p.provider_name, logoPath: p.logo_path }));
 }
 
-export function pickStreamingProviders(
-  data: TmdbWatchProviders,
-  region = 'US'
-): { providers: WatchProvider[]; link: string | null } {
-  return {
-    providers: streamingProviders(data, region).map((p) => ({
-      name: p.name,
-      logoUrl: imageUrl(p.logoPath, 'w92'),
-    })),
-    link: data.results?.[region]?.link ?? null,
-  };
-}
-
 // Cached for a day — availability changes slowly.
 export function fetchWatchProviders(seriesId: number): Promise<TmdbWatchProviders> {
   return tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, DAY);
@@ -160,8 +145,12 @@ export function fetchWatchProviders(seriesId: number): Promise<TmdbWatchProvider
 export async function getWatchProviders(
   seriesId: number,
   region = 'US'
-): Promise<{ providers: WatchProvider[]; link: string | null }> {
-  return pickStreamingProviders(await fetchWatchProviders(seriesId), region);
+): Promise<{ providers: Provider[]; link: string | null }> {
+  const data = await fetchWatchProviders(seriesId);
+  return {
+    providers: streamingProviders(data, region),
+    link: data.results?.[region]?.link ?? null,
+  };
 }
 
 export type Score = { voteAverage: number; voteCount: number };
