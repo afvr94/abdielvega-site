@@ -149,6 +149,12 @@ describe('ShowsLibrary dormant lane', () => {
     expect(screen.queryByText('Bravo')).not.toBeInTheDocument();
   });
 
+  it('falls back to Behind for an unknown filter', () => {
+    render(<ShowsLibrary items={items} lists={LISTS} initialFilter="bogus" />);
+    expect(screen.getByText('Bravo')).toBeInTheDocument();
+    expect(screen.queryByText('Golf')).not.toBeInTheDocument();
+  });
+
   it('archives one show, or every dormant show at once', async () => {
     render(<ShowsLibrary items={items} lists={LISTS} initialFilter="dormant" />);
     await userEvent.click(screen.getByRole('button', { name: 'Archive Golf' }));

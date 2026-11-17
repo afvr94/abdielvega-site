@@ -8,9 +8,6 @@ import { imageUrl } from '@/lib/tv/tmdb';
 import { formatAirDate } from '@/lib/tv/format';
 import { archiveShows } from '@/app/tv/actions';
 
-export type Filter =
-  'all' | 'watchlist' | 'not-started' | 'behind' | 'dormant' | 'caught-up' | 'done' | 'archived';
-
 // Production statuses that mean the show won't get new episodes.
 const DONE_STATUSES = new Set(['Ended', 'Canceled']);
 
@@ -36,24 +33,39 @@ function isDone(i: LibraryItem) {
   return isActive(i) && !!i.show.status && DONE_STATUSES.has(i.show.status);
 }
 
+const FILTERS = [
+  { key: 'all', label: 'All', match: isActive },
+  { key: 'watchlist', label: 'Watchlist', match: isWatchlist },
+  { key: 'not-started', label: 'Not started', match: isNotStarted },
+  { key: 'behind', label: 'Behind', match: isBehind },
+  { key: 'dormant', label: 'Dormant', match: isDormant },
+  { key: 'caught-up', label: 'Caught up', match: isCaughtUp },
+  { key: 'done', label: 'Done', match: isDone },
+  { key: 'archived', label: 'Archived', match: (i: LibraryItem) => i.archived },
+] as const;
+
+type Filter = (typeof FILTERS)[number]['key'];
+
 export function ShowsLibrary({
   items,
   lists,
-  initialFilter = 'behind',
+  initialFilter,
 }: {
   items: LibraryItem[];
   lists: TvListWithCount[];
-  initialFilter?: Filter;
+  initialFilter?: string;
 }) {
-  const [filter, setFilter] = useState<Filter>(initialFilter);
+  const [filter, setFilter] = useState<Filter>(
+    () => FILTERS.find((f) => f.key === initialFilter)?.key ?? 'behind'
+  );
   const [archiving, startArchive] = useTransition();
-  const initialChip = useRef<HTMLButtonElement>(null);
+  const [listId, setListId] = useState<number | null>(null);
+  const activeChip = useRef<HTMLButtonElement>(null);
 
   // A deep link to a filter past the fold of the chip row should land with that chip visible.
   useEffect(() => {
-    initialChip.current?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    activeChip.current?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, []);
-  const [listId, setListId] = useState<number | null>(null);
 
   // The status tabs operate within the selected list (or the whole library).
   const scoped = useMemo(
@@ -62,40 +74,11 @@ export function ShowsLibrary({
   );
 
   const counts = useMemo(
-    () => ({
-      all: scoped.filter(isActive).length,
-      watchlist: scoped.filter(isWatchlist).length,
-      'not-started': scoped.filter(isNotStarted).length,
-      behind: scoped.filter(isBehind).length,
-      dormant: scoped.filter(isDormant).length,
-      'caught-up': scoped.filter(isCaughtUp).length,
-      done: scoped.filter(isDone).length,
-      archived: scoped.filter((i) => i.archived).length,
-    }),
+    () => new Map(FILTERS.map((f) => [f.key, scoped.filter(f.match).length])),
     [scoped]
   );
 
-  const shown = scoped.filter((i) => {
-    if (filter === 'all') return isActive(i);
-    if (filter === 'watchlist') return isWatchlist(i);
-    if (filter === 'not-started') return isNotStarted(i);
-    if (filter === 'behind') return isBehind(i);
-    if (filter === 'dormant') return isDormant(i);
-    if (filter === 'caught-up') return isCaughtUp(i);
-    if (filter === 'done') return isDone(i);
-    return i.archived;
-  });
-
-  const tabs: { key: Filter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'watchlist', label: 'Watchlist' },
-    { key: 'not-started', label: 'Not started' },
-    { key: 'behind', label: 'Behind' },
-    { key: 'dormant', label: 'Dormant' },
-    { key: 'caught-up', label: 'Caught up' },
-    { key: 'done', label: 'Done' },
-    { key: 'archived', label: 'Archived' },
-  ];
+  const shown = scoped.filter((i) => FILTERS.some((f) => f.key === filter && f.match(i)));
 
   return (
     <div>
@@ -133,10 +116,10 @@ export function ShowsLibrary({
       ) : null}
 
       <div className="-mx-5 mb-5 no-scrollbar flex gap-1.5 overflow-x-auto px-5">
-        {tabs.map((t) => (
+        {FILTERS.map((t) => (
           <button
             key={t.key}
-            ref={t.key === initialFilter ? initialChip : undefined}
+            ref={t.key === filter ? activeChip : undefined}
             onClick={() => setFilter(t.key)}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
               filter === t.key
@@ -145,7 +128,7 @@ export function ShowsLibrary({
             }`}
           >
             {t.label}
-            <span className="ml-1.5 font-mono-tab opacity-80">{counts[t.key]}</span>
+            <span className="ml-1.5 font-mono-tab opacity-80">{counts.get(t.key)}</span>
           </button>
         ))}
       </div>

@@ -69,6 +69,7 @@ export async function archiveShows(tmdbIds: number[]): Promise<void> {
   if (error) throw error;
   revalidatePath('/tv');
   revalidatePath('/tv/shows');
+  revalidatePath('/tv/show/[tmdbId]', 'page');
 }
 
 // Toggle a followed show's watchlist flag (kept out of Up Next while true).

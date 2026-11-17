@@ -572,10 +572,12 @@ once, after the Up Next, Watchlist and Dormant sections:
 ```sql
 create or replace function tv_home()
 returns jsonb language sql stable as $$
-  with active as (
+  with dormant as materialized (
+    select show_tmdb_id from tv_dormant()
+  ), active as (
     select show_tmdb_id from tv_follows where not archived and not watchlist
     except
-    select show_tmdb_id from tv_dormant()
+    select show_tmdb_id from dormant
   )
   select jsonb_build_object(
     'up_next', coalesce((
@@ -625,7 +627,7 @@ returns jsonb language sql stable as $$
             and w.episode_number = e.episode_number
         )
     ),
-    'dormant_count', (select count(*) from tv_dormant())
+    'dormant_count', (select count(*) from dormant)
   );
 $$;
 ```

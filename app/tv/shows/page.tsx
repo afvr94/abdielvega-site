@@ -29,11 +29,5 @@ export default async function ShowsPage({
     );
   }
 
-  return (
-    <ShowsLibrary
-      items={items}
-      lists={lists}
-      initialFilter={filter === 'dormant' ? 'dormant' : undefined}
-    />
-  );
+  return <ShowsLibrary items={items} lists={lists} initialFilter={filter} />;
 }
