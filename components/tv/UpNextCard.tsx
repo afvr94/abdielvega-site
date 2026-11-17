@@ -20,12 +20,13 @@ export function UpNextCard({
   const { show, next } = item;
   const [pending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
-  // Spoiler protection: the next episode is unwatched by definition.
-  const [revealed, setRevealed] = useState(false);
+  const [spoilerRevealed, setSpoilerRevealed] = useState(false);
 
   if (!next) return null;
 
-  const still = imageUrl(next.stillPath, 'w300') ?? imageUrl(show.posterPath, 'w185');
+  const episodeStill = imageUrl(next.stillPath, 'w300');
+  const still = episodeStill ?? imageUrl(show.posterPath, 'w185');
+  const blurStill = episodeStill && !spoilerRevealed;
   const pct = item.airedTotal ? Math.round((item.airedWatched / item.airedTotal) * 100) : 0;
 
   function mark() {
@@ -49,6 +50,8 @@ export function UpNextCard({
     >
       <Link
         href={`/show/${show.tmdbId}`}
+        aria-hidden
+        tabIndex={-1}
         className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg bg-cream sm:w-40"
       >
         {still ? (
@@ -57,7 +60,7 @@ export function UpNextCard({
             alt=""
             fill
             sizes="160px"
-            className={`object-cover ${revealed ? '' : 'scale-110 blur-md'}`}
+            className={`object-cover ${blurStill ? 'scale-110 blur-md' : ''}`}
           />
         ) : null}
       </Link>
@@ -73,12 +76,12 @@ export function UpNextCard({
           <span className="font-mono-tab text-xs text-muted">
             {episodeCode(next.seasonNumber, next.episodeNumber)}
           </span>
-          {revealed ? (
+          {spoilerRevealed ? (
             <span className="truncate text-ink">{next.name ?? '—'}</span>
           ) : (
             <button
-              onClick={() => setRevealed(true)}
-              aria-label="Show episode title"
+              onClick={() => setSpoilerRevealed(true)}
+              aria-label="hidden, show episode title"
               className="-my-2 truncate py-2 text-muted italic hover:text-ink"
             >
               hidden
@@ -110,7 +113,7 @@ export function UpNextCard({
       <button
         onClick={mark}
         disabled={pending}
-        aria-label={`Mark ${episodeCode(next.seasonNumber, next.episodeNumber)} watched`}
+        aria-label={`Mark ${show.name} ${episodeCode(next.seasonNumber, next.episodeNumber)} watched`}
         className="group flex w-14 shrink-0 items-center justify-center rounded-lg border border-hairline bg-card transition-colors hover:border-income hover:bg-income/5 disabled:opacity-60"
       >
         <Check

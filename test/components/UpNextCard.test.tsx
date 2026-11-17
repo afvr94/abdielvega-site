@@ -38,7 +38,7 @@ describe('UpNextCard', () => {
       next: makeEpisode({ seasonNumber: 2, episodeNumber: 5 }),
     });
     render(<UpNextCard item={item} />);
-    await userEvent.click(screen.getByRole('button', { name: /mark s02e05 watched/i }));
+    await userEvent.click(screen.getByRole('button', { name: /mark show s02e05 watched/i }));
     expect(markWatched).toHaveBeenCalledWith(3, 2, 5);
   });
 
@@ -49,7 +49,7 @@ describe('UpNextCard', () => {
       next: makeEpisode({ seasonNumber: 2, episodeNumber: 5 }),
     });
     render(<UpNextCard item={item} />);
-    await userEvent.click(screen.getByRole('button', { name: /mark s02e05 watched/i }));
+    await userEvent.click(screen.getByRole('button', { name: /mark the show s02e05 watched/i }));
     expect(await screen.findByText(/couldn.t mark it watched/i)).toBeInTheDocument();
     expect(screen.getByText('The Show').closest('.card')).not.toHaveClass('opacity-0');
 

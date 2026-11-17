@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { UpcomingEpisode, UpNextItem } from '@/lib/tv/types';
+import { episodesLeft, type UpcomingEpisode, type UpNextItem } from '@/lib/tv/types';
 import { dayHeading, episodeCode, humanizeMinutes } from '@/lib/tv/format';
 import { ProgressRing } from './ProgressRing';
 
@@ -20,7 +20,7 @@ export function UpNextSummary({
   const nextUp = thisWeek.find((u) => (u.episode.airDate ?? '') > today);
 
   const aired = behind.reduce((n, i) => n + i.airedTotal, 0);
-  const left = behind.reduce((n, i) => n + i.airedTotal - i.airedWatched, 0);
+  const left = episodesLeft(behind);
   const pct = aired ? Math.round(((aired - left) / aired) * 100) : 100;
 
   return (

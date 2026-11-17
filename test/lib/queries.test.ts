@@ -86,6 +86,11 @@ describe('getHome', () => {
     expect(await getHome(db)).toEqual({ upNext: [], thisWeek: [], behindMinutes: 0 });
   });
 
+  it('throws when tv_home() is an older version without behind_minutes', async () => {
+    const db = makeDb({ rpc: { tv_home: { up_next: [], this_week: [] } } });
+    await expect(getHome(db)).rejects.toThrow(/tv_home\(\) returned an unexpected shape/);
+  });
+
   it('orders behind shows first (by most recent air), caught-up last', async () => {
     const db = makeDb({
       rpc: {
@@ -106,6 +111,7 @@ describe('getHome', () => {
             },
           ],
           this_week: [],
+          behind_minutes: 0,
         },
       },
     });
@@ -114,7 +120,7 @@ describe('getHome', () => {
     expect(upNext[0].next?.airDate).toBe('2026-06-01');
     expect(upNext[0].airedWatched).toBe(1);
     expect(upNext[0].airedTotal).toBe(10);
-    expect(upNext[2].next).toBeNull(); // caught up
+    expect(upNext[2].next).toBeNull();
   });
 
   it("maps this week's airings in the order the database returns them", async () => {
@@ -126,6 +132,7 @@ describe('getHome', () => {
             { show: show(1, 'A', { poster_path: '/p.jpg' }), episode: ep(11, 1, '2026-01-01') },
             { show: show(2, 'B'), episode: ep(12, 2, '2026-01-03') },
           ],
+          behind_minutes: 0,
         },
       },
     });

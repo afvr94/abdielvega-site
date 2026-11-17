@@ -7,18 +7,18 @@ export const metadata = {
   title: 'Sign in',
 };
 
-const ERRORS: Record<string, string> = {
+const ERRORS = {
   denied: "That Google account can't sign in here.",
   failed: "Sign-in didn't finish. Try again.",
-};
+} as const;
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string | string[] }>;
 }) {
   const { error } = await searchParams;
-  const message = error ? (ERRORS[error] ?? ERRORS.failed) : null;
+  const message = !error ? null : error === 'denied' ? ERRORS.denied : ERRORS.failed;
   const host = (await headers()).get('host') ?? '';
   const isTv = host.split('.')[0] === 'tv';
   return (

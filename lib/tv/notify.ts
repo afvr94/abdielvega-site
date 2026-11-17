@@ -10,32 +10,41 @@ export type NotifyItem = {
 export type Behind = { episodes: number; minutes: number };
 
 const APP_URL = 'https://tv.abdielvega.com';
-// Discord rejects messages over 2,000 characters; a long backlog gets a "+N more".
 const MAX_LINES = 25;
+const DISCORD_MAX_CHARS = 2000;
+const SUPPRESS_EMBEDS = 1 << 2;
+const HEADERS_AND_MORE_LINES_RESERVE = 80;
 
-// Spoiler-safe: show name and episode code only, never the episode title.
 export function buildDiscordMessage(items: NotifyItem[], today: string, behind?: Behind): string {
   const tonight = items.filter((i) => i.airDate === today);
   const earlier = items.filter((i) => i.airDate !== today);
+  const footer =
+    behind && behind.episodes > 0
+      ? `-# Behind: ${behind.episodes.toLocaleString('en-US')} eps · ${humanizeMinutes(behind.minutes)} · [Open cliffo](${APP_URL})`
+      : `-# [Open cliffo](${APP_URL})`;
 
   const out: string[] = [];
+  let size = footer.length + HEADERS_AND_MORE_LINES_RESERVE;
+  const push = (line: string) => {
+    out.push(line);
+    size += line.length + 1;
+  };
   const section = (title: string, list: NotifyItem[]) => {
     if (list.length === 0) return;
-    out.push(`**${title}**`);
-    const lines = byShow(list);
-    for (const line of lines.slice(0, MAX_LINES)) out.push(line);
-    if (lines.length > MAX_LINES) out.push(`+${lines.length - MAX_LINES} more shows`);
+    push(`**${title}**`);
+    const lines = collapsedLinePerShow(list);
+    let shown = 0;
+    for (const line of lines.slice(0, MAX_LINES)) {
+      if (size + line.length >= DISCORD_MAX_CHARS) break;
+      push(line);
+      shown += 1;
+    }
+    if (shown < lines.length) push(`+${lines.length - shown} more shows`);
   };
   section('📺 Tonight', tonight);
   section('New since last time', earlier);
 
-  if (behind && behind.episodes > 0) {
-    out.push(
-      `-# Behind: ${behind.episodes.toLocaleString('en-US')} eps · ${humanizeMinutes(behind.minutes)} · [Open cliffo](${APP_URL})`
-    );
-  } else {
-    out.push(`-# [Open cliffo](${APP_URL})`);
-  }
+  out.push(footer);
   return out.join('\n');
 }
 
@@ -43,15 +52,12 @@ export async function sendDiscord(webhookUrl: string, content: string): Promise<
   const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    // A show named "@everyone" must not ping anyone.
-    // flags 4 = SUPPRESS_EMBEDS: no link preview card under the post.
-    body: JSON.stringify({ content, allowed_mentions: { parse: [] }, flags: 4 }),
+    body: JSON.stringify({ content, allowed_mentions: { parse: [] }, flags: SUPPRESS_EMBEDS }),
   });
   if (!res.ok) throw new Error(`discord ${res.status}: ${await res.text()}`);
 }
 
-// One line per show, with consecutive episodes collapsed: "Show `S01E03–E08`".
-function byShow(list: NotifyItem[]): string[] {
+function collapsedLinePerShow(list: NotifyItem[]): string[] {
   const shows = new Map<string, NotifyItem[]>();
   for (const i of list) shows.set(i.showName, [...(shows.get(i.showName) ?? []), i]);
 
@@ -72,5 +78,5 @@ function byShow(list: NotifyItem[]): string[] {
 }
 
 function escapeMarkdown(s: string) {
-  return s.replace(/([\\*_~`|>[\]])/g, '\\$1');
+  return s.replace(/([\\*_~`|>[\]])/g, '\\$1').replace(/^([#+-])/, '\\$1');
 }

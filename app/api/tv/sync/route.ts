@@ -4,6 +4,7 @@ import { cacheShow } from '@/lib/tv/cache';
 import { buildDiscordMessage, sendDiscord, type NotifyItem } from '@/lib/tv/notify';
 import { getHome } from '@/lib/tv/queries';
 import { todayIso } from '@/lib/tv/format';
+import { episodesLeft } from '@/lib/tv/types';
 
 type PendingRow = {
   episode_tmdb_id: number;
@@ -13,7 +14,6 @@ type PendingRow = {
   air_date: string | null;
 };
 
-// After syncing, post newly aired episodes (tonight's included) to Discord.
 async function notifyNewEpisodes(
   db: ReturnType<typeof createAdminClient>
 ): Promise<{ notified: number; error?: string }> {
@@ -32,18 +32,18 @@ async function notifyNewEpisodes(
     airDate: r.air_date,
   }));
 
+  // The footer is optional; a failed stats read must not hold back the post.
+  const behind = await getHome(db).then(
+    ({ upNext, behindMinutes }) => ({ episodes: episodesLeft(upNext), minutes: behindMinutes }),
+    () => undefined
+  );
+
   try {
-    const { upNext, behindMinutes } = await getHome(db);
-    const episodes = upNext.reduce((n, i) => n + (i.next ? i.airedTotal - i.airedWatched : 0), 0);
-    await sendDiscord(
-      webhook,
-      buildDiscordMessage(items, todayIso(), { episodes, minutes: behindMinutes })
-    );
+    await sendDiscord(webhook, buildDiscordMessage(items, todayIso(), behind));
   } catch (e) {
     return { notified: 0, error: `send: ${e instanceof Error ? e.message : String(e)}` };
   }
 
-  // Only mark notified once the post actually went out.
   const { error: insErr } = await db.from('tv_notified').upsert(
     rows.map((r) => ({ episode_tmdb_id: r.episode_tmdb_id })),
     { onConflict: 'episode_tmdb_id', ignoreDuplicates: true }

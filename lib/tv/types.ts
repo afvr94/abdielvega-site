@@ -63,6 +63,10 @@ export function watchKey(season: number, episode: number): string {
   return `${season}-${episode}`;
 }
 
+export function episodesLeft(items: UpNextItem[]): number {
+  return items.reduce((n, i) => n + (i.next ? i.airedTotal - i.airedWatched : 0), 0);
+}
+
 // Aggregated viewing stats (computed by the tv_stats() SQL function).
 export type Stats = {
   totalWatches: number;
