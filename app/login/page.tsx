@@ -6,7 +6,7 @@ import { cliffoTheme } from '@/app/tv/fonts';
 
 async function onTvHost() {
   const host = (await headers()).get('host') ?? '';
-  return host.split('.')[0] === 'tv';
+  return host.split('.')[0].toLowerCase() === 'tv';
 }
 
 export async function generateMetadata(): Promise<Metadata> {
