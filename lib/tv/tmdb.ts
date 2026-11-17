@@ -148,3 +148,57 @@ export async function getWatchProviders(
   const data = await tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, 86_400);
   return pickStreamingProviders(data, region);
 }
+
+export type Score = { voteAverage: number; voteCount: number };
+
+export type ShowReview = {
+  author: string;
+  rating: number | null;
+  excerpt: string;
+  url: string;
+  createdAt: string;
+};
+
+const DAY = 86_400;
+const toScore = (r: { vote_average?: number; vote_count?: number }): Score | null =>
+  r.vote_count ? { voteAverage: r.vote_average ?? 0, voteCount: r.vote_count } : null;
+
+export async function getEpisodeScore(
+  seriesId: number,
+  season: number,
+  episode: number
+): Promise<Score | null> {
+  const r = await tmdb<{ vote_average?: number; vote_count?: number }>(
+    `/tv/${seriesId}/season/${season}/episode/${episode}`,
+    {},
+    DAY
+  );
+  return toScore(r);
+}
+
+export async function getShowReception(
+  seriesId: number
+): Promise<{ score: Score | null; reviews: ShowReview[] }> {
+  const [show, reviews] = await Promise.all([
+    tmdb<{ vote_average?: number; vote_count?: number }>(`/tv/${seriesId}`, {}, DAY),
+    tmdb<{
+      results?: {
+        author: string;
+        content: string;
+        url: string;
+        created_at: string;
+        author_details?: { rating?: number | null };
+      }[];
+    }>(`/tv/${seriesId}/reviews`, {}, DAY),
+  ]);
+  return {
+    score: toScore(show),
+    reviews: (reviews.results ?? []).slice(0, 3).map((r) => ({
+      author: r.author,
+      rating: r.author_details?.rating ?? null,
+      excerpt: r.content.length > 400 ? `${r.content.slice(0, 400).trimEnd()}…` : r.content,
+      url: r.url,
+      createdAt: r.created_at,
+    })),
+  };
+}

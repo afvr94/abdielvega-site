@@ -17,6 +17,7 @@ import {
   setWatchlist,
 } from '@/app/tv/actions';
 import { FollowButton } from './FollowButton';
+import { EpisodeSheet } from './EpisodeSheet';
 
 const hasAired = (e: Episode, today: string) => !!e.airDate && e.airDate <= today;
 
@@ -27,7 +28,7 @@ export function ShowDetailClient({
   isFollowed,
   archived,
   watchlist,
-  whereToWatch,
+  streamedInfo,
   allLists = [],
   listIds = [],
 }: {
@@ -37,7 +38,7 @@ export function ShowDetailClient({
   isFollowed: boolean;
   archived: boolean;
   watchlist: boolean;
-  whereToWatch?: React.ReactNode;
+  streamedInfo?: React.ReactNode;
   allLists?: TvList[];
   listIds?: number[];
 }) {
@@ -48,6 +49,7 @@ export function ShowDetailClient({
   const [, startTransition] = useTransition();
   const [neverAsk, setNeverAsk] = useState(false);
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(null);
   const [retry, setRetry] = useState<(() => void) | null>(null);
   // Episode taps still saving. markWatched doesn't refresh this page, so a refresh from another
   // action could carry older data; these are re-applied on top of it until they settle.
@@ -148,7 +150,8 @@ export function ShowDetailClient({
     });
   }
 
-  function toggle(e: Episode) {
+  // Returns whether it asked to mark earlier episodes too.
+  function toggle(e: Episode): boolean {
     const key = watchKey(e.seasonNumber, e.episodeNumber);
     const nowWatched = !watched.has(key);
     // Are there earlier aired episodes still unwatched? (checked before the update)
@@ -183,7 +186,9 @@ export function ShowDetailClient({
           })
         )
     );
-    if (hasEarlierGap && !neverAsk) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
+    const asks = hasEarlierGap && !neverAsk;
+    if (asks) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
+    return asks;
   }
 
   function toggleWatchlist() {
@@ -245,6 +250,9 @@ export function ShowDetailClient({
     );
   }
 
+  const openEpisode = openKey
+    ? episodes.find((e) => watchKey(e.seasonNumber, e.episodeNumber) === openKey)
+    : undefined;
   const backdrop = imageUrl(show.backdropPath, 'w780');
   const seasonAllWatched = seasonEpisodes
     .filter((e) => hasAired(e, today))
@@ -328,7 +336,7 @@ export function ShowDetailClient({
         </p>
       ) : null}
 
-      {whereToWatch}
+      {streamedInfo}
 
       {isFollowed ? (
         <ListPicker tmdbId={show.tmdbId} allLists={allLists} initialListIds={listIds} />
@@ -376,27 +384,42 @@ export function ShowDetailClient({
                 isNext ? 'border-income/50 bg-income/5' : 'border-hairline'
               } ${isWatched ? 'opacity-60' : ''}`}
             >
-              <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-md bg-cream">
-                {still ? (
-                  <Image src={still} alt="" fill sizes="96px" className="object-cover" />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono-tab text-[11px] text-muted">
-                    {episodeCode(e.seasonNumber, e.episodeNumber)}
+              <button
+                type="button"
+                onClick={() => setOpenKey(key)}
+                aria-label={`${episodeCode(e.seasonNumber, e.episodeNumber)} details`}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <span className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-md bg-cream">
+                  {still ? (
+                    <Image
+                      src={still}
+                      alt=""
+                      fill
+                      sizes="96px"
+                      className={`object-cover ${isWatched ? '' : 'scale-110 blur-sm'}`}
+                    />
+                  ) : null}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-mono-tab text-[11px] text-muted">
+                      {episodeCode(e.seasonNumber, e.episodeNumber)}
+                    </span>
+                    {isNext ? <span className="label-tag text-income">Next up</span> : null}
                   </span>
-                  {isNext ? <span className="label-tag text-income">Next up</span> : null}
-                </div>
-                <div className="truncate text-sm text-ink">{e.name ?? '—'}</div>
-                <div className="mt-0.5 text-[11px] text-muted">
-                  {aired
-                    ? formatAirDate(e.airDate)
-                    : e.airDate
-                      ? `Airs ${formatAirDate(e.airDate)}`
-                      : 'TBA'}
-                </div>
-              </div>
+                  {isWatched ? (
+                    <span className="block truncate text-sm text-ink">{e.name ?? '—'}</span>
+                  ) : null}
+                  <span className="mt-0.5 block text-[11px] text-muted">
+                    {aired
+                      ? formatAirDate(e.airDate)
+                      : e.airDate
+                        ? `Airs ${formatAirDate(e.airDate)}`
+                        : 'TBA'}
+                  </span>
+                </span>
+              </button>
               <button
                 onClick={() => toggle(e)}
                 disabled={!aired && !isWatched}
@@ -413,6 +436,20 @@ export function ShowDetailClient({
           );
         })}
       </div>
+
+      {openEpisode ? (
+        <EpisodeSheet
+          key={openKey}
+          showId={show.tmdbId}
+          episode={openEpisode}
+          watched={watched.has(openKey ?? '')}
+          onToggle={() => {
+            // The "mark previous?" prompt can't sit above a modal sheet, so close the sheet first.
+            if (toggle(openEpisode)) setOpenKey(null);
+          }}
+          onClose={() => setOpenKey(null)}
+        />
+      ) : null}
 
       {prompt ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">

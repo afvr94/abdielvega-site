@@ -76,7 +76,9 @@ describe('ShowDetailClient — mark previous prompt', () => {
   it('prompts when marking ahead of a gap, and Yes bulk-marks up to that point', async () => {
     renderDetail(['1-1']); // S1E2 still unwatched
     // Mark S1E3 (ahead of the S1E2 gap)
-    await userEvent.click(within(episodeRow('S01E03')).getByRole('button'));
+    await userEvent.click(
+      within(episodeRow('S01E03')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    );
     expect(markWatched).toHaveBeenCalledWith(500, 1, 3);
 
     // Dialog appears
@@ -95,14 +97,18 @@ describe('ShowDetailClient — mark previous prompt', () => {
 
   it('does not prompt when marking the next in-line episode (no gap)', async () => {
     renderDetail(['1-1']); // next up is S1E2
-    await userEvent.click(within(episodeRow('S01E02')).getByRole('button'));
+    await userEvent.click(
+      within(episodeRow('S01E02')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    );
     expect(markWatched).toHaveBeenCalledWith(500, 1, 2);
     expect(screen.queryByText('Mark previous episodes?')).not.toBeInTheDocument();
   });
 
   it('"Never for this show" persists and closes the dialog', async () => {
     renderDetail(['1-1']);
-    await userEvent.click(within(episodeRow('S01E03')).getByRole('button'));
+    await userEvent.click(
+      within(episodeRow('S01E03')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    );
     await screen.findByText('Mark previous episodes?');
 
     await userEvent.click(screen.getByRole('button', { name: /never for this show/i }));
@@ -114,7 +120,9 @@ describe('ShowDetailClient — mark previous prompt', () => {
   it('respects a stored "never" preference (no prompt)', async () => {
     localStorage.setItem('tv:neverMarkPrev:500', '1');
     renderDetail(['1-1']);
-    await userEvent.click(within(episodeRow('S01E03')).getByRole('button'));
+    await userEvent.click(
+      within(episodeRow('S01E03')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    );
     expect(screen.queryByText('Mark previous episodes?')).not.toBeInTheDocument();
   });
 });
@@ -123,13 +131,19 @@ describe('ShowDetailClient — failed saves', () => {
   it('reverts a watched toggle when the action rejects, with a retry', async () => {
     vi.mocked(markWatched).mockRejectedValueOnce(new Error('offline'));
     renderDetail([]);
-    await userEvent.click(within(episodeRow('S01E01')).getByRole('button'));
+    await userEvent.click(
+      within(episodeRow('S01E01')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent(/couldn.t save/i);
-    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark watched');
+    expect(
+      within(episodeRow('S01E01')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    ).toHaveAccessibleName('Mark watched');
 
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
     expect(markWatched).toHaveBeenCalledTimes(2);
-    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+    expect(
+      within(episodeRow('S01E01')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    ).toHaveAccessibleName('Mark unwatched');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -153,7 +167,9 @@ describe('ShowDetailClient — server refresh', () => {
     };
     const { rerender } = render(<ShowDetailClient {...props} watchedKeys={[]} />);
     rerender(<ShowDetailClient {...props} watchedKeys={['1-1']} />);
-    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+    expect(
+      within(episodeRow('S01E01')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    ).toHaveAccessibleName('Mark unwatched');
   });
 
   it('keeps an episode tap that is still saving when older server data arrives', async () => {
@@ -166,9 +182,15 @@ describe('ShowDetailClient — server refresh', () => {
       watchlist: false,
     };
     const { rerender } = render(<ShowDetailClient {...props} watchedKeys={[]} />);
-    await userEvent.click(within(episodeRow('S01E01')).getByRole('button'));
+    await userEvent.click(
+      within(episodeRow('S01E01')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    );
     rerender(<ShowDetailClient {...props} watchedKeys={['1-3']} />);
-    expect(within(episodeRow('S01E01')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
-    expect(within(episodeRow('S01E03')).getByRole('button')).toHaveAccessibleName('Mark unwatched');
+    expect(
+      within(episodeRow('S01E01')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    ).toHaveAccessibleName('Mark unwatched');
+    expect(
+      within(episodeRow('S01E03')).getByRole('button', { name: /^Mark (un)?watched$/ })
+    ).toHaveAccessibleName('Mark unwatched');
   });
 });

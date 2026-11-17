@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { cacheShow } from '@/lib/tv/cache';
 import { getFollowedTmdbIds } from '@/lib/tv/queries';
-import { searchTv, imageUrl } from '@/lib/tv/tmdb';
+import { searchTv, imageUrl, getEpisodeScore, type Score } from '@/lib/tv/tmdb';
 import { todayIso } from '@/lib/tv/format';
 
 export type SearchHit = {
@@ -127,6 +127,48 @@ export async function addToWatchlist(tmdbId: number): Promise<void> {
   if (error) throw error;
   revalidatePath('/tv');
   revalidatePath(`/tv/show/${tmdbId}`);
+}
+
+export type EpisodeSheetData = {
+  overview: string | null;
+  runtime: number | null;
+  watchedAt: string | null;
+  score: Score | null;
+};
+
+// Read behind a server action because the sheet loads on tap, not on page render.
+export async function getEpisodeSheet(
+  tmdbId: number,
+  season: number,
+  episode: number
+): Promise<EpisodeSheetData> {
+  const db = await createClient();
+  const [ep, watch, score] = await Promise.all([
+    db
+      .from('tv_episodes')
+      .select('overview,runtime')
+      .eq('show_tmdb_id', tmdbId)
+      .eq('season_number', season)
+      .eq('episode_number', episode)
+      .maybeSingle(),
+    db
+      .from('tv_watches')
+      .select('watched_at')
+      .eq('show_tmdb_id', tmdbId)
+      .eq('season_number', season)
+      .eq('episode_number', episode)
+      .maybeSingle(),
+    getEpisodeScore(tmdbId, season, episode).catch(() => null),
+  ]);
+  if (ep.error) throw ep.error;
+  if (watch.error) throw watch.error;
+  const row = ep.data as { overview: string | null; runtime: number | null } | null;
+  return {
+    overview: row?.overview ?? null,
+    runtime: row?.runtime ?? null,
+    watchedAt: (watch.data as { watched_at: string } | null)?.watched_at ?? null,
+    score,
+  };
 }
 
 export async function markWatched(tmdbId: number, season: number, episode: number): Promise<void> {
