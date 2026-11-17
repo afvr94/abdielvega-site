@@ -53,7 +53,7 @@ export function FollowButton({
         {pending ? (followed ? 'Removing…' : 'Adding…') : followed ? 'Following' : 'Follow'}
       </button>
       {failed ? (
-        <span role="alert" className="text-[11px] text-expense">
+        <span role="alert" className="w-0 min-w-full text-[11px] leading-snug text-expense">
           Couldn&apos;t {followed ? 'unfollow' : 'follow'}. Tap to retry.
         </span>
       ) : null}
