@@ -13,7 +13,7 @@ function tokenMatches(given: string | null, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-// Calendar apps can't sign in, so a long secret in the URL stands in for the session.
+// Calendar apps can't sign in, so the feed checks a long secret in the URL instead of a session.
 export async function GET(req: NextRequest) {
   const token = process.env.TV_CALENDAR_TOKEN;
   if (!token || !tokenMatches(req.nextUrl.searchParams.get('token'), token)) {
