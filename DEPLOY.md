@@ -652,7 +652,7 @@ columns changed):
 ```sql
 drop function if exists tv_library();
 
--- Same planner problem as tv_home(): without enable_nestloop = off it re-sorts every watch once per followed show.
+-- The owner-only policies throw off the planner's row estimates, so without this setting it re-sorts every watch once per followed show instead of hash-joining.
 create or replace function tv_library()
 returns table (
   show_tmdb_id     integer,
