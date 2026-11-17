@@ -149,7 +149,8 @@ export default async function StatsPage({
     );
   }
 
-  const thisYear = Number(todayIso().slice(0, 4));
+  const today = todayIso();
+  const thisYear = Number(today.slice(0, 4));
   const years = [...new Set([thisYear, ...stats.byYear.map((y) => y.year)])].sort((a, b) => b - a);
   const asked = Number(yearParam);
   const year = years.includes(asked) ? asked : thisYear;
@@ -158,7 +159,6 @@ export default async function StatsPage({
 
   const maxYear = Math.max(1, ...stats.byYear.map((y) => y.count));
   const maxTop = Math.max(1, ...stats.topShows.map((s) => s.count));
-  const today = todayIso();
   const heat = buildHeatmap(stats.byDay, today, 53);
 
   return (

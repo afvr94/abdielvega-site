@@ -5,13 +5,19 @@ import { pickBestEpisodes } from '@/lib/tv/year';
 import type { YearInReview } from '@/lib/tv/types';
 
 const DAY = 86_400;
-const MAX_SEASONS = 15;
+const SEASONS_PER_SHOW = 3;
 
 // Scores aren't stored, so this streams in after the year from TMDB, cached for a day.
 export async function YearBestEpisodes({ year }: { year: YearInReview }) {
-  const pairs = [...new Set(year.topWatched.map(([s, se]) => `${s}:${se}`))]
-    .slice(0, MAX_SEASONS)
-    .map((k) => k.split(':').map(Number) as [number, number]);
+  // A watched show may not be cached in tv_shows yet; it has no name and no top-shows row.
+  const names = new Map(year.topShows.map((s) => [s.showTmdbId, s.name]));
+  const watched = year.topWatched.filter(([s]) => names.has(s));
+  // A per-show cap, so one long-running show can't crowd the others out of the fetch.
+  const pairs = year.topShows.flatMap(({ showTmdbId }) =>
+    [...new Set(watched.filter(([s]) => s === showTmdbId).map(([, se]) => se))]
+      .slice(0, SEASONS_PER_SHOW)
+      .map((se) => [showTmdbId, se] as [number, number])
+  );
   const seasons = (
     await Promise.all(
       pairs.map(([showTmdbId, n]) =>
@@ -22,9 +28,8 @@ export async function YearBestEpisodes({ year }: { year: YearInReview }) {
       )
     )
   ).filter((s) => s !== null);
-  const best = pickBestEpisodes(year.topWatched, seasons);
+  const best = pickBestEpisodes(watched, seasons);
   if (best.length === 0) return null;
-  const names = new Map(year.topShows.map((s) => [s.showTmdbId, s.name]));
 
   return (
     <div>
