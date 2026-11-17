@@ -4,6 +4,7 @@ let host = '';
 vi.mock('next/headers', () => ({
   headers: async () => new Headers({ host }),
 }));
+vi.mock('@/app/tv/fonts', () => ({ cliffoTheme: 'cliffo' }));
 
 import { generateMetadata } from '@/app/login/page';
 
