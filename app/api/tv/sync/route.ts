@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  const followedIds = (follows ?? []).map((f: { show_tmdb_id: number }) => f.show_tmdb_id);
+  const followedIds = (follows ?? []).map((f) => f.show_tmdb_id);
   if (followedIds.length === 0) {
     return NextResponse.json({ ok: true, candidates: 0, synced: 0, failures: [] });
   }

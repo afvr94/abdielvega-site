@@ -1,7 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
-
-type Db = SupabaseClient<Database>;
 import type {
   Episode,
   LibraryItem,
@@ -14,6 +12,8 @@ import type {
 } from './types';
 import { watchKey } from './types';
 import { addDaysIso, todayIso } from './format';
+
+type Db = SupabaseClient<Database>;
 
 const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date';
 const EPISODE_COLUMNS =
@@ -186,7 +186,7 @@ export async function isFollowing(db: Db, tmdbId: number): Promise<boolean> {
 export async function getFollowedTmdbIds(db: Db): Promise<Set<number>> {
   const { data, error } = await db.from('tv_follows').select('show_tmdb_id');
   if (error) throw error;
-  return new Set((data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id));
+  return new Set((data ?? []).map((r) => r.show_tmdb_id));
 }
 
 type StatsJson = {
@@ -232,7 +232,7 @@ export async function getActiveFollowIds(db: Db): Promise<number[]> {
     .eq('archived', false)
     .eq('watchlist', false);
   if (error) throw error;
-  return (data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id);
+  return (data ?? []).map((r) => r.show_tmdb_id);
 }
 
 // All custom lists with their member counts.
