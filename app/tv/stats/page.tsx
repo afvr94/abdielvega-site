@@ -65,9 +65,7 @@ function YearSection({
       </div>
 
       {review.episodes === 0 ? (
-        <p className="card border border-hairline p-6 text-sm text-muted">
-          Nothing watched in {year} yet.
-        </p>
+        <p className="card border border-hairline p-6 text-sm text-muted">No watches in {year}.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -134,7 +132,14 @@ export default async function StatsPage({
   searchParams: Promise<{ year?: string | string[] }>;
 }) {
   const { year: yearParam } = await searchParams;
+  const today = todayIso();
+  const thisYear = Number(today.slice(0, 4));
+  const asked = Number(yearParam);
+  const year = Number.isInteger(asked) && asked >= 1900 && asked <= thisYear ? asked : thisYear;
   const db = await createClient();
+  // Started before getStats so both reads run at once. The year section is optional;
+  // without tv_year() applied the rest of Stats still renders.
+  const reviewPromise = getYear(db, year).catch(() => null);
   let stats: Stats;
   try {
     stats = await getStats(db);
@@ -151,13 +156,10 @@ export default async function StatsPage({
     );
   }
 
-  const today = todayIso();
-  const thisYear = Number(today.slice(0, 4));
-  const years = [...new Set([thisYear, ...stats.byYear.map((y) => y.year)])].sort((a, b) => b - a);
-  const asked = Number(yearParam);
-  const year = years.includes(asked) ? asked : thisYear;
-  // The year section is optional; without tv_year() applied the rest of Stats still renders.
-  const review = await getYear(db, year).catch(() => null);
+  const years = [...new Set([thisYear, year, ...stats.byYear.map((y) => y.year)])].sort(
+    (a, b) => b - a
+  );
+  const review = await reviewPromise;
 
   const maxYear = Math.max(1, ...stats.byYear.map((y) => y.count));
   const maxTop = Math.max(1, ...stats.topShows.map((s) => s.count));

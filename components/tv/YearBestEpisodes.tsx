@@ -13,6 +13,7 @@ export async function YearBestEpisodes({ year }: { year: YearInReview }) {
   // Without a cap, a show watched across many seasons costs one TMDB fetch per season.
   const pairs = year.topShows.flatMap(({ showTmdbId }) =>
     [...new Set(year.topWatched.filter(([s]) => s === showTmdbId).map(([, se]) => se))]
+      .sort((a, b) => b - a)
       .slice(0, SEASONS_PER_SHOW)
       .map((se): [number, number] => [showTmdbId, se])
   );
