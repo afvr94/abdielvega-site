@@ -89,13 +89,7 @@ export type YearInReview = {
   runtimeMin: number;
   shows: number;
   newShows: number;
-  topShows: {
-    showTmdbId: number;
-    name: string;
-    posterPath: string | null;
-    count: number;
-    runtimeMin: number;
-  }[];
+  topShows: Stats['topShows'];
   bingeDay: { date: string; count: number } | null;
   longestStreak: { days: number; start: string } | null;
   bulk: { date: string; count: number }[];

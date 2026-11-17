@@ -877,7 +877,7 @@ returns json language sql stable as $$
         and f.first_day not in (select day from bulk)),
     'top_shows', (
       select coalesce(json_agg(json_build_object(
-        'show_tmdb_id', t.show_tmdb_id, 'name', s.name, 'poster_path', s.poster_path,
+        'show_tmdb_id', t.show_tmdb_id, 'name', s.name,
         'count', t.count, 'runtime_min', t.runtime_min)
         order by t.runtime_min desc, t.count desc), '[]'::json)
       from top t join tv_shows s on s.tmdb_id = t.show_tmdb_id),

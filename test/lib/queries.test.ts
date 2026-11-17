@@ -294,9 +294,7 @@ describe('getYear', () => {
           runtime_min: 11950,
           shows: 27,
           new_shows: 14,
-          top_shows: [
-            { show_tmdb_id: 1, name: 'A', poster_path: null, count: 51, runtime_min: 1275 },
-          ],
+          top_shows: [{ show_tmdb_id: 1, name: 'A', count: 51, runtime_min: 1275 }],
           binge_day: { date: '2026-07-24', count: 24 },
           longest_streak: { days: 6, start: '2026-08-23' },
           bulk: [{ date: '2026-07-06', count: 2351 }],
@@ -309,7 +307,6 @@ describe('getYear', () => {
     expect(y.topShows[0]).toEqual({
       showTmdbId: 1,
       name: 'A',
-      posterPath: null,
       count: 51,
       runtimeMin: 1275,
     });

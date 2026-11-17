@@ -9,12 +9,11 @@ const SEASONS_PER_SHOW = 3;
 
 // Scores aren't stored, so this streams in after the year from TMDB, cached for a day.
 export async function YearBestEpisodes({ year }: { year: YearInReview }) {
-  // A watched show may not be cached in tv_shows yet; it has no name and no top-shows row.
+  // top_shows only lists shows cached in tv_shows, so building from it skips nameless shows.
   const names = new Map(year.topShows.map((s) => [s.showTmdbId, s.name]));
-  const watched = year.topWatched.filter(([s]) => names.has(s));
   // A per-show cap, so one long-running show can't crowd the others out of the fetch.
   const pairs = year.topShows.flatMap(({ showTmdbId }) =>
-    [...new Set(watched.filter(([s]) => s === showTmdbId).map(([, se]) => se))]
+    [...new Set(year.topWatched.filter(([s]) => s === showTmdbId).map(([, se]) => se))]
       .slice(0, SEASONS_PER_SHOW)
       .map((se) => [showTmdbId, se] as [number, number])
   );
@@ -28,7 +27,7 @@ export async function YearBestEpisodes({ year }: { year: YearInReview }) {
       )
     )
   ).filter((s) => s !== null);
-  const best = pickBestEpisodes(watched, seasons);
+  const best = pickBestEpisodes(year.topWatched, seasons);
   if (best.length === 0) return null;
 
   return (

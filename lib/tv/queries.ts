@@ -227,6 +227,15 @@ type StatsJson = {
   top_shows: { show_tmdb_id: number; name: string; count: number; runtime_min: number }[];
 };
 
+function toTopShows(rows: StatsJson['top_shows']): Stats['topShows'] {
+  return rows.map((r) => ({
+    showTmdbId: Number(r.show_tmdb_id),
+    name: r.name,
+    count: Number(r.count),
+    runtimeMin: Number(r.runtime_min),
+  }));
+}
+
 // Aggregated viewing stats — all computed in one tv_stats() SQL call.
 export async function getStats(db: Db): Promise<Stats> {
   const { data, error } = await db.rpc('tv_stats');
@@ -241,12 +250,7 @@ export async function getStats(db: Db): Promise<Stats> {
     lastWatch: d.last_watch ?? null,
     byYear: (d.by_year ?? []).map((r) => ({ year: Number(r.year), count: Number(r.count) })),
     byDay: (d.by_day ?? []).map((r) => ({ date: String(r.date), count: Number(r.count) })),
-    topShows: (d.top_shows ?? []).map((r) => ({
-      showTmdbId: Number(r.show_tmdb_id),
-      name: r.name,
-      count: Number(r.count),
-      runtimeMin: Number(r.runtime_min),
-    })),
+    topShows: toTopShows(d.top_shows ?? []),
   };
 }
 
@@ -255,13 +259,7 @@ type YearJson = {
   runtime_min: number;
   shows: number;
   new_shows: number;
-  top_shows: {
-    show_tmdb_id: number;
-    name: string;
-    poster_path: string | null;
-    count: number;
-    runtime_min: number;
-  }[];
+  top_shows: StatsJson['top_shows'];
   binge_day: { date: string; count: number } | null;
   longest_streak: { days: number; start: string } | null;
   bulk: { date: string; count: number }[];
@@ -295,13 +293,7 @@ export async function getYear(db: Db, year: number): Promise<YearInReview> {
     runtimeMin: Number(d.runtime_min),
     shows: d.shows,
     newShows: d.new_shows,
-    topShows: d.top_shows.map((s) => ({
-      showTmdbId: s.show_tmdb_id,
-      name: s.name,
-      posterPath: s.poster_path,
-      count: s.count,
-      runtimeMin: s.runtime_min,
-    })),
+    topShows: toTopShows(d.top_shows),
     bingeDay: d.binge_day,
     longestStreak: d.longest_streak,
     bulk: d.bulk,
