@@ -45,8 +45,8 @@ export async function proxy(req: NextRequest) {
     }
 
     // Everything else: authenticate, then internally rewrite to /<prefix>/<path>
-    const { response, user } = await updateSession(req);
-    if (!user) {
+    const { response, signedIn } = await updateSession(req);
+    if (!signedIn) {
       const loginUrl = url.clone();
       loginUrl.pathname = '/login';
       loginUrl.search = '';
