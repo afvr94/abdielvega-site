@@ -189,9 +189,12 @@
   }
 }
 
-.cliffo :focus-visible {
-  outline: 2px solid rgb(var(--income));
-  outline-offset: 2px;
+/* Layered so outline-hidden on the text inputs still wins. */
+@layer base {
+  .cliffo :focus-visible {
+    outline: 2px solid rgb(var(--income));
+    outline-offset: 2px;
+  }
 }
 
 .cliffo :is(a, button) {
