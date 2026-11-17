@@ -458,7 +458,7 @@ helpers, so the zone lives only in `tv_date()`. The app's `dateIso()` in
 
 In a filter, write `(select public.tv_today())`, not `public.tv_today()`. The
 bare call inlines to a time-zone conversion that Postgres repeats for every row
-it scans (about 10 ms per pass over `tv_episodes`); the subquery runs it once.
+it scans; the subquery runs it once.
 
 ```sql
 -- No `set search_path` here: it stops Postgres inlining these into the queries that call them per row.
@@ -576,7 +576,7 @@ the hours left skip them. Run once, after the Up Next, Watchlist, Dormant and
 Streaming services sections:
 
 ```sql
--- Row security hides the row counts from the planner, which then probes tv_watches once per episode; hash joins touch 6x fewer pages.
+-- The owner-only policies hide row counts from the planner, so it would probe tv_watches once per episode instead of hash-joining.
 create or replace function tv_home()
 returns jsonb language sql stable set enable_nestloop = off as $$
   with dormant as materialized (
