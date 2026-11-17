@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Tables } from '@/lib/supabase/database.types';
+import type { Database, Json, Tables } from '@/lib/supabase/database.types';
 import type {
   Episode,
   LibraryItem,
+  Provider,
   Show,
   ShowDetail,
   Stats,
@@ -15,13 +16,13 @@ import { addDaysIso, todayIso } from './format';
 
 type Db = SupabaseClient<Database>;
 
-const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date';
+const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date,providers';
 const EPISODE_COLUMNS =
   'tmdb_id,show_tmdb_id,season_number,episode_number,name,air_date,still_path';
 
 type ShowRow = Pick<
   Tables<'tv_shows'>,
-  'tmdb_id' | 'name' | 'poster_path' | 'backdrop_path' | 'status' | 'first_air_date'
+  'tmdb_id' | 'name' | 'poster_path' | 'backdrop_path' | 'status' | 'first_air_date' | 'providers'
 >;
 
 type EpisodeRow = Pick<
@@ -35,6 +36,20 @@ type EpisodeRow = Pick<
   | 'still_path'
 >;
 
+// tv_shows.providers is jsonb [{id, name, logo_path}], null until first fetched.
+function parseProviders(j: Json | null | undefined): Provider[] {
+  if (!Array.isArray(j)) return [];
+  return j.flatMap((p) =>
+    p &&
+    typeof p === 'object' &&
+    !Array.isArray(p) &&
+    typeof p.id === 'number' &&
+    typeof p.name === 'string'
+      ? [{ id: p.id, name: p.name, logoPath: typeof p.logo_path === 'string' ? p.logo_path : null }]
+      : []
+  );
+}
+
 function mapShow(r: ShowRow): Show {
   return {
     tmdbId: r.tmdb_id,
@@ -43,6 +58,7 @@ function mapShow(r: ShowRow): Show {
     backdropPath: r.backdrop_path,
     status: r.status,
     firstAirDate: r.first_air_date,
+    providers: parseProviders(r.providers),
   };
 }
 
@@ -79,6 +95,7 @@ type HomeJson = {
   this_week: { show: ShowRow; episode: EpisodeRow }[];
   behind_minutes: number;
   dormant_count: number;
+  services: number[];
 };
 
 function parseHome(data: unknown): HomeJson {
@@ -92,7 +109,10 @@ function parseHome(data: unknown): HomeJson {
     'behind_minutes' in data &&
     typeof data.behind_minutes === 'number' &&
     'dormant_count' in data &&
-    typeof data.dormant_count === 'number'
+    typeof data.dormant_count === 'number' &&
+    'services' in data &&
+    Array.isArray(data.services) &&
+    data.services.every((id) => typeof id === 'number')
   ) {
     return data as HomeJson;
   }
@@ -104,6 +124,7 @@ export async function getHome(db: Db): Promise<{
   thisWeek: UpcomingEpisode[];
   behindMinutes: number;
   dormantCount: number;
+  services: number[];
 }> {
   const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
@@ -131,6 +152,7 @@ export async function getHome(db: Db): Promise<{
     })),
     behindMinutes: home.behind_minutes,
     dormantCount: home.dormant_count,
+    services: home.services,
   };
 }
 
@@ -236,6 +258,35 @@ export async function getActiveFollowIds(db: Db): Promise<number[]> {
     .eq('watchlist', false);
   if (error) throw error;
   return (data ?? []).map((r) => r.show_tmdb_id);
+}
+
+export async function getServices(db: Db): Promise<number[]> {
+  const { data, error } = await db.from('tv_settings').select('services').maybeSingle();
+  if (error) throw error;
+  return data?.services ?? [];
+}
+
+// Keep a picked service listed after its last followed show goes, so it can be unpicked.
+export async function getServiceOptions(
+  db: Db,
+  picked: number[]
+): Promise<{ provider: Provider; shows: number }[]> {
+  const [active, { data, error }] = await Promise.all([
+    getActiveFollowIds(db).then((ids) => new Set(ids)),
+    db.from('tv_shows').select('tmdb_id,providers').not('providers', 'is', null),
+  ]);
+  if (error) throw error;
+  const byId = new Map<number, { provider: Provider; shows: number }>();
+  for (const row of data ?? []) {
+    for (const p of parseProviders(row.providers)) {
+      const hit = byId.get(p.id) ?? { provider: p, shows: 0 };
+      if (active.has(row.tmdb_id)) hit.shows += 1;
+      byId.set(p.id, hit);
+    }
+  }
+  return [...byId.values()]
+    .filter((o) => o.shows > 0 || picked.includes(o.provider.id))
+    .sort((a, b) => b.shows - a.shows || a.provider.name.localeCompare(b.provider.name));
 }
 
 // All custom lists with their member counts.

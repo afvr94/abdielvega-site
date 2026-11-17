@@ -23,9 +23,9 @@ afterEach(() => vi.useRealTimers());
 
 describe('UpNextList', () => {
   it('shows the next episode after one is marked', async () => {
-    const { rerender } = render(<UpNextList items={[itemAt(5)]} />);
+    const { rerender } = render(<UpNextList items={[itemAt(5)]} services={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /mark the show s02e05 watched/i }));
-    rerender(<UpNextList items={[itemAt(6)]} />);
+    rerender(<UpNextList items={[itemAt(6)]} services={[]} />);
     const card = screen
       .getByRole('button', { name: /mark the show s02e06 watched/i })
       .closest('.card');
@@ -34,7 +34,7 @@ describe('UpNextList', () => {
   });
 
   it('undoes a mark with the unmark action', async () => {
-    render(<UpNextList items={[itemAt(5)]} />);
+    render(<UpNextList items={[itemAt(5)]} services={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /mark the show s02e05 watched/i }));
     await userEvent.click(screen.getByRole('button', { name: /undo/i }));
     expect(markUnwatched).toHaveBeenCalledWith(3, 2, 5);
@@ -43,7 +43,7 @@ describe('UpNextList', () => {
 
   it('offers undo for about five seconds', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    render(<UpNextList items={[itemAt(5)]} />);
+    render(<UpNextList items={[itemAt(5)]} services={[]} />);
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await user.click(screen.getByRole('button', { name: /mark the show s02e05 watched/i }));
     expect(screen.getByRole('button', { name: /undo/i })).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('UpNextList', () => {
 
   it('keeps a retry when undo fails', async () => {
     vi.mocked(markUnwatched).mockRejectedValueOnce(new Error('offline'));
-    render(<UpNextList items={[itemAt(5)]} />);
+    render(<UpNextList items={[itemAt(5)]} services={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /mark the show s02e05 watched/i }));
     await userEvent.click(screen.getByRole('button', { name: /undo/i }));
     expect(await screen.findByText(/couldn.t undo/i)).toBeInTheDocument();

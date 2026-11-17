@@ -18,7 +18,13 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/lib/tv/cache', () => ({ cacheShow: vi.fn() }));
 
 import { revalidatePath } from 'next/cache';
-import { archiveShows, markWatched, markUnwatched, setArchived } from '@/app/tv/actions';
+import {
+  archiveShows,
+  markWatched,
+  markUnwatched,
+  setArchived,
+  setServices,
+} from '@/app/tv/actions';
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -48,5 +54,17 @@ describe('archiveShows', () => {
     await archiveShows([1, 2]);
     expect(revalidatePath).toHaveBeenCalledWith('/tv');
     expect(revalidatePath).toHaveBeenCalledWith('/tv/shows');
+  });
+});
+
+describe('setServices', () => {
+  it('rejects ids that are not positive integers', async () => {
+    await expect(setServices([8, 0])).rejects.toThrow(/invalid provider ids/i);
+  });
+
+  it('revalidates the pages that show services', async () => {
+    await setServices([8]);
+    expect(revalidatePath).toHaveBeenCalledWith('/tv');
+    expect(revalidatePath).toHaveBeenCalledWith('/tv/calendar');
   });
 });

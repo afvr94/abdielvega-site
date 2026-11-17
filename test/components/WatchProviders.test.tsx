@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-vi.mock('@/lib/tv/tmdb', () => ({ getWatchProviders: vi.fn() }));
+vi.mock('@/lib/tv/tmdb', async (importActual) => ({
+  ...(await importActual<typeof import('@/lib/tv/tmdb')>()),
+  getWatchProviders: vi.fn(),
+}));
 
 import { WatchProviders } from '@/components/tv/WatchProviders';
 import { getWatchProviders } from '@/lib/tv/tmdb';
@@ -9,7 +12,7 @@ import { getWatchProviders } from '@/lib/tv/tmdb';
 describe('WatchProviders', () => {
   it('lists where to watch with the JustWatch link', async () => {
     vi.mocked(getWatchProviders).mockResolvedValueOnce({
-      providers: [{ name: 'Netflix', logoUrl: null }],
+      providers: [{ id: 8, name: 'Netflix', logoPath: null }],
       link: 'https://example.com/watch',
     });
     render(await WatchProviders({ tmdbId: 1 }));

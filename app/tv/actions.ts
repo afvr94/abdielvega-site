@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { cacheShow } from '@/lib/tv/cache';
+import { cacheProviders, cacheShow } from '@/lib/tv/cache';
 import { getFollowedTmdbIds } from '@/lib/tv/queries';
 import { searchTv, imageUrl, getEpisodeScore, type Score } from '@/lib/tv/tmdb';
 import { todayIso } from '@/lib/tv/format';
@@ -34,9 +34,13 @@ export async function searchShows(query: string): Promise<SearchHit[]> {
 export async function followShow(tmdbId: number): Promise<void> {
   const db = await createClient();
   await cacheShow(db, tmdbId);
-  const { error } = await db
-    .from('tv_follows')
-    .upsert({ show_tmdb_id: tmdbId }, { onConflict: 'show_tmdb_id', ignoreDuplicates: true });
+  const [{ error }] = await Promise.all([
+    db
+      .from('tv_follows')
+      .upsert({ show_tmdb_id: tmdbId }, { onConflict: 'show_tmdb_id', ignoreDuplicates: true }),
+    // The daily sync fills providers too, so a TMDB hiccup here shouldn't fail the follow.
+    cacheProviders(db, tmdbId).catch(() => {}),
+  ]);
   if (error) throw error;
   revalidatePath('/tv');
   revalidatePath(`/tv/show/${tmdbId}`);
@@ -70,6 +74,20 @@ export async function archiveShows(tmdbIds: number[]): Promise<void> {
   revalidatePath('/tv');
   revalidatePath('/tv/shows');
   revalidatePath('/tv/show/[tmdbId]', 'page');
+}
+
+export async function setServices(providerIds: number[]): Promise<void> {
+  if (!Array.isArray(providerIds) || !providerIds.every((id) => Number.isInteger(id) && id > 0)) {
+    throw new Error('Invalid provider ids');
+  }
+  const db = await createClient();
+  const { error } = await db
+    .from('tv_settings')
+    .upsert({ id: true, services: [...new Set(providerIds)] });
+  if (error) throw error;
+  revalidatePath('/tv');
+  revalidatePath('/tv/calendar');
+  revalidatePath('/tv/services');
 }
 
 // Toggle a followed show's watchlist flag (kept out of Up Next while true).

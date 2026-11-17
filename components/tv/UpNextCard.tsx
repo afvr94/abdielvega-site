@@ -4,17 +4,20 @@ import { useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
-import type { Episode, UpNextItem } from '@/lib/tv/types';
+import { myService, type Episode, type UpNextItem } from '@/lib/tv/types';
 import { imageUrl } from '@/lib/tv/tmdb';
 import { episodeCode, formatAirDate } from '@/lib/tv/format';
 import { markWatched } from '@/app/tv/actions';
 import { ProgressRing } from './ProgressRing';
+import { ServiceBadge } from './ServiceBadge';
 
 export function UpNextCard({
   item,
+  services,
   onMarked,
 }: {
   item: UpNextItem;
+  services: number[];
   onMarked?: (episode: Episode) => void;
 }) {
   const { show, next } = item;
@@ -27,6 +30,7 @@ export function UpNextCard({
   const episodeStill = imageUrl(next.stillPath, 'w300');
   const still = episodeStill ?? imageUrl(show.posterPath, 'w185');
   const blurStill = episodeStill && !spoilerRevealed;
+  const service = myService(show.providers, services);
   const pct = item.airedTotal ? Math.round((item.airedWatched / item.airedTotal) * 100) : 0;
 
   function mark() {
@@ -96,6 +100,7 @@ export function UpNextCard({
           {next.airDate ? (
             <span className="whitespace-nowrap">aired {formatAirDate(next.airDate)}</span>
           ) : null}
+          {service ? <ServiceBadge provider={service} /> : null}
         </div>
         {failed ? (
           <p role="alert" className="mt-2 text-xs text-expense">

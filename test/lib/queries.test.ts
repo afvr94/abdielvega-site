@@ -7,6 +7,7 @@ import {
   getLibrary,
   getStats,
   getLists,
+  getServiceOptions,
   getUpcoming,
 } from '@/lib/tv/queries';
 
@@ -84,19 +85,55 @@ const ep = (tmdb_id: number, show_tmdb_id: number, air_date: string) => ({
 describe('getHome', () => {
   it('returns empty lists when nothing is followed', async () => {
     const db = makeDb({
-      rpc: { tv_home: { up_next: [], this_week: [], behind_minutes: 0, dormant_count: 0 } },
+      rpc: {
+        tv_home: { up_next: [], this_week: [], behind_minutes: 0, dormant_count: 0, services: [] },
+      },
     });
     expect(await getHome(db)).toEqual({
       upNext: [],
       thisWeek: [],
       behindMinutes: 0,
       dormantCount: 0,
+      services: [],
     });
+  });
+
+  it('maps stored providers onto shows and passes your services through', async () => {
+    const providers = [
+      { id: 8, name: 'Netflix', logo_path: '/n.jpg' },
+      { id: 'bad', name: 'Broken' },
+    ];
+    const db = makeDb({
+      rpc: {
+        tv_home: {
+          up_next: [
+            { show: show(1, 'A', { providers }), next: null, aired_total: 1, aired_watched: 1 },
+            {
+              show: show(2, 'B', { providers: null }),
+              next: null,
+              aired_total: 1,
+              aired_watched: 1,
+            },
+          ],
+          this_week: [],
+          behind_minutes: 0,
+          dormant_count: 0,
+          services: [8],
+        },
+      },
+    });
+    const { upNext, services } = await getHome(db);
+    expect(services).toEqual([8]);
+    const byName = Object.fromEntries(upNext.map((i) => [i.show.name, i.show.providers]));
+    expect(byName.A).toEqual([{ id: 8, name: 'Netflix', logoPath: '/n.jpg' }]);
+    expect(byName.B).toEqual([]);
   });
 
   it('passes the dormant count through', async () => {
     const db = makeDb({
-      rpc: { tv_home: { up_next: [], this_week: [], behind_minutes: 0, dormant_count: 90 } },
+      rpc: {
+        tv_home: { up_next: [], this_week: [], behind_minutes: 0, dormant_count: 90, services: [] },
+      },
     });
     expect((await getHome(db)).dormantCount).toBe(90);
   });
@@ -133,6 +170,7 @@ describe('getHome', () => {
           this_week: [],
           behind_minutes: 0,
           dormant_count: 0,
+          services: [],
         },
       },
     });
@@ -155,6 +193,7 @@ describe('getHome', () => {
           ],
           behind_minutes: 0,
           dormant_count: 0,
+          services: [],
         },
       },
     });
@@ -213,6 +252,35 @@ describe('getLibrary', () => {
     expect(items.map((i) => i.show.name)).toEqual(['Beta', 'Zeta', 'Alpha', 'Xray']);
     expect(items[0].lastWatchedAt).toBe('2026-07-05T00:00:00Z');
     expect(items.find((i) => i.show.name === 'Zeta')?.dormant).toBe(true);
+  });
+});
+
+describe('getServiceOptions', () => {
+  it('counts active follows per service and keeps a picked service with none', async () => {
+    const nf = { id: 8, name: 'Netflix', logo_path: null };
+    const hu = { id: 15, name: 'Hulu', logo_path: null };
+    const mx = { id: 1899, name: 'Max', logo_path: null };
+    const db = makeDb({
+      tables: {
+        tv_follows: [
+          { show_tmdb_id: 1, archived: false, watchlist: false },
+          { show_tmdb_id: 2, archived: false, watchlist: false },
+          { show_tmdb_id: 3, archived: true, watchlist: false },
+        ],
+        tv_shows: [
+          show(1, 'A', { providers: [nf, hu] }),
+          show(2, 'B', { providers: [nf] }),
+          show(3, 'C', { providers: [mx] }),
+        ],
+      },
+    });
+    const opts = await getServiceOptions(db, [1899]);
+    expect(opts.map((o) => [o.provider.name, o.shows])).toEqual([
+      ['Netflix', 2],
+      ['Hulu', 1],
+      ['Max', 0],
+    ]);
+    expect((await getServiceOptions(db, [])).map((o) => o.provider.name)).not.toContain('Max');
   });
 });
 

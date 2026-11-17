@@ -562,11 +562,13 @@ $$;
 
 The Up Next page reads everything it shows in one call, because each Supabase
 round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
-`tv_home()` wraps `tv_up_next()` with the show and episode columns the page
-needs, the next 7 days of airings, the runtime of every aired episode you
-haven't watched (the summary's "hours left") and the number of dormant shows,
-as one JSON value. Dormant shows still appear in the next 7 days of airings, so a returning season shows up, but are left out of Up Next and the hours left.
-Run once, after the Up Next, Watchlist and Dormant sections:
+`tv_home()` wraps `tv_up_next()` and returns one JSON value with the show and
+episode columns the page needs, the next 7 days of airings, the runtime of
+every aired episode you haven't watched (the summary's "hours left"), the
+number of dormant shows and your streaming services. Dormant shows still appear
+in the next 7 days of airings, so a returning season shows up, but Up Next and
+the hours left skip them. Run once, after the Up Next, Watchlist, Dormant and
+Streaming services sections:
 
 ```sql
 create or replace function tv_home()
@@ -586,7 +588,7 @@ returns jsonb language sql stable as $$
         'show', jsonb_build_object(
           'tmdb_id', s.tmdb_id, 'name', s.name, 'poster_path', s.poster_path,
           'backdrop_path', s.backdrop_path, 'status', s.status,
-          'first_air_date', s.first_air_date),
+          'first_air_date', s.first_air_date, 'providers', s.providers),
         'next', case when e.tmdb_id is null then null else jsonb_build_object(
           'tmdb_id', e.tmdb_id, 'show_tmdb_id', e.show_tmdb_id,
           'season_number', e.season_number, 'episode_number', e.episode_number,
@@ -603,7 +605,7 @@ returns jsonb language sql stable as $$
         'show', jsonb_build_object(
           'tmdb_id', s.tmdb_id, 'name', s.name, 'poster_path', s.poster_path,
           'backdrop_path', s.backdrop_path, 'status', s.status,
-          'first_air_date', s.first_air_date),
+          'first_air_date', s.first_air_date, 'providers', s.providers),
         'episode', jsonb_build_object(
           'tmdb_id', e.tmdb_id, 'show_tmdb_id', e.show_tmdb_id,
           'season_number', e.season_number, 'episode_number', e.episode_number,
@@ -628,7 +630,8 @@ returns jsonb language sql stable as $$
             and w.episode_number = e.episode_number
         )
     ),
-    'dormant_count', (select count(*) from dormant)
+    'dormant_count', (select count(*) from dormant),
+    'services', coalesce((select to_jsonb(services) from tv_settings), '[]'::jsonb)
   );
 $$;
 ```
@@ -753,6 +756,28 @@ create policy "owner only" on tv_list_shows for all
 
 Optionally seed an "Anime" list from TMDB genres: `npx tsx scripts/seed-anime-list.ts`
 (detects Animation genre + Japanese origin; run after the tables exist).
+
+### Streaming services
+
+`tv_shows.providers` holds the US streaming services each show is on
+(subscription, free and ad-supported, from JustWatch via TMDB). Following a show
+fills it, and the daily sync refreshes it. A one-row `tv_settings` holds the
+services you pay for. Up Next and Calendar badge a show with the first of your
+services that carries it, and Up Next can filter to shows you can watch now. Run
+before the Home function:
+
+```sql
+alter table tv_shows add column if not exists providers jsonb; -- [{id, name, logo_path}]
+
+create table tv_settings (
+  id        boolean primary key default true check (id), -- at most one row
+  services  integer[] not null default '{}'
+);
+alter table tv_settings enable row level security;
+create policy "owner only" on tv_settings for all
+  using ((select auth.uid()) = '<OWNER_USER_ID>'::uuid)
+  with check ((select auth.uid()) = '<OWNER_USER_ID>'::uuid);
+```
 
 ### Stats function
 

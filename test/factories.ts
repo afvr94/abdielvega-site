@@ -8,6 +8,7 @@ export function makeShow(over: Partial<Show> = {}): Show {
     backdropPath: '/b.jpg',
     status: null,
     firstAirDate: null,
+    providers: [],
     ...over,
   };
 }

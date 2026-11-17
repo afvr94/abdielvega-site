@@ -1,3 +1,5 @@
+export type Provider = { id: number; name: string; logoPath: string | null };
+
 export type Show = {
   tmdbId: number;
   name: string;
@@ -5,6 +7,7 @@ export type Show = {
   backdropPath: string | null;
   status: string | null;
   firstAirDate: string | null;
+  providers: Provider[];
 };
 
 export type Episode = {
@@ -80,3 +83,8 @@ export type Stats = {
   byDay: { date: string; count: number }[];
   topShows: { showTmdbId: number; name: string; count: number; runtimeMin: number }[];
 };
+
+// providers arrive in TMDB display order, so find() picks the top-billed service.
+export function myService(providers: Provider[], services: number[]): Provider | null {
+  return providers.find((p) => services.includes(p.id)) ?? null;
+}

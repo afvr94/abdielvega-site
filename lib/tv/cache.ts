@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
-import { getShow, getSeason, getExternalIds } from './tmdb';
+import {
+  getShow,
+  getSeason,
+  getExternalIds,
+  fetchWatchProviders,
+  streamingProviders,
+} from './tmdb';
 
 // TMDB uses '' for unknown dates; Postgres `date` wants null.
 function nullDate(d: string | null | undefined): string | null {
@@ -58,4 +64,14 @@ export async function cacheShow(db: SupabaseClient<Database>, tmdbId: number): P
       .upsert(rows.slice(i, i + 500), { onConflict: 'tmdb_id' });
     if (error) throw error;
   }
+}
+
+export async function cacheProviders(db: SupabaseClient<Database>, tmdbId: number): Promise<void> {
+  const providers = streamingProviders(await fetchWatchProviders(tmdbId)).map((p) => ({
+    id: p.id,
+    name: p.name,
+    logo_path: p.logoPath,
+  }));
+  const { error } = await db.from('tv_shows').update({ providers }).eq('tmdb_id', tmdbId);
+  if (error) throw error;
 }
