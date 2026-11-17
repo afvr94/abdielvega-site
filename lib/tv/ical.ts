@@ -1,6 +1,5 @@
 import type { UpcomingEpisode } from './types';
-import { addDaysIso, episodeCode } from './format';
-import { APP_URL } from './notify';
+import { APP_URL, addDaysIso, episodeCode } from './format';
 
 const icsDate = (iso: string) => iso.replaceAll('-', '');
 
@@ -30,10 +29,7 @@ function fold(line: string): string {
 
 // All-day events titled "Show S01E03" only, so the calendar never spoils an episode title.
 export function buildCalendar(items: UpcomingEpisode[], now: Date): string {
-  const stamp = now
-    .toISOString()
-    .replace(/[-:]/g, '')
-    .replace(/\.\d{3}/, '');
+  const stamp = now.toISOString().replace(/[-:]|\.\d{3}/g, '');
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
