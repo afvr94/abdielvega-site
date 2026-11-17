@@ -15,7 +15,7 @@ export async function YearBestEpisodes({ year }: { year: YearInReview }) {
   const pairs = year.topShows.flatMap(({ showTmdbId }) =>
     [...new Set(year.topWatched.filter(([s]) => s === showTmdbId).map(([, se]) => se))]
       .slice(0, SEASONS_PER_SHOW)
-      .map((se) => [showTmdbId, se] as [number, number])
+      .map((se): [number, number] => [showTmdbId, se])
   );
   const seasons = (
     await Promise.all(

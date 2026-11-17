@@ -1,4 +1,5 @@
 import type { TmdbSeason } from './tmdb';
+import type { YearInReview } from './types';
 
 export type BestEpisode = {
   showTmdbId: number;
@@ -12,7 +13,7 @@ export type BestEpisode = {
 const MIN_VOTES = 5;
 
 export function pickBestEpisodes(
-  watched: [show: number, season: number, episode: number][],
+  watched: YearInReview['topWatched'],
   seasons: { showTmdbId: number; season: TmdbSeason }[],
   limit = 5
 ): BestEpisode[] {
