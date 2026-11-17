@@ -41,7 +41,6 @@ export async function proxy(req: NextRequest) {
     const { response, signedIn } = await updateSession(req);
     if (isPublic(pathname)) return response;
 
-    // Everything else: require a session, then internally rewrite to /<prefix>/<path>
     if (!signedIn) {
       const loginUrl = url.clone();
       loginUrl.pathname = '/login';

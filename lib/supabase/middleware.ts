@@ -27,7 +27,6 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Verifies the ES256-signed token against cached public keys, so most requests skip the Auth server.
   const { data } = await supabase.auth.getClaims();
 
   return { response, signedIn: !!data?.claims };
