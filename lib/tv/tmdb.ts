@@ -156,7 +156,6 @@ export type ShowReview = {
   rating: number | null;
   excerpt: string;
   url: string;
-  createdAt: string;
 };
 
 const DAY = 86_400;
@@ -186,7 +185,6 @@ export async function getShowReception(
         author: string;
         content: string;
         url: string;
-        created_at: string;
         author_details?: { rating?: number | null };
       }[];
     }>(`/tv/${seriesId}/reviews`, {}, DAY),
@@ -198,7 +196,6 @@ export async function getShowReception(
       rating: r.author_details?.rating ?? null,
       excerpt: r.content.length > 400 ? `${r.content.slice(0, 400).trimEnd()}…` : r.content,
       url: r.url,
-      createdAt: r.created_at,
     })),
   };
 }

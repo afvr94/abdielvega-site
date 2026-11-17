@@ -443,6 +443,7 @@ export function ShowDetailClient({
           showId={show.tmdbId}
           episode={openEpisode}
           watched={watched.has(openKey ?? '')}
+          aired={hasAired(openEpisode, today)}
           onToggle={() => {
             // The "mark previous?" prompt can't sit above a modal sheet, so close the sheet first.
             if (toggle(openEpisode)) setOpenKey(null);

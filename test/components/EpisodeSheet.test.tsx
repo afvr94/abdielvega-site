@@ -35,12 +35,13 @@ const episode = makeEpisode({
   airDate: '2026-02-07',
 });
 
-function renderSheet(watched: boolean, onToggle = vi.fn(), onClose = vi.fn()) {
+function renderSheet(watched: boolean, onToggle = vi.fn(), onClose = vi.fn(), aired = true) {
   render(
     <EpisodeSheet
       showId={9}
       episode={episode}
       watched={watched}
+      aired={aired}
       onToggle={onToggle}
       onClose={onClose}
     />
@@ -81,6 +82,11 @@ describe('EpisodeSheet', () => {
     const { onToggle } = renderSheet(false);
     await userEvent.click(screen.getByRole('button', { name: 'Mark watched' }));
     expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it("won't mark an unaired episode watched", () => {
+    renderSheet(false, vi.fn(), vi.fn(), false);
+    expect(screen.getByRole('button', { name: 'Mark watched' })).toBeDisabled();
   });
 
   it('says so when the details fail to load', async () => {

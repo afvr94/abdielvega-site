@@ -14,12 +14,14 @@ export function EpisodeSheet({
   showId,
   episode,
   watched,
+  aired,
   onToggle,
   onClose,
 }: {
   showId: number;
   episode: Episode;
   watched: boolean;
+  aired: boolean;
   onToggle: () => void;
   onClose: () => void;
 }) {
@@ -129,8 +131,13 @@ export function EpisodeSheet({
 
         <button
           type="button"
-          onClick={onToggle}
-          className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold ${
+          onClick={() => {
+            // A fresh watch gets a new date; don't show the one fetched before this toggle.
+            setData((d) => d && { ...d, watchedAt: null });
+            onToggle();
+          }}
+          disabled={!aired && !watched}
+          className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold disabled:opacity-30 ${
             watched ? 'bg-ink/10 text-ink' : 'bg-income text-cream'
           }`}
         >
