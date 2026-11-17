@@ -77,7 +77,8 @@ export function ShowsLibrary({
     [scoped]
   );
 
-  const shown = scoped.filter((i) => FILTERS.some((f) => f.key === filter && f.match(i)));
+  const match = FILTERS.find((f) => f.key === filter)?.match ?? isBehind;
+  const shown = scoped.filter(match);
 
   return (
     <div>

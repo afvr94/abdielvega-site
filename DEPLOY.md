@@ -565,7 +565,7 @@ round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
 `tv_home()` wraps `tv_up_next()` with the show and episode columns the page
 needs, the next 7 days of airings, the runtime of every aired episode you
 haven't watched (the summary's "hours left") and the number of dormant shows,
-as one JSON value. It leaves dormant shows out of everything except that count.
+as one JSON value. Dormant shows still appear in the next 7 days of airings, so a returning season shows up, but are left out of Up Next and the hours left.
 Run once, after the Up Next, Watchlist and Dormant sections:
 
 ```sql
@@ -573,8 +573,10 @@ create or replace function tv_home()
 returns jsonb language sql stable as $$
   with dormant as materialized (
     select show_tmdb_id from tv_dormant()
-  ), active as (
+  ), followed as (
     select show_tmdb_id from tv_follows where not archived and not watchlist
+  ), active as (
+    select show_tmdb_id from followed
     except
     select show_tmdb_id from dormant
   )
@@ -608,7 +610,7 @@ returns jsonb language sql stable as $$
           'name', e.name, 'air_date', e.air_date, 'still_path', e.still_path))
         order by e.air_date, s.name, e.season_number, e.episode_number)
       from tv_episodes e
-      join active a on a.show_tmdb_id = e.show_tmdb_id
+      join followed a on a.show_tmdb_id = e.show_tmdb_id
       join tv_shows s on s.tmdb_id = e.show_tmdb_id
       where e.season_number > 0
         and e.air_date between public.tv_today() and public.tv_today() + 7
