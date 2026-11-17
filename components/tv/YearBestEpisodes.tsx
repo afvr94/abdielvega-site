@@ -7,7 +7,6 @@ import type { YearInReview } from '@/lib/tv/types';
 const DAY = 86_400;
 const SEASONS_PER_SHOW = 3;
 
-// Scores aren't stored, so this streams in after the year from TMDB, cached for a day.
 export async function YearBestEpisodes({ year }: { year: YearInReview }) {
   // top_shows only lists shows cached in tv_shows, so building from it skips nameless shows.
   const names = new Map(year.topShows.map((s) => [s.showTmdbId, s.name]));
