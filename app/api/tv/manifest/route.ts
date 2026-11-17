@@ -1,3 +1,5 @@
+import type { MetadataRoute } from 'next';
+
 // Under /api so it's reachable past the auth gate.
 export async function GET() {
   const manifest = {
@@ -13,8 +15,10 @@ export async function GET() {
     icons: [
       { src: '/cliffo/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/cliffo/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      // The couch sits well inside the 80% safe zone on a full-bleed background.
+      { src: '/cliffo/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
-  };
+  } satisfies MetadataRoute.Manifest;
   return Response.json(manifest, {
     headers: { 'content-type': 'application/manifest+json' },
   });

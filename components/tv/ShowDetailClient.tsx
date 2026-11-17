@@ -290,7 +290,7 @@ export function ShowDetailClient({
           </span>
           <span className="text-xs text-muted">{pct}%</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           {isFollowed ? (
             <>
               <button

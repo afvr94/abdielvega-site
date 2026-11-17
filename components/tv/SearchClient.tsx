@@ -85,7 +85,7 @@ export function SearchClient() {
                 </p>
               ) : null}
             </div>
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 items-start gap-1.5">
               {!hit.isFollowed ? <WantToWatchButton tmdbId={hit.tmdbId} /> : null}
               <FollowButton tmdbId={hit.tmdbId} initialFollowed={hit.isFollowed} />
             </div>
