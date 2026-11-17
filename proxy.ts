@@ -38,15 +38,10 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(new URL(pathname.slice(app.prefix.length) || '/', url));
     }
 
-    // Public paths served as-is — just refresh the Supabase session
-    if (isPublic(pathname)) {
-      const { response } = await updateSession(req);
-      return response;
-    }
+    const { response, signedIn } = await updateSession(req);
+    if (isPublic(pathname)) return response;
 
-    // Everything else: authenticate, then internally rewrite to /<prefix>/<path>
-    const { response, user } = await updateSession(req);
-    if (!user) {
+    if (!signedIn) {
       const loginUrl = url.clone();
       loginUrl.pathname = '/login';
       loginUrl.search = '';
