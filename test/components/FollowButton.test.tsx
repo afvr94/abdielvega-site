@@ -44,4 +44,12 @@ describe('FollowButton', () => {
     expect(await screen.findByText('Following')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('stays followed and says so when unfollowing fails', async () => {
+    vi.mocked(unfollowShow).mockRejectedValueOnce(new Error('offline'));
+    render(<FollowButton tmdbId={7} initialFollowed={true} />);
+    await userEvent.click(screen.getByRole('button'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/couldn.t unfollow/i);
+    expect(screen.getByRole('button')).toHaveTextContent('Following');
+  });
 });
