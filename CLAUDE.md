@@ -52,7 +52,7 @@ app/
   api/contact/route.ts  # nodemailer POST
   api/tv/sync/route.ts  # daily cron: refresh TMDB metadata, post new episodes to Discord
   api/tv/manifest/route.ts   # PWA manifest for cliffo (icons are static, in public/cliffo/)
-  api/tv/calendar/route.ts   # iCal feed of the next 90 days, guarded by TV_CALENDAR_TOKEN
+  api/tv/calendar/route.ts   # iCal feed (last 14 days + next 90), guarded by TV_CALENDAR_TOKEN
   layout.tsx            # root html/body + fonts
   not-found.tsx
   fonts.ts

@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
   if (!token || !tokenMatches(req.nextUrl.searchParams.get('token'), token)) {
     return new NextResponse('Not found', { status: 404 });
   }
-  const items = await getUpcoming(createAdminClient());
+  // Subscribed calendars drop events that leave the feed, so keep two weeks of history.
+  const items = await getUpcoming(createAdminClient(), 90, 14);
   return new NextResponse(buildCalendar(items, new Date()), {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',

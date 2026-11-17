@@ -5,6 +5,7 @@ vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({}) }));
 vi.mock('@/lib/tv/queries', () => ({ getUpcoming: vi.fn().mockResolvedValue([]) }));
 
 import { GET } from '@/app/api/tv/calendar/route';
+import { getUpcoming } from '@/lib/tv/queries';
 
 const TOKEN = 'a'.repeat(40);
 const req = (q: string) => new NextRequest(`https://tv.abdielvega.com/api/tv/calendar${q}`);
@@ -17,6 +18,7 @@ describe('calendar feed route', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toMatch(/text\/calendar/);
     expect(await res.text()).toContain('BEGIN:VCALENDAR');
+    expect(getUpcoming).toHaveBeenCalledWith(expect.anything(), 90, 14);
   });
 
   it.each([
