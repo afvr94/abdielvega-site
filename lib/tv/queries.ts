@@ -111,7 +111,8 @@ function parseHome(data: unknown): HomeJson {
     'dormant_count' in data &&
     typeof data.dormant_count === 'number' &&
     'services' in data &&
-    Array.isArray(data.services)
+    Array.isArray(data.services) &&
+    data.services.every((id) => typeof id === 'number')
   ) {
     return data as HomeJson;
   }

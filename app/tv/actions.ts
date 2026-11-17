@@ -75,7 +75,7 @@ export async function archiveShows(tmdbIds: number[]): Promise<void> {
 }
 
 export async function setServices(providerIds: number[]): Promise<void> {
-  if (!providerIds.every((id) => Number.isInteger(id) && id > 0)) {
+  if (!Array.isArray(providerIds) || !providerIds.every((id) => Number.isInteger(id) && id > 0)) {
     throw new Error('Invalid provider ids');
   }
   const db = await createClient();
