@@ -19,7 +19,7 @@ describe('proxy auth gate', () => {
     expect((await visit('/shows')).headers.get('location')).toBe('https://tv.abdielvega.com/login');
   });
 
-  it('rewrites a verified session into the tracker', async () => {
+  it('rewrites a request with a verified session into the tracker', async () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: 'u1' } }, error: null });
     const res = await visit('/shows');
     expect(res.headers.get('location')).toBeNull();
