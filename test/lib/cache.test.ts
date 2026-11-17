@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
 
 // Mock the TMDB client the cache module depends on.
 vi.mock('@/lib/tv/tmdb', () => ({
@@ -21,7 +22,7 @@ function makeRecordingDb() {
         return Promise.resolve({ error: null });
       },
     }),
-  } as unknown as SupabaseClient;
+  } as unknown as SupabaseClient<Database>;
   return { db, calls };
 }
 

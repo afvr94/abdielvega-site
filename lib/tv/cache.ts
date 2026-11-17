@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
 import { getShow, getSeason, getExternalIds } from './tmdb';
 
 // TMDB uses '' for unknown dates; Postgres `date` wants null.
@@ -8,7 +9,7 @@ function nullDate(d: string | null | undefined): string | null {
 
 // Fetch a show + all its seasons from TMDB once and persist into tv_shows /
 // tv_episodes. Called on follow, import, and the scheduled sync — never on read.
-export async function cacheShow(db: SupabaseClient, tmdbId: number): Promise<void> {
+export async function cacheShow(db: SupabaseClient<Database>, tmdbId: number): Promise<void> {
   const show = await getShow(tmdbId);
 
   let tvdbId: number | null = null;

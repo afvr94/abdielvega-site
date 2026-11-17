@@ -42,3 +42,5 @@ yarn-error.log*
 
 # design tooling working state (taste-skill gate history, Chrome profiles)
 /.taste-skill/
+
+/supabase/.temp/

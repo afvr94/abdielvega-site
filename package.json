@@ -12,7 +12,8 @@
     "prepare": "husky",
     "pre-commit": "lint-staged",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:types": "npx supabase@3.2.0 gen types typescript --project-id bapduijmricexifedxoe --schema public > lib/supabase/database.types.ts.tmp && mv lib/supabase/database.types.ts.tmp lib/supabase/database.types.ts && prettier --write lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

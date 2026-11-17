@@ -1,11 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database, Tables } from '@/lib/supabase/database.types';
 import type {
   Episode,
   LibraryItem,
   Show,
   ShowDetail,
   Stats,
-  TvList,
   TvListWithCount,
   UpcomingEpisode,
   UpNextItem,
@@ -13,28 +13,27 @@ import type {
 import { watchKey } from './types';
 import { addDaysIso, todayIso } from './format';
 
+type Db = SupabaseClient<Database>;
+
 const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_date';
 const EPISODE_COLUMNS =
   'tmdb_id,show_tmdb_id,season_number,episode_number,name,air_date,still_path';
 
-type ShowRow = {
-  tmdb_id: number;
-  name: string;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  status: string | null;
-  first_air_date: string | null;
-};
+type ShowRow = Pick<
+  Tables<'tv_shows'>,
+  'tmdb_id' | 'name' | 'poster_path' | 'backdrop_path' | 'status' | 'first_air_date'
+>;
 
-type EpisodeRow = {
-  tmdb_id: number;
-  show_tmdb_id: number;
-  season_number: number;
-  episode_number: number;
-  name: string | null;
-  air_date: string | null;
-  still_path: string | null;
-};
+type EpisodeRow = Pick<
+  Tables<'tv_episodes'>,
+  | 'tmdb_id'
+  | 'show_tmdb_id'
+  | 'season_number'
+  | 'episode_number'
+  | 'name'
+  | 'air_date'
+  | 'still_path'
+>;
 
 function mapShow(r: ShowRow): Show {
   return {
@@ -61,7 +60,6 @@ function mapEpisode(r: EpisodeRow): Episode {
 
 // PostgREST caps a single response (default 1000 rows); page through everything.
 async function fetchAll<T>(
-  db: SupabaseClient,
   build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
 ): Promise<T[]> {
   const PAGE = 1000;
@@ -99,7 +97,7 @@ function parseHome(data: unknown): HomeJson {
 }
 
 export async function getHome(
-  db: SupabaseClient
+  db: Db
 ): Promise<{ upNext: UpNextItem[]; thisWeek: UpcomingEpisode[]; behindMinutes: number }> {
   const { data, error } = await db.rpc('tv_home');
   if (error) throw error;
@@ -129,13 +127,10 @@ export async function getHome(
   };
 }
 
-export async function getShowDetail(
-  db: SupabaseClient,
-  tmdbId: number
-): Promise<ShowDetail | null> {
+export async function getShowDetail(db: Db, tmdbId: number): Promise<ShowDetail | null> {
   const [showRes, episodeRows, watchRows, followRow, allListsRes, memberRes] = await Promise.all([
     db.from('tv_shows').select(SHOW_COLUMNS).eq('tmdb_id', tmdbId).maybeSingle(),
-    fetchAll<EpisodeRow>(db, (from, to) =>
+    fetchAll<EpisodeRow>((from, to) =>
       db
         .from('tv_episodes')
         .select(EPISODE_COLUMNS)
@@ -144,7 +139,7 @@ export async function getShowDetail(
         .order('episode_number')
         .range(from, to)
     ),
-    fetchAll<{ season_number: number; episode_number: number }>(db, (from, to) =>
+    fetchAll<{ season_number: number; episode_number: number }>((from, to) =>
       db
         .from('tv_watches')
         .select('season_number,episode_number')
@@ -161,20 +156,20 @@ export async function getShowDetail(
   if (allListsRes.error) throw allListsRes.error;
   if (memberRes.error) throw memberRes.error;
 
-  const follow = followRow.data as { archived: boolean; watchlist: boolean } | null;
+  const follow = followRow.data;
   return {
-    show: mapShow(showRes.data as ShowRow),
+    show: mapShow(showRes.data),
     episodes: episodeRows.map(mapEpisode),
     watched: new Set(watchRows.map((w) => watchKey(w.season_number, w.episode_number))),
     isFollowed: follow !== null,
     archived: follow?.archived ?? false,
     watchlist: follow?.watchlist ?? false,
-    allLists: (allListsRes.data ?? []) as TvList[],
-    listIds: ((memberRes.data ?? []) as { list_id: number }[]).map((r) => r.list_id),
+    allLists: allListsRes.data ?? [],
+    listIds: (memberRes.data ?? []).map((r) => r.list_id),
   };
 }
 
-export async function isFollowing(db: SupabaseClient, tmdbId: number): Promise<boolean> {
+export async function isFollowing(db: Db, tmdbId: number): Promise<boolean> {
   const { data, error } = await db
     .from('tv_follows')
     .select('show_tmdb_id')
@@ -184,10 +179,10 @@ export async function isFollowing(db: SupabaseClient, tmdbId: number): Promise<b
   return data !== null;
 }
 
-export async function getFollowedTmdbIds(db: SupabaseClient): Promise<Set<number>> {
+export async function getFollowedTmdbIds(db: Db): Promise<Set<number>> {
   const { data, error } = await db.from('tv_follows').select('show_tmdb_id');
   if (error) throw error;
-  return new Set((data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id));
+  return new Set((data ?? []).map((r) => r.show_tmdb_id));
 }
 
 type StatsJson = {
@@ -203,7 +198,7 @@ type StatsJson = {
 };
 
 // Aggregated viewing stats — all computed in one tv_stats() SQL call.
-export async function getStats(db: SupabaseClient): Promise<Stats> {
+export async function getStats(db: Db): Promise<Stats> {
   const { data, error } = await db.rpc('tv_stats');
   if (error) throw error;
   const d = (data ?? {}) as StatsJson;
@@ -226,28 +221,18 @@ export async function getStats(db: SupabaseClient): Promise<Stats> {
 }
 
 // Actively-followed shows: not archived and not on the watchlist.
-export async function getActiveFollowIds(db: SupabaseClient): Promise<number[]> {
+export async function getActiveFollowIds(db: Db): Promise<number[]> {
   const { data, error } = await db
     .from('tv_follows')
     .select('show_tmdb_id')
     .eq('archived', false)
     .eq('watchlist', false);
   if (error) throw error;
-  return (data ?? []).map((r: { show_tmdb_id: number }) => r.show_tmdb_id);
+  return (data ?? []).map((r) => r.show_tmdb_id);
 }
 
-type LibraryRpcRow = {
-  show_tmdb_id: number;
-  archived: boolean;
-  watchlist: boolean;
-  aired_total: number;
-  aired_watched: number;
-  next_air_date: string | null;
-  last_watched_at: string | null;
-};
-
 // All custom lists with their member counts.
-export async function getLists(db: SupabaseClient): Promise<TvListWithCount[]> {
+export async function getLists(db: Db): Promise<TvListWithCount[]> {
   const [listRes, memberRes] = await Promise.all([
     db.from('tv_lists').select('id,name').order('name'),
     db.from('tv_list_shows').select('list_id'),
@@ -255,18 +240,18 @@ export async function getLists(db: SupabaseClient): Promise<TvListWithCount[]> {
   if (listRes.error) throw listRes.error;
   if (memberRes.error) throw memberRes.error;
   const counts = new Map<number, number>();
-  for (const m of (memberRes.data ?? []) as { list_id: number }[]) {
+  for (const m of memberRes.data ?? []) {
     counts.set(m.list_id, (counts.get(m.list_id) ?? 0) + 1);
   }
-  return ((listRes.data ?? []) as TvList[]).map((l) => ({
+  return (listRes.data ?? []).map((l) => ({
     id: l.id,
     name: l.name,
     count: counts.get(l.id) ?? 0,
   }));
 }
 
-async function listIdsByShow(db: SupabaseClient): Promise<Map<number, number[]>> {
-  const rows = await fetchAll<{ list_id: number; show_tmdb_id: number }>(db, (from, to) =>
+async function listIdsByShow(db: Db): Promise<Map<number, number[]>> {
+  const rows = await fetchAll<{ list_id: number; show_tmdb_id: number }>((from, to) =>
     db.from('tv_list_shows').select('list_id,show_tmdb_id').range(from, to)
   );
   const map = new Map<number, number[]>();
@@ -274,11 +259,19 @@ async function listIdsByShow(db: SupabaseClient): Promise<Map<number, number[]>>
   return map;
 }
 
+// The type generator marks every column a table-returning function returns as non-null, but
+// next_air_date and last_watched_at are null for shows with nothing upcoming
+// or nothing watched.
+type LibraryRpcRow = Omit<
+  Database['public']['Functions']['tv_library']['Returns'][number],
+  'next_air_date' | 'last_watched_at'
+> & { next_air_date: string | null; last_watched_at: string | null };
+
 // Every followed show (archived included) with aired progress + next air date.
-export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
+export async function getLibrary(db: Db): Promise<LibraryItem[]> {
   const { data, error } = await db.rpc('tv_library');
   if (error) throw error;
-  const rows = (data ?? []) as LibraryRpcRow[];
+  const rows: LibraryRpcRow[] = data ?? [];
   if (rows.length === 0) return [];
 
   const [{ data: showData, error: showErr }, listMap] = await Promise.all([
@@ -292,7 +285,7 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
     listIdsByShow(db),
   ]);
   if (showErr) throw showErr;
-  const shows = new Map((showData as ShowRow[]).map((r) => [r.tmdb_id, mapShow(r)]));
+  const shows = new Map((showData ?? []).map((r) => [r.tmdb_id, mapShow(r)]));
 
   const items: LibraryItem[] = [];
   for (const r of rows) {
@@ -301,11 +294,11 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
     items.push({
       show,
       archived: r.archived,
-      watchlist: r.watchlist ?? false,
+      watchlist: r.watchlist,
       airedTotal: Number(r.aired_total),
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,
-      lastWatchedAt: r.last_watched_at ?? null,
+      lastWatchedAt: r.last_watched_at,
       listIds: listMap.get(r.show_tmdb_id) ?? [],
     });
   }
@@ -321,14 +314,14 @@ export async function getLibrary(db: SupabaseClient): Promise<LibraryItem[]> {
 }
 
 // Future episodes across active (non-archived) follows, within `days`.
-export async function getUpcoming(db: SupabaseClient, days = 90): Promise<UpcomingEpisode[]> {
+export async function getUpcoming(db: Db, days = 90): Promise<UpcomingEpisode[]> {
   const ids = await getActiveFollowIds(db);
   if (ids.length === 0) return [];
 
   const today = todayIso();
   const end = addDaysIso(today, days);
 
-  const epRows = await fetchAll(db, (from, to) =>
+  const epRows = await fetchAll((from, to) =>
     db
       .from('tv_episodes')
       .select(`${EPISODE_COLUMNS},show:tv_shows(${SHOW_COLUMNS})`)
@@ -338,9 +331,6 @@ export async function getUpcoming(db: SupabaseClient, days = 90): Promise<Upcomi
       .lte('air_date', end)
       .order('air_date')
       .range(from, to)
-      // The client has no schema types, so the select parser assumes embeds are
-      // arrays. A many-to-one embed comes back as one object.
-      .overrideTypes<(EpisodeRow & { show: ShowRow | null })[], { merge: false }>()
   );
 
   const out: UpcomingEpisode[] = [];
