@@ -335,21 +335,22 @@ Only after production is confirmed working on Vercel:
 
 ## Environment variable reference
 
-| Name                            | Where                      | Notes                                                            |
-| ------------------------------- | -------------------------- | ---------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Settings → API  | Public, safe to ship                                             |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API  | New-format `sb_publishable_…` or legacy `anon` JWT — both work   |
-| `GITHUB_TOKEN`                  | github.com/settings/tokens | Fine-grained, no scopes needed for public repos                  |
-| `SMTP_HOST`                     | Your mail provider         | iCloud: `smtp.mail.me.com`. Namecheap: `mail.privateemail.com`   |
-| `SMTP_PORT`                     | Your mail provider         | iCloud: `587`. Namecheap: `465`                                  |
-| `SMTP_USER`                     | Your mail provider         | iCloud: `<you>@icloud.com`. Namecheap: `hey@abdielvega.com`      |
-| `EMAIL_PASSWORD`                | Your mail provider         | iCloud: **app-specific password** from appleid.apple.com         |
-| `EMAIL`                         | You                        | From address recipients see (e.g. `hey@abdielvega.com`)          |
-| `CONTACT_INBOX`                 | You                        | Optional, defaults to `EMAIL`                                    |
-| `TMDB_ACCESS_TOKEN`             | themoviedb.org → API       | v4 read access token (Bearer). TV tracker metadata source        |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Settings → API  | **Server-only.** Import script + cron sync. Never ship to client |
-| `CRON_SECRET`                   | You                        | Random string guarding the TV cron sync route                    |
-| `DISCORD_WEBHOOK_URL`           | Discord channel → Webhooks | **Server-only.** Daily TV post; skipped without it               |
+| Name                            | Where                        | Notes                                                              |
+| ------------------------------- | ---------------------------- | ------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Settings → API    | Public, safe to ship                                               |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API    | New-format `sb_publishable_…` or legacy `anon` JWT — both work     |
+| `GITHUB_TOKEN`                  | github.com/settings/tokens   | Fine-grained, no scopes needed for public repos                    |
+| `SMTP_HOST`                     | Your mail provider           | iCloud: `smtp.mail.me.com`. Namecheap: `mail.privateemail.com`     |
+| `SMTP_PORT`                     | Your mail provider           | iCloud: `587`. Namecheap: `465`                                    |
+| `SMTP_USER`                     | Your mail provider           | iCloud: `<you>@icloud.com`. Namecheap: `hey@abdielvega.com`        |
+| `EMAIL_PASSWORD`                | Your mail provider           | iCloud: **app-specific password** from appleid.apple.com           |
+| `EMAIL`                         | You                          | From address recipients see (e.g. `hey@abdielvega.com`)            |
+| `CONTACT_INBOX`                 | You                          | Optional, defaults to `EMAIL`                                      |
+| `TMDB_ACCESS_TOKEN`             | themoviedb.org → API         | v4 read access token (Bearer). TV tracker metadata source          |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Settings → API    | **Server-only.** Import script + cron sync. Never ship to client   |
+| `CRON_SECRET`                   | You                          | Random string guarding the TV cron sync route                      |
+| `DISCORD_WEBHOOK_URL`           | Discord channel → Webhooks   | **Server-only.** Daily TV post; skipped without it                 |
+| `TV_CALENDAR_TOKEN`             | You (`openssl rand -hex 32`) | **Server-only.** Secret in the iCal feed URL; feed 404s without it |
 
 ### Apple / iCloud SMTP setup
 

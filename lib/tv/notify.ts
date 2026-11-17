@@ -9,7 +9,7 @@ export type NotifyItem = {
 
 export type Behind = { episodes: number; minutes: number };
 
-const APP_URL = 'https://tv.abdielvega.com';
+export const APP_URL = 'https://tv.abdielvega.com';
 const MAX_LINES = 25;
 const DISCORD_MAX_CHARS = 2000;
 const SUPPRESS_EMBEDS = 1 << 2;
