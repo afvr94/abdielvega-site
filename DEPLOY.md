@@ -456,6 +456,10 @@ doesn't show as aired at 8pm. Every function below that needs a date calls these
 helpers, so the zone lives only in `tv_date()`. The app's `dateIso()` in
 `lib/tv/format.ts` uses the same zone.
 
+In a filter, write `(select public.tv_today())`, not `public.tv_today()`. The
+bare call inlines to a time-zone conversion that Postgres repeats for every row
+it scans (about 10 ms per pass over `tv_episodes`); the subquery runs it once.
+
 ```sql
 -- No `set search_path` here: it stops Postgres inlining these into the queries that call them per row.
 create or replace function public.tv_date(ts timestamptz)
@@ -493,7 +497,7 @@ returns table (
     join tv_follows f on f.show_tmdb_id = e.show_tmdb_id and not f.archived and not f.watchlist
     where e.season_number > 0            -- specials (season 0) excluded
       and e.air_date is not null
-      and e.air_date <= public.tv_today()
+      and e.air_date <= (select public.tv_today())
   ),
   marked as (
     select a.*, w.id as watch_id
@@ -548,7 +552,7 @@ returns table (show_tmdb_id integer) language sql stable as $$
       select 1 from tv_episodes e
       where e.show_tmdb_id = f.show_tmdb_id
         and e.season_number > 0
-        and e.air_date <= public.tv_today() - 30
+        and e.air_date <= (select public.tv_today()) - 30
         and not exists (
           select 1 from tv_watches w
           where w.show_tmdb_id  = e.show_tmdb_id
@@ -572,8 +576,9 @@ the hours left skip them. Run once, after the Up Next, Watchlist, Dormant and
 Streaming services sections:
 
 ```sql
+-- Row security hides the row counts from the planner, which then probes tv_watches once per episode; hash joins touch 6x fewer pages.
 create or replace function tv_home()
-returns jsonb language sql stable as $$
+returns jsonb language sql stable set enable_nestloop = off as $$
   with dormant as materialized (
     select show_tmdb_id from tv_dormant()
   ), followed as (
@@ -616,14 +621,14 @@ returns jsonb language sql stable as $$
       join followed a on a.show_tmdb_id = e.show_tmdb_id
       join tv_shows s on s.tmdb_id = e.show_tmdb_id
       where e.season_number > 0
-        and e.air_date between public.tv_today() and public.tv_today() + 7
+        and e.air_date between (select public.tv_today()) and (select public.tv_today()) + 7
     ), '[]'::jsonb),
     'behind_minutes', (
       select coalesce(sum(e.runtime), 0)
       from tv_episodes e
       join active a on a.show_tmdb_id = e.show_tmdb_id
       where e.season_number > 0
-        and e.air_date <= public.tv_today()
+        and e.air_date <= (select public.tv_today())
         and not exists (
           select 1 from tv_watches w
           where w.show_tmdb_id  = e.show_tmdb_id
@@ -664,7 +669,7 @@ returns table (
   aired as (
     select show_tmdb_id, season_number, episode_number
     from tv_episodes
-    where season_number > 0 and air_date is not null and air_date <= public.tv_today()
+    where season_number > 0 and air_date is not null and air_date <= (select public.tv_today())
   ),
   counts as (
     select f.show_tmdb_id,
@@ -681,7 +686,7 @@ returns table (
   upcoming as (
     select show_tmdb_id, min(air_date) as next_air_date
     from tv_episodes
-    where season_number > 0 and air_date is not null and air_date > public.tv_today()
+    where season_number > 0 and air_date is not null and air_date > (select public.tv_today())
     group by show_tmdb_id
   ),
   lastw as (
@@ -947,8 +952,8 @@ returns table (
   join tv_shows  s on s.tmdb_id = e.show_tmdb_id
   where e.season_number > 0
     and e.air_date is not null
-    and e.air_date <= public.tv_today()
-    and e.air_date >= public.tv_today() - interval '30 days'
+    and e.air_date <= (select public.tv_today())
+    and e.air_date >= (select public.tv_today()) - interval '30 days'
     and not exists (select 1 from tv_notified n where n.episode_tmdb_id = e.tmdb_id)
     and not exists (
       select 1 from tv_watches w
