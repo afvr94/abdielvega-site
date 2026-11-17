@@ -329,7 +329,12 @@ export type Database = {
     };
     Functions: {
       tv_date: { Args: { ts: string }; Returns: string };
-      tv_dormant: { Args: never; Returns: { show_tmdb_id: number }[] };
+      tv_dormant: {
+        Args: never;
+        Returns: {
+          show_tmdb_id: number;
+        }[];
+      };
       tv_home: { Args: never; Returns: Json };
       tv_library: {
         Args: never;
