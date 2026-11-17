@@ -1,11 +1,21 @@
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Image from 'next/image';
 import { LoginForm } from '@/components/budget/LoginForm';
 import { cliffoTheme } from '@/app/tv/fonts';
 
-export const metadata = {
-  title: 'Sign in',
-};
+async function onTvHost() {
+  const host = (await headers()).get('host') ?? '';
+  return host.toLowerCase().split('.')[0] === 'tv';
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  if (!(await onTvHost())) return { title: 'Sign in' };
+  return {
+    title: { absolute: 'Sign in · cliffo' },
+    icons: { icon: '/tv/icon.svg', apple: '/tv/apple-icon.png' },
+  };
+}
 
 const ERRORS = {
   denied: "That Google account can't sign in here.",
@@ -19,8 +29,7 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   const message = !error ? null : error === 'denied' ? ERRORS.denied : ERRORS.failed;
-  const host = (await headers()).get('host') ?? '';
-  const isTv = host.split('.')[0] === 'tv';
+  const isTv = await onTvHost();
   return (
     <div
       className={`${isTv ? cliffoTheme : ''} flex min-h-screen items-center justify-center bg-cream px-5 py-10`}
