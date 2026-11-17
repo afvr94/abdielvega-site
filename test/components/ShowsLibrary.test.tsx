@@ -45,13 +45,13 @@ const items = [
     dormant: true,
     airedTotal: 9,
     airedWatched: 2,
-  }), // dormant
+  }),
   makeLibraryItem({
     show: makeShow({ tmdbId: 8, name: 'Hotel' }),
     dormant: true,
     airedTotal: 4,
     airedWatched: 0,
-  }), // dormant, never started
+  }),
 ];
 
 function tab(name: RegExp) {

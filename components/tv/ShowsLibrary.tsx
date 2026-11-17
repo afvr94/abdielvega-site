@@ -62,7 +62,6 @@ export function ShowsLibrary({
   const [listId, setListId] = useState<number | null>(null);
   const activeChip = useRef<HTMLButtonElement>(null);
 
-  // A deep link to a filter past the fold of the chip row should land with that chip visible.
   useEffect(() => {
     activeChip.current?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, []);

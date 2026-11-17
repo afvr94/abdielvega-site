@@ -547,7 +547,6 @@ returns table (show_tmdb_id integer) language sql stable as $$
       select 1 from tv_episodes e
       where e.show_tmdb_id = f.show_tmdb_id
         and e.season_number > 0
-        -- A 30-day grace, so a show returning from a long break isn't dormant on premiere day.
         and e.air_date <= public.tv_today() - 30
         and not exists (
           select 1 from tv_watches w
