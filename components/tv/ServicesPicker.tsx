@@ -19,6 +19,7 @@ export function ServicesPicker({
   const [, startSave] = useTransition();
   const saved = useRef(initial);
   const latest = useRef(0);
+  const queue = useRef(Promise.resolve());
 
   function toggle(id: number) {
     const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
@@ -26,8 +27,11 @@ export function ServicesPicker({
     setSelected(next);
     setFailed(false);
     startSave(async () => {
+      // Saves run one at a time, so an older list can never land after a newer one.
+      const save = queue.current.then(() => setServices(next));
+      queue.current = save.catch(() => {});
       try {
-        await setServices(next);
+        await save;
         saved.current = next;
       } catch {
         // A newer toggle already sends the full list, so only the last save may roll back.

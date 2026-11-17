@@ -34,12 +34,14 @@ export async function searchShows(query: string): Promise<SearchHit[]> {
 export async function followShow(tmdbId: number): Promise<void> {
   const db = await createClient();
   await cacheShow(db, tmdbId);
-  const { error } = await db
-    .from('tv_follows')
-    .upsert({ show_tmdb_id: tmdbId }, { onConflict: 'show_tmdb_id', ignoreDuplicates: true });
+  const [{ error }] = await Promise.all([
+    db
+      .from('tv_follows')
+      .upsert({ show_tmdb_id: tmdbId }, { onConflict: 'show_tmdb_id', ignoreDuplicates: true }),
+    // The daily sync fills providers too, so a TMDB hiccup here shouldn't fail the follow.
+    cacheProviders(db, tmdbId).catch(() => {}),
+  ]);
   if (error) throw error;
-  // The daily sync fills providers too, so a TMDB hiccup here shouldn't fail the follow.
-  await cacheProviders(db, tmdbId).catch(() => {});
   revalidatePath('/tv');
   revalidatePath(`/tv/show/${tmdbId}`);
 }

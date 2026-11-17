@@ -117,7 +117,9 @@ follow / archive / watchlist state; `tv_watches` is one row per watched episode,
 keyed on `(show, season, episode)` rather than the episode's `tmdb_id` so
 imported history records even before metadata is cached. `tv_lists` /
 `tv_list_shows` back the custom lists, and `tv_notified` tracks which episodes
-the cron has already emailed about. The heavier reads go through Postgres
+the cron has already posted about. `tv_shows.providers` holds each show's US
+streaming services (refreshed by the cron), and the one-row `tv_settings` holds
+the services you pay for. The heavier reads go through Postgres
 functions — `tv_up_next()`, `tv_dormant()`, `tv_library()`, `tv_stats()`,
 `tv_pending_notifications()`.
 
