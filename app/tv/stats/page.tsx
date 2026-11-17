@@ -120,8 +120,8 @@ function YearSection({
 
       {review.bulk.map((b) => (
         <p key={b.date} className="text-xs text-muted">
-          Leaves out {b.count.toLocaleString('en-US')} episodes marked on {formatAirDate(b.date)}, a
-          bulk import.
+          These stats skip {b.count.toLocaleString('en-US')} episodes bulk-imported on{' '}
+          {formatAirDate(b.date)}.
         </p>
       ))}
     </section>

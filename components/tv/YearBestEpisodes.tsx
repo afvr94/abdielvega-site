@@ -10,7 +10,7 @@ const SEASONS_PER_SHOW = 3;
 export async function YearBestEpisodes({ year }: { year: YearInReview }) {
   // top_shows only lists shows cached in tv_shows, so building from it skips nameless shows.
   const names = new Map(year.topShows.map((s) => [s.showTmdbId, s.name]));
-  // A per-show cap, so one long-running show can't crowd the others out of the fetch.
+  // Without a cap, a show watched across many seasons costs one TMDB fetch per season.
   const pairs = year.topShows.flatMap(({ showTmdbId }) =>
     [...new Set(year.topWatched.filter(([s]) => s === showTmdbId).map(([, se]) => se))]
       .slice(0, SEASONS_PER_SHOW)

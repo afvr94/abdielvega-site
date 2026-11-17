@@ -829,9 +829,10 @@ $$;
 ### Year in review
 
 Backs the year section on `/stats`: totals, top shows, the biggest day, the
-longest daily streak and new shows for one calendar year (Eastern time). A day
-with 100 or more watches is a bulk import (the TV Time import stamped undated
-history with its import day), so it's left out and listed under `bulk`. Run once:
+longest daily streak and new shows for one calendar year (Eastern time). The TV
+Time import stamped undated history with the day it ran, so the function treats
+any day with 100 or more watches as a bulk import. It leaves those days out and
+lists them under `bulk`. Run once:
 
 ```sql
 create or replace function tv_year(y int)

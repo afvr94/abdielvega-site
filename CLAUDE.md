@@ -126,9 +126,10 @@ functions — `tv_up_next()`, `tv_dormant()`, `tv_library()`, `tv_stats()`, `tv_
 
 Library reads come from Postgres; `lib/tv/tmdb.ts` writes metadata only on follow,
 import and the scheduled sync. Page renders call TMDB only for watch providers,
-for the preview of a show that isn't cached yet, and for the year review's
-episode scores (top shows only, cached a day, streamed after the page). Watch providers are cached
-for a day and stream in after the episode list.
+for the preview of a show that isn't cached yet, and for episode scores in the
+year in review. Watch providers are cached for a day and stream in after the
+episode list. Episode scores cover only the year's top shows, are cached for a
+day and stream in after the rest of `/stats`.
 
 ## Local development
 
