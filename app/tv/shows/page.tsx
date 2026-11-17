@@ -9,7 +9,7 @@ export const metadata = { title: 'Shows' };
 export default async function ShowsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: string | string[] }>;
 }) {
   const { filter } = await searchParams;
   const db = await createClient();
@@ -29,5 +29,11 @@ export default async function ShowsPage({
     );
   }
 
-  return <ShowsLibrary items={items} lists={lists} initialFilter={filter} />;
+  return (
+    <ShowsLibrary
+      items={items}
+      lists={lists}
+      initialFilter={typeof filter === 'string' ? filter : undefined}
+    />
+  );
 }
