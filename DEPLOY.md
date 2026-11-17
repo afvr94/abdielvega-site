@@ -934,7 +934,7 @@ alter table tv_notified enable row level security;
 -- Seed: everything already aired is considered "already notified".
 insert into tv_notified (episode_tmdb_id)
 select tmdb_id from tv_episodes
-where season_number > 0 and air_date is not null and air_date <= public.tv_today()
+where season_number > 0 and air_date is not null and air_date <= (select public.tv_today())
 on conflict do nothing;
 
 create or replace function tv_pending_notifications()
