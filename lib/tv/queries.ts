@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/lib/supabase/database.types';
+import type { Database, Tables } from '@/lib/supabase/database.types';
 import type {
   Episode,
   LibraryItem,
@@ -19,24 +19,21 @@ const SHOW_COLUMNS = 'tmdb_id,name,poster_path,backdrop_path,status,first_air_da
 const EPISODE_COLUMNS =
   'tmdb_id,show_tmdb_id,season_number,episode_number,name,air_date,still_path';
 
-type ShowRow = {
-  tmdb_id: number;
-  name: string;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  status: string | null;
-  first_air_date: string | null;
-};
+type ShowRow = Pick<
+  Tables<'tv_shows'>,
+  'tmdb_id' | 'name' | 'poster_path' | 'backdrop_path' | 'status' | 'first_air_date'
+>;
 
-type EpisodeRow = {
-  tmdb_id: number;
-  show_tmdb_id: number;
-  season_number: number;
-  episode_number: number;
-  name: string | null;
-  air_date: string | null;
-  still_path: string | null;
-};
+type EpisodeRow = Pick<
+  Tables<'tv_episodes'>,
+  | 'tmdb_id'
+  | 'show_tmdb_id'
+  | 'season_number'
+  | 'episode_number'
+  | 'name'
+  | 'air_date'
+  | 'still_path'
+>;
 
 function mapShow(r: ShowRow): Show {
   return {
@@ -63,7 +60,6 @@ function mapEpisode(r: EpisodeRow): Episode {
 
 // PostgREST caps a single response (default 1000 rows); page through everything.
 async function fetchAll<T>(
-  db: Db,
   build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
 ): Promise<T[]> {
   const PAGE = 1000;
@@ -134,7 +130,7 @@ export async function getHome(
 export async function getShowDetail(db: Db, tmdbId: number): Promise<ShowDetail | null> {
   const [showRes, episodeRows, watchRows, followRow, allListsRes, memberRes] = await Promise.all([
     db.from('tv_shows').select(SHOW_COLUMNS).eq('tmdb_id', tmdbId).maybeSingle(),
-    fetchAll<EpisodeRow>(db, (from, to) =>
+    fetchAll<EpisodeRow>((from, to) =>
       db
         .from('tv_episodes')
         .select(EPISODE_COLUMNS)
@@ -143,7 +139,7 @@ export async function getShowDetail(db: Db, tmdbId: number): Promise<ShowDetail 
         .order('episode_number')
         .range(from, to)
     ),
-    fetchAll<{ season_number: number; episode_number: number }>(db, (from, to) =>
+    fetchAll<{ season_number: number; episode_number: number }>((from, to) =>
       db
         .from('tv_watches')
         .select('season_number,episode_number')
@@ -255,7 +251,7 @@ export async function getLists(db: Db): Promise<TvListWithCount[]> {
 }
 
 async function listIdsByShow(db: Db): Promise<Map<number, number[]>> {
-  const rows = await fetchAll<{ list_id: number; show_tmdb_id: number }>(db, (from, to) =>
+  const rows = await fetchAll<{ list_id: number; show_tmdb_id: number }>((from, to) =>
     db.from('tv_list_shows').select('list_id,show_tmdb_id').range(from, to)
   );
   const map = new Map<number, number[]>();
@@ -263,11 +259,18 @@ async function listIdsByShow(db: Db): Promise<Map<number, number[]>> {
   return map;
 }
 
+// The generator types SETOF function columns as non-null; these two are null
+// for shows with nothing upcoming or nothing watched.
+type LibraryRpcRow = Omit<
+  Database['public']['Functions']['tv_library']['Returns'][number],
+  'next_air_date' | 'last_watched_at'
+> & { next_air_date: string | null; last_watched_at: string | null };
+
 // Every followed show (archived included) with aired progress + next air date.
 export async function getLibrary(db: Db): Promise<LibraryItem[]> {
   const { data, error } = await db.rpc('tv_library');
   if (error) throw error;
-  const rows = data ?? [];
+  const rows: LibraryRpcRow[] = data ?? [];
   if (rows.length === 0) return [];
 
   const [{ data: showData, error: showErr }, listMap] = await Promise.all([
@@ -294,7 +297,7 @@ export async function getLibrary(db: Db): Promise<LibraryItem[]> {
       airedTotal: Number(r.aired_total),
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,
-      lastWatchedAt: r.last_watched_at ?? null,
+      lastWatchedAt: r.last_watched_at,
       listIds: listMap.get(r.show_tmdb_id) ?? [],
     });
   }
@@ -317,7 +320,7 @@ export async function getUpcoming(db: Db, days = 90): Promise<UpcomingEpisode[]>
   const today = todayIso();
   const end = addDaysIso(today, days);
 
-  const epRows = await fetchAll(db, (from, to) =>
+  const epRows = await fetchAll((from, to) =>
     db
       .from('tv_episodes')
       .select(`${EPISODE_COLUMNS},show:tv_shows(${SHOW_COLUMNS})`)
