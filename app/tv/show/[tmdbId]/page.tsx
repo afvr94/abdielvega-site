@@ -7,6 +7,7 @@ import { getShow, imageUrl } from '@/lib/tv/tmdb';
 import { ShowDetailClient } from '@/components/tv/ShowDetailClient';
 import { FollowButton } from '@/components/tv/FollowButton';
 import { WatchProviders } from '@/components/tv/WatchProviders';
+import { ShowReception } from '@/components/tv/ShowReception';
 
 export default async function ShowPage({ params }: { params: Promise<{ tmdbId: string }> }) {
   const { tmdbId: raw } = await params;
@@ -49,10 +50,15 @@ export default async function ShowPage({ params }: { params: Promise<{ tmdbId: s
       isFollowed={detail.isFollowed}
       archived={detail.archived}
       watchlist={detail.watchlist}
-      whereToWatch={
-        <Suspense fallback={null}>
-          <WatchProviders tmdbId={tmdbId} />
-        </Suspense>
+      streamedInfo={
+        <>
+          <Suspense fallback={null}>
+            <ShowReception tmdbId={tmdbId} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <WatchProviders tmdbId={tmdbId} />
+          </Suspense>
+        </>
       }
       allLists={detail.allLists}
       listIds={detail.listIds}

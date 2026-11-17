@@ -1,6 +1,7 @@
 // Thin wrapper over the TMDB v3 REST API using a v4 bearer token.
 
 const BASE = 'https://api.themoviedb.org/3';
+const DAY = 86_400;
 const IMG = 'https://image.tmdb.org/t/p';
 
 function bearer(): string {
@@ -145,6 +146,59 @@ export async function getWatchProviders(
   region = 'US'
 ): Promise<{ providers: WatchProvider[]; link: string | null }> {
   // Cached for a day — availability changes slowly and this runs on page view.
-  const data = await tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, 86_400);
+  const data = await tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, DAY);
   return pickStreamingProviders(data, region);
+}
+
+export type Score = { voteAverage: number; voteCount: number };
+
+export type ShowReview = {
+  author: string;
+  rating: number | null;
+  excerpt: string;
+  url: string;
+};
+
+type TmdbVotes = { vote_average?: number; vote_count?: number };
+
+const toScore = (r: TmdbVotes): Score | null =>
+  r.vote_count ? { voteAverage: r.vote_average ?? 0, voteCount: r.vote_count } : null;
+
+export async function getEpisodeScore(
+  seriesId: number,
+  season: number,
+  episode: number
+): Promise<Score | null> {
+  const r = await tmdb<TmdbVotes>(`/tv/${seriesId}/season/${season}/episode/${episode}`, {}, DAY);
+  return toScore(r);
+}
+
+export async function getShowReception(
+  seriesId: number
+): Promise<{ score: Score | null; reviews: ShowReview[] }> {
+  const [show, reviews] = await Promise.allSettled([
+    tmdb<TmdbVotes>(`/tv/${seriesId}`, {}, DAY),
+    tmdb<{
+      results?: {
+        author: string;
+        content: string;
+        url: string;
+        author_details?: { rating?: number | null };
+      }[];
+    }>(`/tv/${seriesId}/reviews`, {}, DAY),
+  ]);
+  return {
+    score: show.status === 'fulfilled' ? toScore(show.value) : null,
+    reviews: (reviews.status === 'fulfilled' ? (reviews.value.results ?? []) : [])
+      .slice(0, 3)
+      .map((r) => ({
+        author: r.author,
+        rating: r.author_details?.rating ?? null,
+        excerpt:
+          [...r.content].length > 400
+            ? `${[...r.content].slice(0, 400).join('').trimEnd()}…`
+            : r.content,
+        url: r.url,
+      })),
+  };
 }

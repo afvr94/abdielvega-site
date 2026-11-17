@@ -212,6 +212,16 @@
   }
 }
 
+@keyframes cliffo-sheet {
+  from {
+    translate: 0 100%;
+  }
+}
+
+.cliffo .cliffo-sheet[open] {
+  animation: cliffo-sheet 320ms var(--ease);
+}
+
 .cliffo .rise > * {
   animation: cliffo-rise 380ms var(--ease) backwards;
 }
