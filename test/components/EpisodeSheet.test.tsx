@@ -8,8 +8,9 @@ vi.mock('@/app/tv/actions', () => ({ getEpisodeSheet }));
 import { EpisodeSheet } from '@/components/tv/EpisodeSheet';
 import { makeEpisode } from '../factories';
 
-// jsdom has no modal dialog support.
+// jsdom has no modal dialog or pointer capture support.
 beforeAll(() => {
+  Element.prototype.setPointerCapture = () => {};
   HTMLDialogElement.prototype.showModal = function () {
     this.open = true;
   };
@@ -98,6 +99,12 @@ describe('EpisodeSheet', () => {
   it('closes when the backdrop is tapped', async () => {
     const { onClose } = renderSheet(false);
     await userEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes from the handle button', async () => {
+    const { onClose } = renderSheet(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

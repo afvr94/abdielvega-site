@@ -64,13 +64,18 @@ export function EpisodeSheet({
       onClick={(e) => {
         if (e.target === e.currentTarget) e.currentTarget.close();
       }}
-      className="cliffo-sheet mx-0 mt-auto mb-0 max-h-[90dvh] w-full max-w-none overflow-y-auto bg-transparent p-0 text-ink backdrop:bg-black/55 sm:mx-auto sm:max-w-lg"
+      className="cliffo-sheet mx-0 mt-auto mb-0 max-h-[90dvh] w-full max-w-none overflow-y-auto overscroll-contain bg-transparent p-0 text-ink backdrop:bg-black/55 sm:mx-auto sm:max-w-lg"
     >
       <div className="rounded-t-[26px] border border-b-0 border-hairline bg-card px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        <div
-          aria-hidden
-          className="-mx-5 cursor-grab touch-none pt-2.5 pb-3"
-          onPointerDown={(e) => (dragFrom.current = e.clientY)}
+        <button
+          type="button"
+          aria-label="Close"
+          className="-mx-5 block w-[calc(100%+2.5rem)] cursor-grab touch-none pt-2.5 pb-3"
+          onClick={() => dialog.current?.close()}
+          onPointerDown={(e) => {
+            dragFrom.current = e.clientY;
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
           onPointerUp={(e) => {
             if (dragFrom.current !== null && e.clientY - dragFrom.current > SWIPE_CLOSE_PX) {
               dialog.current?.close();
@@ -78,8 +83,8 @@ export function EpisodeSheet({
             dragFrom.current = null;
           }}
         >
-          <div className="mx-auto h-1 w-10 rounded-full bg-hairline" />
-        </div>
+          <span className="mx-auto block h-1 w-10 rounded-full bg-hairline" />
+        </button>
 
         <div className="relative aspect-video overflow-hidden rounded-2xl bg-cream">
           {still ? (
@@ -94,7 +99,12 @@ export function EpisodeSheet({
         </div>
 
         {showSpoilers ? (
-          <h2 className="mt-3 font-display text-xl leading-tight font-semibold">
+          <h2
+            // Focus lands here after "Show details" so it isn't dropped with the removed button.
+            tabIndex={-1}
+            autoFocus={spoilerRevealed}
+            className="mt-3 font-display text-xl leading-tight font-semibold outline-none"
+          >
             {episode.name ?? code}
           </h2>
         ) : null}
