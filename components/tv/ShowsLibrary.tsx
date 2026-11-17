@@ -144,7 +144,7 @@ export function ShowsLibrary({
             onClick={() => startArchive(() => archiveShows(shown.map((i) => i.show.tmdbId)))}
             className="shrink-0 rounded-full bg-expense px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-cream transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            Archive all {shown.length}
+            {archiving ? 'Archiving…' : `Archive all ${shown.length}`}
           </button>
         </div>
       ) : null}
@@ -202,7 +202,7 @@ export function ShowsLibrary({
                     disabled={archiving}
                     onClick={() => startArchive(() => archiveShows([i.show.tmdbId]))}
                     aria-label={`Archive ${i.show.name}`}
-                    className="mt-1.5 w-full rounded-full border border-hairline py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
+                    className="mt-1.5 w-full rounded-full border border-hairline bg-card py-2 text-[11px] font-semibold text-muted transition-colors hover:text-ink disabled:opacity-50"
                   >
                     Archive
                   </button>

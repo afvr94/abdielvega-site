@@ -40,24 +40,26 @@ export default async function TvHomePage() {
 
   return (
     <div className="space-y-10">
-      <UpNextSummary
-        behind={behind}
-        thisWeek={thisWeek}
-        behindMinutes={behindMinutes}
-        today={today}
-      />
+      <div className="space-y-4">
+        <UpNextSummary
+          behind={behind}
+          thisWeek={thisWeek}
+          behindMinutes={behindMinutes}
+          today={today}
+        />
 
-      {dormantCount > 0 ? (
-        <Link
-          href="/shows?filter=dormant"
-          className="-mt-6 flex items-center justify-between gap-3 rounded-full border border-hairline px-4 py-2.5 text-xs text-muted transition-colors hover:text-ink"
-        >
-          <span>
-            {dormantCount} {dormantCount === 1 ? 'show' : 'shows'} untouched for 6 months
-          </span>
-          <span className="font-semibold text-ink">Review</span>
-        </Link>
-      ) : null}
+        {dormantCount > 0 ? (
+          <Link
+            href="/shows?filter=dormant"
+            className="flex items-center justify-between gap-3 rounded-full border border-hairline bg-card px-4 py-2.5 text-xs text-muted transition-colors hover:text-ink"
+          >
+            <span>
+              {dormantCount} {dormantCount === 1 ? 'show' : 'shows'} untouched for 6 months
+            </span>
+            <span className="font-semibold text-ink">Review</span>
+          </Link>
+        ) : null}
+      </div>
 
       {thisWeek.length > 0 ? (
         <section>
