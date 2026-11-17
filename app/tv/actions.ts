@@ -136,13 +136,11 @@ export type EpisodeSheetData = {
   score: Score | null;
 };
 
-// Read behind a server action because the sheet loads on tap, not on page render.
 export async function getEpisodeSheet(
   tmdbId: number,
   season: number,
   episode: number
 ): Promise<EpisodeSheetData> {
-  // Clients can send anything; these end up in a TMDB URL path.
   if (![tmdbId, season, episode].every(Number.isInteger)) throw new Error('Invalid episode');
   const db = await createClient();
   const [ep, watch, score] = await Promise.all([

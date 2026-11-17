@@ -47,6 +47,11 @@ export function EpisodeSheet({
     };
   }, [showId, season, number]);
 
+  function toggleWatchedDroppingStaleDate() {
+    setData((d) => d && { ...d, watchedAt: null });
+    onToggle();
+  }
+
   const showSpoilers = watched || spoilerRevealed;
   const still = imageUrl(episode.stillPath, 'w780');
   const code = episodeCode(season, number);
@@ -100,7 +105,6 @@ export function EpisodeSheet({
 
         {showSpoilers ? (
           <h2
-            // Focus lands here after "Show details" so it isn't dropped with the removed button.
             tabIndex={-1}
             autoFocus={spoilerRevealed}
             className="mt-3 font-display text-xl leading-tight font-semibold outline-none"
@@ -141,11 +145,7 @@ export function EpisodeSheet({
 
         <button
           type="button"
-          onClick={() => {
-            // A fresh watch gets a new date; don't show the one fetched before this toggle.
-            setData((d) => d && { ...d, watchedAt: null });
-            onToggle();
-          }}
+          onClick={toggleWatchedDroppingStaleDate}
           disabled={!aired && !watched}
           className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold disabled:opacity-30 ${
             watched ? 'bg-ink/10 text-ink' : 'bg-income text-cream'
