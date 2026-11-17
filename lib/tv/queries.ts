@@ -266,23 +266,28 @@ export async function getServices(db: Db): Promise<number[]> {
   return data?.services ?? [];
 }
 
-// Every service carrying an active follow, most-carried first, with how many follows it carries.
-export async function getServiceOptions(db: Db): Promise<{ provider: Provider; shows: number }[]> {
-  const ids = await getActiveFollowIds(db);
-  if (ids.length === 0) return [];
-  const { data, error } = await db.from('tv_shows').select('providers').in('tmdb_id', ids);
+// Every service carrying an active follow, most-carried first, plus any picked
+// service that no longer carries one, so it can still be unpicked.
+export async function getServiceOptions(
+  db: Db,
+  picked: number[]
+): Promise<{ provider: Provider; shows: number }[]> {
+  const [active, { data, error }] = await Promise.all([
+    getActiveFollowIds(db).then((ids) => new Set(ids)),
+    db.from('tv_shows').select('tmdb_id,providers').not('providers', 'is', null),
+  ]);
   if (error) throw error;
   const byId = new Map<number, { provider: Provider; shows: number }>();
   for (const row of data ?? []) {
     for (const p of parseProviders(row.providers)) {
-      const hit = byId.get(p.id);
-      if (hit) hit.shows += 1;
-      else byId.set(p.id, { provider: p, shows: 1 });
+      const hit = byId.get(p.id) ?? { provider: p, shows: 0 };
+      if (active.has(row.tmdb_id)) hit.shows += 1;
+      byId.set(p.id, hit);
     }
   }
-  return [...byId.values()].sort(
-    (a, b) => b.shows - a.shows || a.provider.name.localeCompare(b.provider.name)
-  );
+  return [...byId.values()]
+    .filter((o) => o.shows > 0 || picked.includes(o.provider.id))
+    .sort((a, b) => b.shows - a.shows || a.provider.name.localeCompare(b.provider.name));
 }
 
 // All custom lists with their member counts.

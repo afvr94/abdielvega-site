@@ -7,6 +7,7 @@ import {
   getLibrary,
   getStats,
   getLists,
+  getServiceOptions,
   getUpcoming,
 } from '@/lib/tv/queries';
 
@@ -251,6 +252,35 @@ describe('getLibrary', () => {
     expect(items.map((i) => i.show.name)).toEqual(['Beta', 'Zeta', 'Alpha', 'Xray']);
     expect(items[0].lastWatchedAt).toBe('2026-07-05T00:00:00Z');
     expect(items.find((i) => i.show.name === 'Zeta')?.dormant).toBe(true);
+  });
+});
+
+describe('getServiceOptions', () => {
+  it('counts active follows per service and keeps a picked service with none', async () => {
+    const nf = { id: 8, name: 'Netflix', logo_path: null };
+    const hu = { id: 15, name: 'Hulu', logo_path: null };
+    const mx = { id: 1899, name: 'Max', logo_path: null };
+    const db = makeDb({
+      tables: {
+        tv_follows: [
+          { show_tmdb_id: 1, archived: false, watchlist: false },
+          { show_tmdb_id: 2, archived: false, watchlist: false },
+          { show_tmdb_id: 3, archived: true, watchlist: false },
+        ],
+        tv_shows: [
+          show(1, 'A', { providers: [nf, hu] }),
+          show(2, 'B', { providers: [nf] }),
+          show(3, 'C', { providers: [mx] }),
+        ],
+      },
+    });
+    const opts = await getServiceOptions(db, [1899]);
+    expect(opts.map((o) => [o.provider.name, o.shows])).toEqual([
+      ['Netflix', 2],
+      ['Hulu', 1],
+      ['Max', 0],
+    ]);
+    expect((await getServiceOptions(db, [])).map((o) => o.provider.name)).not.toContain('Max');
   });
 });
 

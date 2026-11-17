@@ -6,7 +6,8 @@ export const metadata = { title: 'Services' };
 
 export default async function ServicesPage() {
   const db = await createClient();
-  const [options, services] = await Promise.all([getServiceOptions(db), getServices(db)]);
+  const services = await getServices(db);
+  const options = await getServiceOptions(db, services);
 
   return (
     <div>
