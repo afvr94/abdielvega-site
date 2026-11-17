@@ -13,6 +13,8 @@ export async function GET() {
     icons: [
       { src: '/cliffo/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/cliffo/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      // The couch sits well inside the 80% safe zone on a full-bleed background.
+      { src: '/cliffo/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
   return Response.json(manifest, {

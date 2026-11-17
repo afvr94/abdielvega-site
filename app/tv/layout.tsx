@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   description: 'Personal TV tracker — private.',
   manifest: '/api/tv/manifest',
   appleWebApp: { capable: true, title: 'cliffo', statusBarStyle: 'black' },
-  icons: { apple: '/cliffo/icon-180.png' },
 };
 
 export const viewport: Viewport = {
