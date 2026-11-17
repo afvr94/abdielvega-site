@@ -293,7 +293,7 @@ export async function getLibrary(db: Db): Promise<LibraryItem[]> {
     items.push({
       show,
       archived: r.archived,
-      watchlist: r.watchlist ?? false,
+      watchlist: r.watchlist,
       airedTotal: Number(r.aired_total),
       airedWatched: Number(r.aired_watched),
       nextAirDate: r.next_air_date,

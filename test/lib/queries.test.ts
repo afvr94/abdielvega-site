@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
 import {
   getHome,
   getShowDetail,
@@ -49,12 +50,12 @@ function makeDb(
     tables?: Record<string, Record<string, unknown>[]>;
   },
   selects: { table: string; cols: string }[] = []
-): SupabaseClient {
+): SupabaseClient<Database> {
   return {
     rpc: (name: string) => Promise.resolve({ data: config.rpc?.[name] ?? [], error: null }),
     from: (table: string) =>
       makeBuilder(config.tables?.[table] ?? [], (cols) => selects.push({ table, cols })),
-  } as unknown as SupabaseClient;
+  } as unknown as SupabaseClient<Database>;
 }
 
 const show = (tmdb_id: number, name: string, extra: Record<string, unknown> = {}) => ({
