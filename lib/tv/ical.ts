@@ -27,7 +27,7 @@ function fold(line: string): string {
   return out.join('\r\n ');
 }
 
-// All-day events titled "Show S01E03" only, so the calendar never spoils an episode title.
+// Titles stop at the episode code so the calendar never spoils an episode name.
 export function buildCalendar(items: UpcomingEpisode[], now: Date): string {
   const stamp = now.toISOString().replace(/[-:]|\.\d{3}/g, '');
   const lines = [
