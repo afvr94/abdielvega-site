@@ -576,7 +576,7 @@ the hours left skip them. Run once, after the Up Next, Watchlist, Dormant and
 Streaming services sections:
 
 ```sql
--- The owner-only policies hide row counts from the planner, so it would probe tv_watches once per episode instead of hash-joining.
+-- The owner-only policies throw off the planner's row estimates, so without this setting it probes tv_watches once per episode instead of hash-joining.
 create or replace function tv_home()
 returns jsonb language sql stable set enable_nestloop = off as $$
   with dormant as materialized (
