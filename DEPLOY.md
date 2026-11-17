@@ -566,7 +566,7 @@ $$;
 ### Home function
 
 The Up Next page reads everything it shows in one call, because each Supabase
-round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
+round trip costs far more than the SQL.
 `tv_home()` wraps `tv_up_next()` and returns one JSON value with the show and
 episode columns the page needs, the next 7 days of airings, the runtime of
 every aired episode you haven't watched (the summary's "hours left"), the
