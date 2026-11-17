@@ -1,4 +1,3 @@
-// A streaming service carrying a show in the US, by TMDB provider id.
 export type Provider = { id: number; name: string; logoPath: string | null };
 
 export type Show = {
@@ -85,7 +84,7 @@ export type Stats = {
   topShows: { showTmdbId: number; name: string; count: number; runtimeMin: number }[];
 };
 
-// The first of the services you pay for that carries the show, in TMDB display order.
+// providers arrive in TMDB display order, so find() picks the top-billed service.
 export function myService(providers: Provider[], services: number[]): Provider | null {
   return providers.find((p) => services.includes(p.id)) ?? null;
 }

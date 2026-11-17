@@ -66,8 +66,6 @@ export async function cacheShow(db: SupabaseClient<Database>, tmdbId: number): P
   }
 }
 
-// Refresh a show's US streaming services. Separate from cacheShow so the sync can
-// refresh ended shows too, which still stream but never gain episodes.
 export async function cacheProviders(db: SupabaseClient<Database>, tmdbId: number): Promise<void> {
   const providers = streamingProviders(await fetchWatchProviders(tmdbId)).map((p) => ({
     id: p.id,

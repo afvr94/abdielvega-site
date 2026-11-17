@@ -36,7 +36,7 @@ type EpisodeRow = Pick<
   | 'still_path'
 >;
 
-// tv_shows.providers is jsonb [{id, name, logo_path}], null until the sync first fills it.
+// tv_shows.providers is jsonb [{id, name, logo_path}], null until first fetched.
 function parseProviders(j: Json | null | undefined): Provider[] {
   if (!Array.isArray(j)) return [];
   return j.flatMap((p) =>
@@ -266,8 +266,7 @@ export async function getServices(db: Db): Promise<number[]> {
   return data?.services ?? [];
 }
 
-// Every service carrying an active follow, most-carried first, plus any picked
-// service that no longer carries one, so it can still be unpicked.
+// A picked service whose last show went stays listed, so it can still be unpicked.
 export async function getServiceOptions(
   db: Db,
   picked: number[]

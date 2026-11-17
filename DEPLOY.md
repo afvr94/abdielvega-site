@@ -769,7 +769,7 @@ alter table tv_shows add column if not exists providers jsonb; -- [{id, name, lo
 
 create table tv_settings (
   id        boolean primary key default true check (id), -- at most one row
-  services  integer[] not null default '{}'               -- TMDB provider ids
+  services  integer[] not null default '{}'
 );
 alter table tv_settings enable row level security;
 create policy "owner only" on tv_settings for all

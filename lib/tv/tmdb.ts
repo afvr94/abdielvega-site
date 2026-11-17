@@ -137,7 +137,6 @@ export function streamingProviders(data: TmdbWatchProviders, region = 'US'): Pro
     .map((p) => ({ id: p.provider_id, name: p.provider_name, logoPath: p.logo_path }));
 }
 
-// Cached for a day — availability changes slowly.
 export function fetchWatchProviders(seriesId: number): Promise<TmdbWatchProviders> {
   return tmdb<TmdbWatchProviders>(`/tv/${seriesId}/watch/providers`, {}, DAY);
 }
