@@ -652,6 +652,7 @@ columns changed):
 ```sql
 drop function if exists tv_library();
 
+-- The owner-only policies throw off the planner's row estimates, so without this setting it re-sorts every watch once per followed show instead of hash-joining.
 create or replace function tv_library()
 returns table (
   show_tmdb_id     integer,
@@ -662,7 +663,7 @@ returns table (
   next_air_date    date,
   last_watched_at  timestamptz,
   dormant          boolean
-) language sql stable as $$
+) language sql stable set enable_nestloop = off as $$
   with foll as (
     select show_tmdb_id, archived, watchlist from tv_follows
   ),
