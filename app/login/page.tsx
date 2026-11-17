@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!(await onTvHost())) return { title: 'Sign in' };
   return {
     title: { absolute: 'Sign in · cliffo' },
-    icons: { icon: '/cliffo/icon-192.png', apple: '/cliffo/icon-192.png' },
+    icons: { icon: '/tv/icon.svg', apple: '/tv/apple-icon.png' },
   };
 }
 

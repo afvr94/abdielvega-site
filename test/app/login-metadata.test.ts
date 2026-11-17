@@ -13,7 +13,7 @@ describe('login metadata', () => {
     host = 'tv.abdielvega.com';
     const meta = await generateMetadata();
     expect(meta.title).toEqual({ absolute: 'Sign in · cliffo' });
-    expect(meta.icons).toEqual({ icon: '/cliffo/icon-192.png', apple: '/cliffo/icon-192.png' });
+    expect(meta.icons).toEqual({ icon: '/tv/icon.svg', apple: '/tv/apple-icon.png' });
   });
 
   it('keeps the site icon on the budget host', async () => {
