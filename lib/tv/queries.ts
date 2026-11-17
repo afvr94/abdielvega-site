@@ -259,8 +259,9 @@ async function listIdsByShow(db: Db): Promise<Map<number, number[]>> {
   return map;
 }
 
-// The generator types SETOF function columns as non-null; these two are null
-// for shows with nothing upcoming or nothing watched.
+// The type generator marks every column a table-returning function returns as non-null, but
+// next_air_date and last_watched_at are null for shows with nothing upcoming
+// or nothing watched.
 type LibraryRpcRow = Omit<
   Database['public']['Functions']['tv_library']['Returns'][number],
   'next_air_date' | 'last_watched_at'
