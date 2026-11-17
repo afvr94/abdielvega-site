@@ -44,7 +44,7 @@ app/
     show/[tmdbId]/      # show detail — seasons, episodes, where to watch
     search/page.tsx
     calendar/page.tsx   # upcoming air dates
-    stats/page.tsx      # totals + activity heatmap
+    stats/page.tsx      # year in review (?year=) + totals + activity heatmap
     actions.ts          # all TV server actions (follow, watch, lists, …)
   hiit/                 # public interval timer (Builder/Runner/schema/presets)
   login/page.tsx        # Continue with Google; brand switches on the host
@@ -121,13 +121,15 @@ imported history records even before metadata is cached. `tv_lists` /
 the cron has already posted about. `tv_shows.providers` holds each show's US
 streaming services (refreshed by the cron), and the one-row `tv_settings` holds
 the services you pay for. The heavier reads go through Postgres
-functions — `tv_up_next()`, `tv_dormant()`, `tv_library()`, `tv_stats()`,
+functions — `tv_up_next()`, `tv_dormant()`, `tv_library()`, `tv_stats()`, `tv_year()`,
 `tv_pending_notifications()`.
 
 Library reads come from Postgres; `lib/tv/tmdb.ts` writes metadata only on follow,
-import and the scheduled sync. Page renders call TMDB only for watch providers
-and for the preview of a show that isn't cached yet. Watch providers are cached
-for a day and stream in after the episode list.
+import and the scheduled sync. Page renders call TMDB only for watch providers,
+for the preview of a show that isn't cached yet, and for episode scores in the
+year in review. Watch providers are cached for a day and stream in after the
+episode list. Episode scores cover only the year's top shows, are cached for a
+day and stream in after the rest of `/stats`.
 
 ## Local development
 

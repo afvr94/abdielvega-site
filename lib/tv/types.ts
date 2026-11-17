@@ -84,6 +84,18 @@ export type Stats = {
   topShows: { showTmdbId: number; name: string; count: number; runtimeMin: number }[];
 };
 
+export type YearInReview = {
+  episodes: number;
+  runtimeMin: number;
+  shows: number;
+  newShows: number;
+  topShows: Stats['topShows'];
+  bingeDay: { date: string; count: number } | null;
+  longestStreak: { days: number; start: string } | null;
+  bulk: { date: string; count: number }[];
+  topWatched: [show: number, season: number, episode: number][];
+};
+
 // providers arrive in TMDB display order, so find() picks the top-billed service.
 export function myService(providers: Provider[], services: number[]): Provider | null {
   return providers.find((p) => services.includes(p.id)) ?? null;

@@ -10,6 +10,7 @@ import type {
   TvListWithCount,
   UpcomingEpisode,
   UpNextItem,
+  YearInReview,
 } from './types';
 import { watchKey } from './types';
 import { addDaysIso, todayIso } from './format';
@@ -226,6 +227,15 @@ type StatsJson = {
   top_shows: { show_tmdb_id: number; name: string; count: number; runtime_min: number }[];
 };
 
+function toTopShows(rows: StatsJson['top_shows']): Stats['topShows'] {
+  return rows.map((r) => ({
+    showTmdbId: Number(r.show_tmdb_id),
+    name: r.name,
+    count: Number(r.count),
+    runtimeMin: Number(r.runtime_min),
+  }));
+}
+
 // Aggregated viewing stats — all computed in one tv_stats() SQL call.
 export async function getStats(db: Db): Promise<Stats> {
   const { data, error } = await db.rpc('tv_stats');
@@ -240,12 +250,54 @@ export async function getStats(db: Db): Promise<Stats> {
     lastWatch: d.last_watch ?? null,
     byYear: (d.by_year ?? []).map((r) => ({ year: Number(r.year), count: Number(r.count) })),
     byDay: (d.by_day ?? []).map((r) => ({ date: String(r.date), count: Number(r.count) })),
-    topShows: (d.top_shows ?? []).map((r) => ({
-      showTmdbId: Number(r.show_tmdb_id),
-      name: r.name,
-      count: Number(r.count),
-      runtimeMin: Number(r.runtime_min),
-    })),
+    topShows: toTopShows(d.top_shows ?? []),
+  };
+}
+
+type YearJson = {
+  episodes: number;
+  runtime_min: number;
+  shows: number;
+  new_shows: number;
+  top_shows: StatsJson['top_shows'];
+  binge_day: { date: string; count: number } | null;
+  longest_streak: { days: number; start: string } | null;
+  bulk: { date: string; count: number }[];
+  top_watched: [number, number, number][];
+};
+
+function parseYear(data: unknown): YearJson {
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'episodes' in data &&
+    typeof data.episodes === 'number' &&
+    'top_shows' in data &&
+    Array.isArray(data.top_shows) &&
+    'bulk' in data &&
+    Array.isArray(data.bulk) &&
+    'top_watched' in data &&
+    Array.isArray(data.top_watched)
+  ) {
+    return data as YearJson;
+  }
+  throw new Error('tv_year() returned an unexpected shape; re-apply it from DEPLOY.md');
+}
+
+export async function getYear(db: Db, year: number): Promise<YearInReview> {
+  const { data, error } = await db.rpc('tv_year', { y: year });
+  if (error) throw error;
+  const d = parseYear(data);
+  return {
+    episodes: d.episodes,
+    runtimeMin: Number(d.runtime_min),
+    shows: d.shows,
+    newShows: d.new_shows,
+    topShows: toTopShows(d.top_shows),
+    bingeDay: d.binge_day,
+    longestStreak: d.longest_streak,
+    bulk: d.bulk,
+    topWatched: d.top_watched,
   };
 }
 

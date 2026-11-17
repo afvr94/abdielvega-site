@@ -391,6 +391,7 @@ export type Database = {
           show_tmdb_id: number;
         }[];
       };
+      tv_year: { Args: { y: number }; Returns: Json };
     };
     Enums: {
       category_type: 'income' | 'expense' | 'savings';
