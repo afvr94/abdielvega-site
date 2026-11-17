@@ -49,7 +49,7 @@ export function ShowDetailClient({
   const [, startTransition] = useTransition();
   const [neverAsk, setNeverAsk] = useState(false);
   const [prompt, setPrompt] = useState<{ season: number; episode: number } | null>(null);
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [openEpisode, setOpenEpisode] = useState<Episode | null>(null);
   const [retry, setRetry] = useState<(() => void) | null>(null);
   // Episode taps still saving. markWatched doesn't refresh this page, so a refresh from another
   // action could carry older data; these are re-applied on top of it until they settle.
@@ -150,8 +150,7 @@ export function ShowDetailClient({
     });
   }
 
-  // Returns whether it asked to mark earlier episodes too.
-  function toggle(e: Episode): boolean {
+  function toggle(e: Episode) {
     const key = watchKey(e.seasonNumber, e.episodeNumber);
     const nowWatched = !watched.has(key);
     // Are there earlier aired episodes still unwatched? (checked before the update)
@@ -186,9 +185,11 @@ export function ShowDetailClient({
           })
         )
     );
-    const asks = hasEarlierGap && !neverAsk;
-    if (asks) setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
-    return asks;
+    if (hasEarlierGap && !neverAsk) {
+      setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
+      // The prompt can't sit above the modal episode sheet.
+      setOpenEpisode(null);
+    }
   }
 
   function toggleWatchlist() {
@@ -250,9 +251,6 @@ export function ShowDetailClient({
     );
   }
 
-  const openEpisode = openKey
-    ? episodes.find((e) => watchKey(e.seasonNumber, e.episodeNumber) === openKey)
-    : undefined;
   const backdrop = imageUrl(show.backdropPath, 'w780');
   const seasonAllWatched = seasonEpisodes
     .filter((e) => hasAired(e, today))
@@ -386,7 +384,7 @@ export function ShowDetailClient({
             >
               <button
                 type="button"
-                onClick={() => setOpenKey(key)}
+                onClick={() => setOpenEpisode(e)}
                 aria-label={`${episodeCode(e.seasonNumber, e.episodeNumber)} details`}
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
@@ -439,16 +437,13 @@ export function ShowDetailClient({
 
       {openEpisode ? (
         <EpisodeSheet
-          key={openKey}
+          key={openEpisode.tmdbId}
           showId={show.tmdbId}
           episode={openEpisode}
-          watched={watched.has(openKey ?? '')}
+          watched={watched.has(watchKey(openEpisode.seasonNumber, openEpisode.episodeNumber))}
           aired={hasAired(openEpisode, today)}
-          onToggle={() => {
-            // The "mark previous?" prompt can't sit above a modal sheet, so close the sheet first.
-            if (toggle(openEpisode)) setOpenKey(null);
-          }}
-          onClose={() => setOpenKey(null)}
+          onToggle={() => toggle(openEpisode)}
+          onClose={() => setOpenEpisode(null)}
         />
       ) : null}
 
