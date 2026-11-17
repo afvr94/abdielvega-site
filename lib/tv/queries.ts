@@ -373,7 +373,7 @@ export async function getLibrary(db: Db): Promise<LibraryItem[]> {
 }
 
 // Future episodes across active (non-archived) follows, within `days`.
-export async function getUpcoming(db: Db, days = 90): Promise<UpcomingEpisode[]> {
+export async function getUpcoming(db: Db, days = 90, pastDays = 0): Promise<UpcomingEpisode[]> {
   const ids = await getActiveFollowIds(db);
   if (ids.length === 0) return [];
 
@@ -386,7 +386,7 @@ export async function getUpcoming(db: Db, days = 90): Promise<UpcomingEpisode[]>
       .select(`${EPISODE_COLUMNS},show:tv_shows(${SHOW_COLUMNS})`)
       .in('show_tmdb_id', ids)
       .gt('season_number', 0)
-      .gte('air_date', today)
+      .gte('air_date', addDaysIso(today, -pastDays))
       .lte('air_date', end)
       .order('air_date')
       .range(from, to)

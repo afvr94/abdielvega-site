@@ -1,3 +1,5 @@
+export const APP_URL = 'https://tv.abdielvega.com';
+
 export function episodeCode(season: number, episode: number): string {
   return `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`;
 }

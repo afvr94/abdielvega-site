@@ -52,6 +52,7 @@ app/
   api/contact/route.ts  # nodemailer POST
   api/tv/sync/route.ts  # daily cron: refresh TMDB metadata, post new episodes to Discord
   api/tv/manifest/route.ts   # PWA manifest for cliffo (icons are static, in public/cliffo/)
+  api/tv/calendar/route.ts   # iCal feed (last 14 days + next 90), guarded by TV_CALENDAR_TOKEN
   layout.tsx            # root html/body + fonts
   not-found.tsx
   fonts.ts
@@ -151,6 +152,7 @@ header: `curl -H "Host: budget.abdielvega.com" http://localhost:3000/` or
 - **Add a TV mutation:** add a server action to `app/tv/actions.ts` — every write goes through there, and each one revalidates the affected paths.
 - **Change what TMDB data is stored:** `lib/tv/cache.ts` maps the API response onto `tv_shows` / `tv_episodes`; add the column in `DEPLOY.md`'s schema too.
 - **Change the new-episode post:** `lib/tv/notify.ts` builds the Discord message; `app/api/tv/sync/route.ts` sends it to `DISCORD_WEBHOOK_URL`.
+- **Change the calendar feed:** `lib/tv/ical.ts` builds it; `app/api/tv/calendar/route.ts` serves it at `/api/tv/calendar?token=<TV_CALENDAR_TOKEN>`. Rotate the token in Vercel to revoke a subscription.
 - **Change the sync schedule:** `vercel.json` `crons`. The route is guarded by `CRON_SECRET` (`Authorization: Bearer <secret>`).
 
 ## Scripts
