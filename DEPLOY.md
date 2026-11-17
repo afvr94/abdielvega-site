@@ -525,12 +525,12 @@ $$;
 
 ### Dormant shows
 
-A dormant show is an active follow (not archived, not on the watchlist) with an
-episode left to watch that aired over 30 days ago, and no watch in 6 months. A
-show that was never watched turns dormant 30 days after it was followed. Dormant shows stay out of
-Up Next, its Behind totals and the Discord footer until you archive them or
-watch an episode. Run after the Watchlist section, before the Home and Library
-functions:
+A dormant show is a follow that is neither archived nor on the watchlist, has an
+unwatched episode that aired more than 30 days ago, and has no watch in the last
+6 months. A show you never watched turns dormant 30 days after you followed it.
+Dormant shows stay out of Up Next, the Behind totals and the Discord footer
+until you archive them or watch an episode. Run this after the Watchlist section
+and before the Home and Library functions:
 
 ```sql
 create or replace function tv_dormant()
@@ -565,8 +565,8 @@ round trip costs far more than the SQL (`tv_up_next()` itself runs in ~35 ms).
 `tv_home()` wraps `tv_up_next()` with the show and episode columns the page
 needs, the next 7 days of airings, the runtime of every aired episode you
 haven't watched (the summary's "hours left") and the number of dormant shows,
-as one JSON value. Dormant shows are left out of everything but that count. Run
-once, after the Up Next, Watchlist and Dormant sections:
+as one JSON value. It leaves dormant shows out of everything except that count.
+Run once, after the Up Next, Watchlist and Dormant sections:
 
 ```sql
 create or replace function tv_home()

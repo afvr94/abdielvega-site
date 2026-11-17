@@ -135,7 +135,7 @@ export function ShowsLibrary({
       {filter === 'dormant' && shown.length > 0 ? (
         <div className="mb-5 flex items-center justify-between gap-3 card border border-hairline p-4">
           <p className="text-sm leading-snug text-muted">
-            Behind, and untouched for 6 months. Archive the ones you&apos;re done with.
+            Not watched in 6 months, or never started. Archive the ones you&apos;re done with.
           </p>
           <button
             type="button"
