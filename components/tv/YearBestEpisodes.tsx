@@ -52,7 +52,9 @@ export async function YearBestEpisodes({ year }: { year: YearInReview }) {
               </div>
             </div>
             <span className="shrink-0 font-mono-tab text-sm text-income">
-              ★ {e.voteAverage.toFixed(1)}
+              <span aria-hidden="true">★ </span>
+              <span className="sr-only">Rated </span>
+              {e.voteAverage.toFixed(1)}
             </span>
           </Link>
         ))}

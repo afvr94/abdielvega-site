@@ -41,15 +41,17 @@ function YearSection({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display text-2xl font-semibold tracking-tightest-2">Your {year}</h2>
+        <h2 className="shrink-0 font-display text-2xl font-semibold tracking-tightest-2">
+          Your {year}
+        </h2>
         {years.length > 1 ? (
-          <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
+          <nav aria-label="Year" className="no-scrollbar flex min-w-0 gap-1.5 overflow-x-auto">
             {years.map((y) => (
               <Link
                 key={y}
                 href={`/stats?year=${y}`}
                 aria-current={y === year ? 'page' : undefined}
-                className={`shrink-0 rounded-full px-3 py-1.5 font-mono-tab text-xs font-semibold ${
+                className={`shrink-0 rounded-full px-3 py-1.5 font-mono-tab text-xs font-semibold transition-colors ${
                   y === year
                     ? 'border border-hairline bg-ink/10 text-ink'
                     : 'border border-transparent text-muted hover:text-ink'
@@ -58,7 +60,7 @@ function YearSection({
                 {y}
               </Link>
             ))}
-          </div>
+          </nav>
         ) : null}
       </div>
 
@@ -175,19 +177,22 @@ export default async function StatsPage({
 
       {review ? <YearSection year={year} review={review} years={years} /> : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard label="Episodes watched" value={stats.totalWatches.toLocaleString('en-US')} />
-        <StatCard
-          label="Time watched"
-          value={humanizeMinutes(stats.totalRuntimeMin)}
-          sub={`≈ ${daysFromMinutes(stats.totalRuntimeMin)} nonstop`}
-        />
-        <StatCard
-          label="Shows tracked"
-          value={(stats.showsFollowed + stats.showsArchived).toLocaleString('en-US')}
-          sub={`${stats.showsArchived} archived`}
-        />
-      </div>
+      <section>
+        <div className="mb-3 label-tag">All time</div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <StatCard label="Episodes watched" value={stats.totalWatches.toLocaleString('en-US')} />
+          <StatCard
+            label="Time watched"
+            value={humanizeMinutes(stats.totalRuntimeMin)}
+            sub={`≈ ${daysFromMinutes(stats.totalRuntimeMin)} nonstop`}
+          />
+          <StatCard
+            label="Shows tracked"
+            value={(stats.showsFollowed + stats.showsArchived).toLocaleString('en-US')}
+            sub={`${stats.showsArchived} archived`}
+          />
+        </div>
+      </section>
 
       {stats.byDay.length > 0 ? (
         <section>
