@@ -385,7 +385,9 @@ export function ShowDetailClient({
               <button
                 type="button"
                 onClick={() => setOpenEpisode(e)}
-                aria-label={`${episodeCode(e.seasonNumber, e.episodeNumber)} details`}
+                aria-label={
+                  isWatched ? undefined : `${episodeCode(e.seasonNumber, e.episodeNumber)} details`
+                }
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
                 <span className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-md bg-cream">

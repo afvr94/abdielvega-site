@@ -176,7 +176,7 @@ export async function getEpisodeScore(
 export async function getShowReception(
   seriesId: number
 ): Promise<{ score: Score | null; reviews: ShowReview[] }> {
-  const [show, reviews] = await Promise.all([
+  const [show, reviews] = await Promise.allSettled([
     tmdb<TmdbVotes>(`/tv/${seriesId}`, {}, DAY),
     tmdb<{
       results?: {
@@ -188,12 +188,17 @@ export async function getShowReception(
     }>(`/tv/${seriesId}/reviews`, {}, DAY),
   ]);
   return {
-    score: toScore(show),
-    reviews: (reviews.results ?? []).slice(0, 3).map((r) => ({
-      author: r.author,
-      rating: r.author_details?.rating ?? null,
-      excerpt: r.content.length > 400 ? `${r.content.slice(0, 400).trimEnd()}…` : r.content,
-      url: r.url,
-    })),
+    score: show.status === 'fulfilled' ? toScore(show.value) : null,
+    reviews: (reviews.status === 'fulfilled' ? (reviews.value.results ?? []) : [])
+      .slice(0, 3)
+      .map((r) => ({
+        author: r.author,
+        rating: r.author_details?.rating ?? null,
+        excerpt:
+          [...r.content].length > 400
+            ? `${[...r.content].slice(0, 400).join('').trimEnd()}…`
+            : r.content,
+        url: r.url,
+      })),
   };
 }
