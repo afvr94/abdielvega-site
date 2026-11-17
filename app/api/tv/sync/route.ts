@@ -32,15 +32,14 @@ async function notifyNewEpisodes(
     airDate: r.air_date,
   }));
 
+  // The footer is optional; a failed stats read must not hold back the post.
+  const behind = await getHome(db).then(
+    ({ upNext, behindMinutes }) => ({ episodes: episodesLeft(upNext), minutes: behindMinutes }),
+    () => undefined
+  );
+
   try {
-    const { upNext, behindMinutes } = await getHome(db);
-    await sendDiscord(
-      webhook,
-      buildDiscordMessage(items, todayIso(), {
-        episodes: episodesLeft(upNext),
-        minutes: behindMinutes,
-      })
-    );
+    await sendDiscord(webhook, buildDiscordMessage(items, todayIso(), behind));
   } catch (e) {
     return { notified: 0, error: `send: ${e instanceof Error ? e.message : String(e)}` };
   }

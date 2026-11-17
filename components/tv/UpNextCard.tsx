@@ -24,7 +24,9 @@ export function UpNextCard({
 
   if (!next) return null;
 
-  const still = imageUrl(next.stillPath, 'w300') ?? imageUrl(show.posterPath, 'w185');
+  const episodeStill = imageUrl(next.stillPath, 'w300');
+  const still = episodeStill ?? imageUrl(show.posterPath, 'w185');
+  const blurStill = episodeStill && !spoilerRevealed;
   const pct = item.airedTotal ? Math.round((item.airedWatched / item.airedTotal) * 100) : 0;
 
   function mark() {
@@ -58,7 +60,7 @@ export function UpNextCard({
             alt=""
             fill
             sizes="160px"
-            className={`object-cover ${spoilerRevealed ? '' : 'scale-110 blur-md'}`}
+            className={`object-cover ${blurStill ? 'scale-110 blur-md' : ''}`}
           />
         ) : null}
       </Link>

@@ -39,6 +39,10 @@ describe('auth callback', () => {
     );
   });
 
+  it('reports a provider error that is not a refusal as a failure', async () => {
+    expect(await call('error=server_error')).toBe('https://tv.abdielvega.com/login?error=failed');
+  });
+
   it('reports a failed code exchange', async () => {
     exchangeCodeForSession.mockResolvedValue({ error: new Error('bad code') });
     expect(await call('code=abc')).toBe('https://tv.abdielvega.com/login?error=failed');

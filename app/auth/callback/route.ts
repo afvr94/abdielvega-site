@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
   const requested = URL.canParse(raw, url.origin) ? new URL(raw, url.origin) : null;
   const next = requested?.origin === url.origin ? requested : new URL('/', url.origin);
 
-  if (url.searchParams.has('error')) {
-    return NextResponse.redirect(new URL('/login?error=denied', url.origin));
+  const oauthError = url.searchParams.get('error');
+  if (oauthError) {
+    const reason = oauthError === 'access_denied' ? 'denied' : 'failed';
+    return NextResponse.redirect(new URL(`/login?error=${reason}`, url.origin));
   }
 
   if (code) {

@@ -78,5 +78,5 @@ function collapsedLinePerShow(list: NotifyItem[]): string[] {
 }
 
 function escapeMarkdown(s: string) {
-  return s.replace(/([\\*_~`|>[\]])/g, '\\$1');
+  return s.replace(/([\\*_~`|>[\]])/g, '\\$1').replace(/^([#+-])/, '\\$1');
 }

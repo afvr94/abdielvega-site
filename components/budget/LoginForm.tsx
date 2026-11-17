@@ -11,10 +11,14 @@ export function LoginForm() {
   async function signIn() {
     setPending(true);
     setError(null);
-    const { error: err } = await createClient().auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
+    const { error: err } = await createClient()
+      .auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+      .catch((e: unknown) => ({
+        error: e instanceof Error ? e : new Error("Couldn't reach Google. Try again."),
+      }));
     // On success the browser is already redirecting to Google.
     if (err) {
       setPending(false);
