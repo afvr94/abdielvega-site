@@ -187,7 +187,7 @@ export function ShowDetailClient({
     );
     if (hasEarlierGap && !neverAsk) {
       setPrompt({ season: e.seasonNumber, episode: e.episodeNumber });
-      // The prompt can't sit above the modal episode sheet.
+      // The gap prompt can't show above the modal episode sheet.
       setOpenEpisode(null);
     }
   }
